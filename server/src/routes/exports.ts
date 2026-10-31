@@ -80,9 +80,90 @@ router.get('/schedule.json', async (req, res) => {
 router.get('/schedule_after.json', async (req, res) => {
   const filePath = path.join(EXPORTS_DIR, 'schedule_after.json');
   if (fs.existsSync(filePath)) {
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', 'attachment; filename="schedule_after.json"');
     return res.sendFile(filePath);
   }
   return res.status(404).json({ error: 'schedule_after.json not generated yet' });
+});
+
+// GET exam_schedule.json
+router.get('/exam_schedule.json', async (req, res) => {
+  try {
+    const dataset = await prisma.datasetVersion.findFirst({ where: { isCurrent: true } });
+    if (!dataset) return res.status(404).json({ error: 'No dataset loaded' });
+
+    const activeSchedule = await prisma.scheduleVersion.findFirst({
+      where: { datasetVersionId: dataset.id, status: ScheduleStatus.active },
+      include: { examAllocations: true },
+    });
+
+    if (!activeSchedule) return res.status(404).json({ error: 'No active schedule' });
+
+    const payload = {
+      team: 'CIT CampusOS Team',
+      dataset_id: dataset.datasetId,
+      exams: activeSchedule.examAllocations.map((e) => ({
+        exam_id: e.examExternalId,
+        day: e.day,
+        session: e.session,
+        rooms: e.rooms,
+      })),
+    };
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', 'attachment; filename="exam_schedule.json"');
+    return res.send(JSON.stringify(payload, null, 2));
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// GET spectra_allocations.json
+router.get('/spectra_allocations.json', async (req, res) => {
+  try {
+    const dataset = await prisma.datasetVersion.findFirst({ where: { isCurrent: true } });
+    if (!dataset) return res.status(404).json({ error: 'No dataset loaded' });
+
+    const activeSchedule = await prisma.scheduleVersion.findFirst({
+      where: { datasetVersionId: dataset.id, status: ScheduleStatus.active },
+      include: {
+        bookingDecisions: { include: { request: true } },
+        sessionOverrides: true,
+      },
+    });
+
+    if (!activeSchedule) return res.status(404).json({ error: 'No active schedule' });
+
+    const payload = {
+      team: 'CIT CampusOS Team',
+      dataset_id: dataset.datasetId,
+      fest_week: {
+        bookings: activeSchedule.bookingDecisions.map((d) => ({
+          request_id: d.request.externalId,
+          status: d.status,
+          ...(d.day ? { day: d.day } : {}),
+          ...(d.startPeriod ? { start_period: d.startPeriod } : {}),
+          ...(d.endPeriod ? { end_period: d.endPeriod } : {}),
+          ...(d.roomExternalId ? { room_id: d.roomExternalId } : {}),
+          reason: d.reason || 'Decision rendered by CIT CampusOS',
+        })),
+        session_overrides: activeSchedule.sessionOverrides.map((o) => ({
+          session_id: o.sessionExternalId,
+          day: o.day,
+          start_period: o.startPeriod,
+          room_id: o.roomExternalId,
+          displaced_by: o.displacedByReqId,
+        })),
+      },
+    };
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', 'attachment; filename="spectra_allocations.json"');
+    return res.send(JSON.stringify(payload, null, 2));
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
 });
 
 // Run official validator (dispatches to internal optimizer validator service or local python)
