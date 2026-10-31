@@ -1,21 +1,26 @@
 import React, { useState } from 'react';
 import { useCampusAuth } from '@/contexts/CampusAuthContext';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
 import {
-  LayoutDashboard,
   CalendarDays,
   FileSpreadsheet,
   PartyPopper,
   AlertTriangle,
-  Bot,
-  LogOut,
-  Sparkles,
+  LayoutDashboard,
+  Search,
+  PanelLeftClose,
+  PanelLeft,
+  ChevronDown,
+  ChevronLeft,
   ChevronRight,
-  ShieldCheck,
-  GraduationCap,
-  Users2,
   RotateCw,
+  LogOut,
+  Bot,
+  Sparkles,
+  Users,
+  GraduationCap,
+  Building2,
+  CheckCircle2,
 } from 'lucide-react';
 import { campusApi } from '@/services/api';
 import { toast } from 'sonner';
@@ -39,6 +44,7 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
 }) => {
   const { user, logout, loginDemo } = useCampusAuth();
   const [resetting, setResetting] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const handleResetData = async () => {
     setResetting(true);
@@ -57,7 +63,7 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
   const getRoleLabel = (role?: string) => {
     switch (role) {
       case 'admin':
-        return 'Dean Office (Admin)';
+        return 'Dean Academic Office';
       case 'department_coordinator':
         return 'CSE Dept Coordinator';
       case 'faculty':
@@ -65,11 +71,15 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
       case 'club':
         return 'Dramatics Society';
       default:
-        return 'Campus User';
+        return 'Authorized Stakeholder';
     }
   };
 
-  const getInitials = (name?: string) => {
+  const getInitials = (role?: string, name?: string) => {
+    if (role === 'admin') return 'DA';
+    if (role === 'department_coordinator') return 'DC';
+    if (role === 'faculty') return 'SR';
+    if (role === 'club') return 'DS';
     if (!name) return 'CIT';
     return name
       .split(' ')
@@ -79,220 +89,435 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
       .substring(0, 2);
   };
 
-  const navItems: Array<{ id: CampusTab; label: string; icon: any; badge?: string | number; adminOnly?: boolean }> = [
-    { id: 'dashboard', label: 'Dashboard Overview', icon: LayoutDashboard },
-    { id: 'timetable', label: 'Academic Timetable', icon: CalendarDays, badge: '189' },
-    { id: 'exams', label: 'Midsem Examinations', icon: FileSpreadsheet, badge: '41' },
-    { id: 'bookings', label: 'Spectra Week Bookings', icon: PartyPopper, badge: '25' },
-    { id: 'disruptions', label: 'Disruptions & Repair', icon: AlertTriangle, badge: 'Active', adminOnly: true },
-  ];
-
-  const visibleNavItems = navItems.filter((item) => !item.adminOnly || user?.role === 'admin');
-
   return (
-    <div className="flex h-screen overflow-hidden bg-[#F9F9FB] font-sans antialiased text-[#111926]">
-      {/* Desktop Sidebar matching docs/UI/app-ui */}
-      <aside className="hidden lg:flex lg:w-[260px] lg:shrink-0 h-full flex-col justify-between bg-[#F9F9FB] px-4 py-5 border-r border-[#E5E7EB] select-none">
-        <div className="space-y-6">
-          {/* Brand Header */}
-          <div className="flex items-center gap-3 px-2 py-1">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-indigo-600 flex items-center justify-center text-white font-poppins font-bold text-xs shadow-xs">
-              CIT
+    <div className="flex h-screen overflow-hidden bg-notion-canvas text-notion-text font-sans antialiased selection:bg-[#E8DEEE] selection:text-[#37352F]">
+      {/* Atelier Monolith Notion Sidebar */}
+      <aside
+        className={`sidebar-transition ${
+          sidebarOpen ? 'w-64 border-r border-notion-border' : 'w-0 border-r-0'
+        } bg-notion-sidebar flex flex-col shrink-0 z-30 select-none h-full relative overflow-hidden`}
+      >
+        <div className="w-64 flex flex-col h-full">
+          {/* Top Workspace Selector & Collapse Toggle */}
+          <div className="px-3.5 py-3 border-b border-notion-border/60 flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-2 cursor-pointer p-1 rounded-md hover:bg-notion-hover transition text-notion-text group min-w-0">
+              <div className="w-5 h-5 rounded bg-notion-hover border border-notion-border flex items-center justify-center text-xs shrink-0">
+                🏛
+              </div>
+              <span className="text-xs font-semibold tracking-tight truncate">CIT Campus</span>
+              <ChevronDown className="w-3 h-3 text-notion-tertiary group-hover:text-notion-secondary transition shrink-0" />
             </div>
-            <div className="flex flex-col">
-              <span className="text-[15px] font-bold tracking-tight text-[#111926] font-poppins flex items-center gap-1.5">
-                CampusOS
-                <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] animate-pulse" />
-              </span>
-              <span className="text-[10px] text-muted-foreground font-mono">cit-public-v1</span>
-            </div>
+
+            {/* Sidebar Toggle Button [ ◨ ] */}
+            <button
+              className="p-1.5 rounded-md hover:bg-notion-hover text-notion-secondary hover:text-notion-text transition"
+              onClick={() => setSidebarOpen(false)}
+              title="Collapse Sidebar"
+            >
+              <PanelLeftClose className="w-4 h-4" />
+            </button>
           </div>
 
-          {/* Navigation Sections */}
-          <div className="space-y-6">
-            <div>
-              <h3 className="mb-2 px-2 text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground font-poppins">
-                Workspace
-              </h3>
-              <div className="space-y-1">
-                {visibleNavItems.map((item) => {
-                  const isActive = activeTab === item.id;
-                  const Icon = item.icon;
+          {/* Scrollable Nav Section */}
+          <div className="p-2.5 flex-1 overflow-y-auto space-y-4 scrollbar-thin">
+            {/* Quick Search / Copilot Bar */}
+            <button
+              onClick={openCopilot}
+              className="w-full flex items-center justify-between px-2.5 py-1.5 text-xs text-notion-secondary hover:text-notion-text rounded-md hover:bg-notion-hover transition border border-transparent"
+            >
+              <div className="flex items-center gap-2">
+                <Search className="w-3.5 h-3.5 text-notion-tertiary" />
+                <span className="font-medium">Search &amp; Quick find</span>
+              </div>
+              <kbd className="text-[10px] font-mono bg-white border border-notion-border text-notion-tertiary px-1 rounded shadow-2xs">
+                ⌘K
+              </kbd>
+            </button>
 
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => setActiveTab(item.id)}
-                      className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-xs font-medium transition-all duration-200 cursor-pointer ${
-                        isActive
-                          ? 'bg-white text-[#111926] shadow-[0_2px_4px_rgba(0,0,0,0.05)] border border-[#E5E7EB] font-bold font-poppins'
-                          : 'text-muted-foreground hover:bg-white/60 hover:text-[#111926] border border-transparent'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <Icon className={`h-4 w-4 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
-                        <span>{item.label}</span>
+            {/* Schedules Section */}
+            <div>
+              <div className="px-2 text-[10px] font-medium tracking-wide uppercase text-notion-tertiary">
+                Schedules
+              </div>
+              <nav className="mt-1 space-y-1">
+                {/* Weekly Schedule */}
+                <div
+                  className={`rounded-md overflow-hidden transition-all ${
+                    activeTab === 'timetable'
+                      ? 'bg-white border border-notion-border shadow-2xs'
+                      : 'hover:bg-notion-hover/50'
+                  }`}
+                >
+                  <button
+                    onClick={() => setActiveTab('timetable')}
+                    className="w-full flex items-center justify-between px-2 py-1.5 text-xs font-medium text-notion-text cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2">
+                      <CalendarDays className={`w-3.5 h-3.5 ${activeTab === 'timetable' ? 'text-primary' : 'text-notion-secondary'}`} />
+                      <span>Weekly Schedule</span>
+                    </div>
+                    <span className="text-[10px] text-notion-tertiary font-mono">Autumn</span>
+                  </button>
+
+                  {/* Sub-cohort list when active */}
+                  {activeTab === 'timetable' && (
+                    <div className="pl-4 pr-1.5 pb-1.5 pt-0.5 space-y-0.5 border-t border-notion-border/40 bg-notion-subtle/30 text-[11px]">
+                      <div className="flex items-center justify-between px-2 py-1 rounded bg-white font-medium text-notion-text border border-notion-border/70 shadow-2xs">
+                        <div className="flex items-center gap-1.5 truncate">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                          <span className="truncate">CSE — Yr 2 (Sec A)</span>
+                        </div>
+                        <span className="text-[9px] font-mono text-emerald-700 bg-emerald-50 px-1 rounded">
+                          Active
+                        </span>
                       </div>
-                      <div className="flex items-center gap-1">
-                        {item.badge !== undefined && (
-                          <span
-                            className={`flex h-4.5 min-w-4.5 items-center justify-center rounded-full px-1.5 text-[9px] font-bold font-mono ${
-                              isActive ? 'bg-primary text-white' : 'bg-slate-200/80 text-muted-foreground'
-                            }`}
-                          >
-                            {item.badge}
-                          </span>
-                        )}
+                      <div className="flex items-center justify-between px-2 py-1 rounded text-notion-secondary hover:text-notion-text hover:bg-notion-hover/70 transition">
+                        <div className="flex items-center gap-1.5 truncate">
+                          <span className="w-1.5 h-1.5 rounded-full bg-notion-tertiary/50 shrink-0" />
+                          <span className="truncate">ECE — Year 3</span>
+                        </div>
+                        <span className="text-[9px] font-mono text-notion-tertiary">42h</span>
                       </div>
-                    </button>
-                  );
-                })}
+                      <div className="flex items-center justify-between px-2 py-1 rounded text-notion-secondary hover:text-notion-text hover:bg-notion-hover/70 transition">
+                        <div className="flex items-center gap-1.5 truncate">
+                          <span className="w-1.5 h-1.5 rounded-full bg-notion-tertiary/50 shrink-0" />
+                          <span className="truncate">Mech — Year 1</span>
+                        </div>
+                        <span className="text-[9px] font-mono text-notion-tertiary">38h</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Exam Timetable */}
+                <button
+                  onClick={() => setActiveTab('exams')}
+                  className={`w-full flex items-center justify-between px-2 py-1.5 text-xs rounded-md transition cursor-pointer ${
+                    activeTab === 'exams'
+                      ? 'bg-white font-medium text-notion-text border border-notion-border shadow-2xs'
+                      : 'text-notion-secondary hover:text-notion-text hover:bg-notion-hover'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <FileSpreadsheet className={`w-3.5 h-3.5 ${activeTab === 'exams' ? 'text-primary' : 'text-notion-tertiary'}`} />
+                    <span>Exam Timetable</span>
+                  </div>
+                  <span className="text-[10px] text-notion-tertiary font-mono">Midsem</span>
+                </button>
+
+                {/* Fest & Event Allocations */}
+                <button
+                  onClick={() => setActiveTab('bookings')}
+                  className={`w-full flex items-center justify-between px-2 py-1.5 text-xs rounded-md transition cursor-pointer ${
+                    activeTab === 'bookings'
+                      ? 'bg-white font-medium text-notion-text border border-notion-border shadow-2xs'
+                      : 'text-notion-secondary hover:text-notion-text hover:bg-notion-hover'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <PartyPopper className={`w-3.5 h-3.5 ${activeTab === 'bookings' ? 'text-primary' : 'text-notion-tertiary'}`} />
+                    <span>Fest &amp; Event Allocations</span>
+                  </div>
+                  <span className="text-[10px] text-notion-tertiary font-mono">Spectra</span>
+                </button>
+              </nav>
+            </div>
+
+            {/* Operations Section */}
+            <div>
+              <div className="px-2 text-[10px] font-medium tracking-wide uppercase text-notion-tertiary">
+                Operations
+              </div>
+              <nav className="mt-1 space-y-0.5">
+                <button
+                  onClick={() => setActiveTab('dashboard')}
+                  className={`w-full flex items-center justify-between px-2 py-1.5 text-xs rounded-md transition cursor-pointer ${
+                    activeTab === 'dashboard'
+                      ? 'bg-white font-medium text-notion-text border border-notion-border shadow-2xs'
+                      : 'text-notion-secondary hover:text-notion-text hover:bg-notion-hover'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <LayoutDashboard className={`w-3.5 h-3.5 ${activeTab === 'dashboard' ? 'text-primary' : 'text-notion-tertiary'}`} />
+                    <span>Campus Overview</span>
+                  </div>
+                  <span className="text-[9px] font-mono text-emerald-700 bg-emerald-50 px-1 rounded">
+                    Live
+                  </span>
+                </button>
+
+                {(user?.role === 'admin' || user?.role === 'department_coordinator') && (
+                  <button
+                    onClick={() => setActiveTab('disruptions')}
+                    className={`w-full flex items-center justify-between px-2 py-1.5 text-xs rounded-md transition cursor-pointer ${
+                      activeTab === 'disruptions'
+                        ? 'bg-white font-medium text-notion-text border border-notion-border shadow-2xs'
+                        : 'text-notion-secondary hover:text-notion-text hover:bg-notion-hover'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className={`w-3.5 h-3.5 ${activeTab === 'disruptions' ? 'text-amber-500' : 'text-notion-tertiary'}`} />
+                      <span>Disruptions &amp; Repair</span>
+                    </div>
+                    <span className="text-[9px] font-mono text-amber-700 bg-amber-50 px-1 rounded">
+                      CP-SAT
+                    </span>
+                  </button>
+                )}
+              </nav>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="space-y-1.5 pt-0.5">
+              <div className="px-2 text-[10px] font-medium tracking-wide uppercase text-notion-tertiary">
+                Quick Actions
+              </div>
+              <div className="grid grid-cols-2 gap-1.5 px-1">
+                <button
+                  onClick={openCopilot}
+                  className="flex items-center justify-center gap-1.5 py-1 px-1.5 text-[11px] font-medium text-notion-text bg-white border border-notion-border rounded hover:bg-notion-hover transition shadow-2xs cursor-pointer"
+                >
+                  <Sparkles className="w-3 h-3 text-purple-600" />
+                  <span>Ask Copilot</span>
+                </button>
+
+                {user?.role === 'admin' && (
+                  <button
+                    onClick={handleResetData}
+                    disabled={resetting}
+                    className="flex items-center justify-center gap-1.5 py-1 px-1.5 text-[11px] font-medium text-notion-secondary hover:text-notion-text bg-white border border-notion-border rounded hover:bg-notion-hover transition shadow-2xs cursor-pointer"
+                  >
+                    <RotateCw className={`w-3 h-3 ${resetting ? 'animate-spin' : ''}`} />
+                    <span>Reset Data</span>
+                  </button>
+                )}
               </div>
             </div>
 
+            {/* Directories */}
             <div>
-              <h3 className="mb-2 px-2 text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground font-poppins">
-                AI Operations
-              </h3>
-              <button
-                onClick={openCopilot}
-                className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-xs font-medium text-muted-foreground hover:bg-purple-50 hover:text-primary transition-all duration-200 cursor-pointer border border-transparent group"
-              >
-                <div className="flex items-center gap-2.5">
-                  <Bot className="h-4 w-4 text-primary group-hover:scale-110 transition-transform" />
-                  <span className="font-poppins font-medium">CIT Copilot</span>
+              <div className="px-2 text-[10px] font-medium tracking-wide uppercase text-notion-tertiary">
+                Directories
+              </div>
+              <nav className="mt-1 space-y-0.5">
+                <div className="flex items-center justify-between px-2 py-1.5 text-xs text-notion-secondary hover:text-notion-text rounded-md hover:bg-notion-hover transition">
+                  <div className="flex items-center gap-2">
+                    <GraduationCap className="w-3.5 h-3.5 text-notion-tertiary" />
+                    <span>Cohorts &amp; Batches</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-notion-tertiary">14</span>
                 </div>
-                <span className="flex items-center gap-1 text-[9px] font-bold font-poppins px-1.5 py-0.5 rounded-full bg-purple-100 text-primary">
-                  <Sparkles className="w-2.5 h-2.5 text-amber-500" />
-                  AI
-                </span>
-              </button>
+                <div className="flex items-center justify-between px-2 py-1.5 text-xs text-notion-secondary hover:text-notion-text rounded-md hover:bg-notion-hover transition">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-3.5 h-3.5 text-notion-tertiary" />
+                    <span>Faculty Directory</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-notion-tertiary">40</span>
+                </div>
+                <div className="flex items-center justify-between px-2 py-1.5 text-xs text-notion-secondary hover:text-notion-text rounded-md hover:bg-notion-hover transition">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="w-3.5 h-3.5 text-notion-tertiary" />
+                    <span>Rooms &amp; Labs</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-notion-tertiary">27</span>
+                </div>
+              </nav>
+            </div>
+
+            {/* Mini Embedded Month Calendar */}
+            <div className="pt-1">
+              <div className="bg-white border border-notion-border rounded-lg p-2.5 shadow-2xs">
+                <div className="flex items-center justify-between mb-2 px-0.5">
+                  <span className="text-xs font-semibold text-notion-text tracking-tight flex items-center gap-1.5">
+                    <span>October 2025</span>
+                    <span className="text-[9px] font-normal text-notion-tertiary bg-notion-subtle px-1 py-0.5 rounded border border-notion-border">
+                      Wk 42
+                    </span>
+                  </span>
+                  <div className="flex items-center gap-1 text-notion-secondary">
+                    <button className="p-0.5 hover:bg-notion-subtle text-notion-secondary hover:text-notion-text rounded transition" title="Previous month">
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                    </button>
+                    <button className="p-0.5 hover:bg-notion-subtle text-notion-secondary hover:text-notion-text rounded transition" title="Next month">
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+                <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-medium text-notion-tertiary mb-1">
+                  <span>M</span>
+                  <span>T</span>
+                  <span>W</span>
+                  <span>T</span>
+                  <span>F</span>
+                  <span>S</span>
+                  <span>S</span>
+                </div>
+                <div className="grid grid-cols-7 gap-1 text-center text-[10px]">
+                  <span className="text-notion-tertiary/40 py-0.5">29</span>
+                  <span className="text-notion-tertiary/40 py-0.5">30</span>
+                  <span className="text-notion-text py-0.5 rounded hover:bg-notion-hover cursor-pointer transition">1</span>
+                  <span className="text-notion-text py-0.5 rounded hover:bg-notion-hover cursor-pointer transition">2</span>
+                  <span className="text-notion-text py-0.5 rounded hover:bg-notion-hover cursor-pointer transition">3</span>
+                  <span className="text-notion-text py-0.5 rounded hover:bg-notion-hover cursor-pointer transition">4</span>
+                  <span className="text-notion-text py-0.5 rounded hover:bg-notion-hover cursor-pointer transition">5</span>
+                  <span className="text-notion-text py-0.5 rounded hover:bg-notion-hover cursor-pointer transition">6</span>
+                  <span className="text-notion-text py-0.5 rounded hover:bg-notion-hover cursor-pointer transition">7</span>
+                  <span className="text-notion-text py-0.5 rounded hover:bg-notion-hover cursor-pointer transition">8</span>
+                  <span className="text-notion-text py-0.5 rounded hover:bg-notion-hover cursor-pointer transition">9</span>
+                  <span className="text-notion-text py-0.5 rounded hover:bg-notion-hover cursor-pointer transition">10</span>
+                  <span className="text-notion-text py-0.5 rounded hover:bg-notion-hover cursor-pointer transition">11</span>
+                  <span className="text-notion-text py-0.5 rounded hover:bg-notion-hover cursor-pointer transition">12</span>
+                  <span className="text-notion-text py-0.5 rounded hover:bg-notion-hover cursor-pointer transition">13</span>
+                  <span className="text-notion-text py-0.5 rounded hover:bg-notion-hover cursor-pointer transition">14</span>
+                  <span className="text-notion-text py-0.5 rounded hover:bg-notion-hover cursor-pointer transition">15</span>
+                  <span className="text-white bg-notion-text font-semibold py-0.5 rounded shadow-2xs cursor-pointer">16</span>
+                  <span className="text-notion-text py-0.5 rounded hover:bg-notion-hover cursor-pointer transition">17</span>
+                  <span className="text-notion-text py-0.5 rounded hover:bg-notion-hover cursor-pointer transition">18</span>
+                  <span className="text-notion-text py-0.5 rounded hover:bg-notion-hover cursor-pointer transition">19</span>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Sidebar Footer: Role Switcher & User Profile matching app-ui */}
-        <div className="pt-4 border-t border-[#E5E7EB] space-y-3">
-          {/* Quick Demo Switcher */}
-          <div className="space-y-1.5">
-            <span className="px-1 text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground font-poppins">
-              Demo Roles
-            </span>
-            <div className="grid grid-cols-2 gap-1 text-[11px] font-poppins">
+          {/* Bottom Profile Pill & Stakeholder Perspective Switcher */}
+          <div className="p-3 border-t border-notion-border/70 space-y-2.5 bg-notion-sidebar shrink-0">
+            {/* Role Switcher Perspective Toggle */}
+            <div className="flex items-center justify-between text-[11px] bg-notion-subtle p-0.5 rounded-md border border-notion-border">
               <button
                 onClick={() => loginDemo('admin')}
-                className={`py-1 px-2 rounded-lg border text-center transition cursor-pointer ${
+                className={`flex-1 py-1 rounded text-center transition cursor-pointer ${
                   user?.role === 'admin'
-                    ? 'bg-primary text-white border-primary font-bold shadow-2xs'
-                    : 'bg-white border-[#E5E7EB] text-muted-foreground hover:text-[#111926]'
+                    ? 'bg-white text-notion-text font-medium shadow-2xs'
+                    : 'text-notion-secondary hover:text-notion-text'
                 }`}
               >
                 Admin
               </button>
               <button
                 onClick={() => loginDemo('department_coordinator')}
-                className={`py-1 px-2 rounded-lg border text-center transition cursor-pointer ${
+                className={`flex-1 py-1 rounded text-center transition cursor-pointer ${
                   user?.role === 'department_coordinator'
-                    ? 'bg-primary text-white border-primary font-bold shadow-2xs'
-                    : 'bg-white border-[#E5E7EB] text-muted-foreground hover:text-[#111926]'
+                    ? 'bg-white text-notion-text font-medium shadow-2xs'
+                    : 'text-notion-secondary hover:text-notion-text'
                 }`}
               >
-                Coordinator
+                Coord
               </button>
               <button
                 onClick={() => loginDemo('faculty')}
-                className={`py-1 px-2 rounded-lg border text-center transition cursor-pointer ${
+                className={`flex-1 py-1 rounded text-center transition cursor-pointer ${
                   user?.role === 'faculty'
-                    ? 'bg-primary text-white border-primary font-bold shadow-2xs'
-                    : 'bg-white border-[#E5E7EB] text-muted-foreground hover:text-[#111926]'
+                    ? 'bg-white text-notion-text font-medium shadow-2xs'
+                    : 'text-notion-secondary hover:text-notion-text'
                 }`}
               >
                 Faculty
               </button>
               <button
                 onClick={() => loginDemo('club')}
-                className={`py-1 px-2 rounded-lg border text-center transition cursor-pointer ${
+                className={`flex-1 py-1 rounded text-center transition cursor-pointer ${
                   user?.role === 'club'
-                    ? 'bg-primary text-white border-primary font-bold shadow-2xs'
-                    : 'bg-white border-[#E5E7EB] text-muted-foreground hover:text-[#111926]'
+                    ? 'bg-white text-notion-text font-medium shadow-2xs'
+                    : 'text-notion-secondary hover:text-notion-text'
                 }`}
               >
                 Club
               </button>
             </div>
-          </div>
 
-          {/* User Profile Card */}
-          <div className="flex items-center justify-between pt-2">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <Avatar className="h-8 w-8 border border-[#E5E7EB] shrink-0">
-                <AvatarFallback className="bg-primary/10 text-primary font-bold text-xs font-poppins">
-                  {getInitials(user?.name)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col min-w-0">
-                <span className="text-xs font-semibold text-[#111926] leading-none truncate font-poppins">
-                  {user?.name || 'Authorized User'}
-                </span>
-                <span className="text-[10px] text-muted-foreground truncate mt-0.5">
-                  {getRoleLabel(user?.role)}
-                </span>
+            {/* Profile Row */}
+            <div className="flex items-center justify-between pt-0.5">
+              <div className="flex items-center gap-2 truncate">
+                <div className="w-6 h-6 rounded-full bg-notion-subtle border border-notion-border flex items-center justify-center text-[10px] font-semibold text-notion-text shadow-2xs shrink-0">
+                  {getInitials(user?.role, user?.name)}
+                </div>
+                <div className="truncate">
+                  <p className="text-xs font-medium text-notion-text truncate">
+                    {user?.name || getRoleLabel(user?.role)}
+                  </p>
+                  <p className="text-[10px] text-notion-tertiary truncate flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+                    <span>Autumn 2025 · CIT Campus</span>
+                  </p>
+                </div>
               </div>
+              <button
+                onClick={logout}
+                className="text-notion-tertiary hover:text-red-600 p-1 rounded hover:bg-notion-hover transition cursor-pointer shrink-0"
+                title="Sign Out"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
             </div>
-
-            <button
-              onClick={logout}
-              title="Sign Out"
-              className="text-muted-foreground hover:text-red-600 transition-colors p-1.5 rounded-lg hover:bg-red-50 cursor-pointer shrink-0"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
           </div>
         </div>
       </aside>
 
-      {/* Main Content Area */}
-      <div className="flex flex-1 flex-col h-full overflow-y-auto scrollbar-thin">
-        {/* Top Operational Header Bar */}
-        <header className="h-16 border-b border-[#E5E7EB] bg-white px-6 flex items-center justify-between shrink-0 sticky top-0 z-30 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+      {/* Main Workspace Area */}
+      <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden bg-notion-canvas">
+        {/* Top Breadcrumb & Quiet Actions Bar */}
+        <header className="h-11 border-b border-notion-border px-4 lg:px-6 flex items-center justify-between shrink-0 bg-white z-20">
           <div className="flex items-center gap-2 text-xs">
-            <span className="text-muted-foreground font-poppins">CIT CampusOS</span>
-            <span className="text-muted-foreground/40">/</span>
-            <span className="font-bold text-[#111926] font-poppins capitalize">
-              {activeTab.replace('_', ' ')}
+            {/* Expand button if collapsed */}
+            {!sidebarOpen && (
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="p-1 rounded hover:bg-notion-hover text-notion-secondary hover:text-notion-text mr-1 transition cursor-pointer"
+                title="Expand Sidebar"
+              >
+                <PanelLeft className="w-4 h-4" />
+              </button>
+            )}
+
+            <span className="text-notion-secondary">CIT Campus</span>
+            <span className="text-notion-tertiary">/</span>
+            <span className="font-medium text-notion-text capitalize">
+              {activeTab === 'timetable'
+                ? 'Timetable Matrix'
+                : activeTab === 'exams'
+                ? 'Midsem Exam Schedule'
+                : activeTab === 'bookings'
+                ? 'Spectra Allocations'
+                : activeTab === 'disruptions'
+                ? 'Disruption Repair'
+                : 'Campus Overview'}
+            </span>
+            <span className="text-[10px] text-notion-tertiary font-mono bg-notion-subtle px-1.5 py-0.5 rounded border border-notion-border hidden sm:inline-block">
+              v2.4-opt
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-800 text-[11px] font-bold font-poppins">
+          <div className="flex items-center gap-2">
+            <span className="hidden md:flex items-center gap-1.5 text-[11px] text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full font-mono">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               0 Hard Violations · CP-SAT Online
-            </div>
+            </span>
 
             {user?.role === 'admin' && (
               <button
                 onClick={handleResetData}
                 disabled={resetting}
-                className="rounded-lg border border-[#E5E7EB] bg-[#FAF9F6] hover:bg-white text-xs font-bold font-poppins text-muted-foreground hover:text-[#111926] px-3 py-1.5 flex items-center gap-1.5 transition shadow-2xs cursor-pointer"
+                className="text-xs font-medium text-notion-secondary hover:text-notion-text bg-white border border-notion-border px-2.5 py-1 rounded hover:bg-notion-hover transition shadow-2xs flex items-center gap-1.5 cursor-pointer"
+                title="Restore clean baseline"
               >
-                <RotateCw className={`w-3.5 h-3.5 ${resetting ? 'animate-spin' : ''}`} />
-                <span>Reset Data</span>
+                <RotateCw className={`w-3 h-3 ${resetting ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">Reset Baseline</span>
               </button>
             )}
 
             <button
               onClick={openCopilot}
-              className="rounded-lg bg-gradient-to-r from-primary to-indigo-600 hover:from-primary/95 text-white shadow-xs font-bold font-poppins px-3.5 py-1.5 text-xs flex items-center gap-1.5 cursor-pointer"
+              className="text-xs font-medium text-white bg-notion-text hover:bg-black px-2.5 py-1 rounded shadow-2xs flex items-center gap-1.5 transition cursor-pointer"
             >
-              <Bot className="w-3.5 h-3.5 text-white" />
+              <Bot className="w-3.5 h-3.5" />
               <span>Ask Copilot</span>
               <Sparkles className="w-3 h-3 text-amber-300" />
             </button>
           </div>
         </header>
 
-        {/* Page Content */}
-        <main className="flex-1 p-6 lg:p-8 max-w-7xl w-full mx-auto">
+        {/* Page Content Viewport */}
+        <main className="flex-1 overflow-y-auto scrollbar-thin">
           {children}
         </main>
       </div>
