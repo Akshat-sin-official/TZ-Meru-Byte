@@ -351,3 +351,20 @@ model TimetableHead {
 
   @@map("timetable_head")
 }
+
+model FacultyUnavailabilityRequest {
+  id               String   @id @default(uuid())
+  facultyId        String
+  facultyName      String
+  days             Json
+  periods          Json
+  reason           String?
+  status           String   @default("pending_approval")
+  affectedSessions Json?
+  proposalId       String?
+  createdById      String
+  createdAt        DateTime @default(now())
+
+  @@index([facultyId])
+  @@index([status])
+}

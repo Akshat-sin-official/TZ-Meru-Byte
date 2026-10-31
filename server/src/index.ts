@@ -11,6 +11,7 @@ import disruptionRoutes from './routes/disruptions.js';
 import assistantRoutes from './routes/assistant.js';
 import exportRoutes from './routes/exports.js';
 import whatsappRoutes from './routes/whatsapp.js';
+import facultyRoutes from './routes/faculty.js';
 
 dotenv.config();
 
@@ -44,6 +45,7 @@ app.use('/api/disruptions', disruptionRoutes);
 app.use('/api/assistant', assistantRoutes);
 app.use('/api/exports', exportRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
+app.use('/api/faculty', facultyRoutes);
 
 app.listen(PORT, () => {
   console.log(`====================================================`);

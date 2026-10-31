@@ -257,19 +257,86 @@ router.post('/batch-validate-moves', authenticate, async (req: AuthenticatedRequ
   }
 });
 
+// GET /proposals/pending: List all pending schedule change proposals (Admin only)
+router.get('/proposals/pending', authenticate, requireRole([Role.admin]), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const dataset = await prisma.datasetVersion.findFirst({ where: { isCurrent: true } });
+    if (!dataset) return res.status(404).json({ error: 'No active dataset found' });
+
+    const pendingProposals = await prisma.scheduleVersion.findMany({
+      where: { datasetVersionId: dataset.id, status: ScheduleStatus.pending_approval },
+      include: {
+        assignments: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const unavailRequests = await prisma.facultyUnavailabilityRequest.findMany({
+      where: { status: 'pending_approval' },
+    });
+    const unavailByProposal = new Map(unavailRequests.map((u) => [u.proposalId, u]));
+
+    const enriched = pendingProposals.map((p) => ({
+      ...p,
+      unavailabilityRequest: unavailByProposal.get(p.id) || null,
+    }));
+
+    return res.json({ success: true, count: enriched.length, proposals: enriched });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // Approve Proposal and Activate
 router.post('/proposals/:id/approve', authenticate, requireRole([Role.admin]), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const proposalId = String(req.params.id);
     const proposal = await prisma.scheduleVersion.findUnique({
       where: { id: proposalId },
+      include: { assignments: true },
     });
 
     if (!proposal || proposal.status !== ScheduleStatus.pending_approval) {
       return res.status(400).json({ error: 'Proposal not found or not in pending_approval state' });
     }
 
-    // Atomic transaction: mark existing active as superseded, activate proposal
+    // RBAC: Strict Separation of Duties (User cannot approve their own proposal)
+    if (proposal.createdById && proposal.createdById === req.user?.id) {
+      return res.status(403).json({
+        error: 'Forbidden: You cannot approve your own proposal. Separation of duties requires independent review.',
+      });
+    }
+
+    // Pre-flight re-validation against current dataset
+    const dataset = await prisma.datasetVersion.findUnique({ where: { id: proposal.datasetVersionId } });
+    if (dataset) {
+      try {
+        const valRes = await axios.post(`${OPTIMIZER_URL}/internal/validate`, {
+          dataset: dataset.rawJson,
+          schedule: {
+            sessions: proposal.assignments.map((a) => ({
+              session_id: a.sessionExternalId,
+              day: a.day,
+              start_period: a.startPeriod,
+              room_id: a.roomExternalId,
+            })),
+          },
+        });
+        const timetableViolations = (valRes.data?.hard_violations || []).filter(
+          (v: any) => v.rule?.startsWith('H') || v.where === 'timetable'
+        );
+        if (timetableViolations.length > 0) {
+          return res.status(422).json({
+            error: 'Pre-flight validation failed: proposed schedule contains hard constraint violations.',
+            violations: timetableViolations,
+          });
+        }
+      } catch (valErr: any) {
+        console.warn('Validator pre-flight warning:', valErr.message);
+      }
+    }
+
+    // Atomic transaction: mark existing active as superseded, activate proposal, update unavailability requests
     await prisma.$transaction([
       prisma.scheduleVersion.updateMany({
         where: { datasetVersionId: proposal.datasetVersionId, status: ScheduleStatus.active },
@@ -283,6 +350,10 @@ router.post('/proposals/:id/approve', authenticate, requireRole([Role.admin]), a
           activatedAt: new Date(),
         },
       }),
+      prisma.facultyUnavailabilityRequest.updateMany({
+        where: { proposalId: proposalId },
+        data: { status: 'approved' },
+      }),
     ]);
 
     await prisma.auditLog.create({
@@ -295,6 +366,46 @@ router.post('/proposals/:id/approve', authenticate, requireRole([Role.admin]), a
     });
 
     return res.json({ success: true, message: `Schedule version ${proposal.versionNumber} is now active.` });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Reject Proposal (Admin only per RBAC)
+router.post('/proposals/:id/reject', authenticate, requireRole([Role.admin]), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const proposalId = String(req.params.id);
+    const proposal = await prisma.scheduleVersion.findUnique({
+      where: { id: proposalId },
+    });
+
+    if (!proposal || proposal.status !== ScheduleStatus.pending_approval) {
+      return res.status(400).json({ error: 'Proposal not found or not in pending_approval state' });
+    }
+
+    await prisma.$transaction([
+      prisma.scheduleVersion.update({
+        where: { id: proposalId },
+        data: {
+          status: ScheduleStatus.rejected,
+        },
+      }),
+      prisma.facultyUnavailabilityRequest.updateMany({
+        where: { proposalId: proposalId },
+        data: { status: 'rejected' },
+      }),
+    ]);
+
+    await prisma.auditLog.create({
+      data: {
+        userId: req.user?.id,
+        action: 'REJECT_SCHEDULE_PROPOSAL',
+        entityType: 'SCHEDULE_VERSION',
+        entityId: proposalId,
+      },
+    });
+
+    return res.json({ success: true, message: `Schedule version ${proposal.versionNumber} proposal has been rejected.` });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }

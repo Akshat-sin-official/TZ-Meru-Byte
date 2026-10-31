@@ -147,6 +147,37 @@ export const campusApi = {
     return res.data;
   },
 
+  // Faculty Unavailability & Rescheduling
+  submitFacultyUnavailability: async (data: {
+    facultyId?: string;
+    days: string[];
+    periods: number[];
+    reason?: string;
+  }) => {
+    const res = await api.post('/faculty/unavailability', data);
+    return res.data;
+  },
+  getFacultyUnavailabilities: async () => {
+    const res = await api.get('/faculty/unavailability');
+    return res.data;
+  },
+  getFacultyAffectedSessions: async (id: string) => {
+    const res = await api.get(`/faculty/unavailability/${id}/affected-sessions`);
+    return res.data;
+  },
+  getFacultyUnavailabilityProposal: async (id: string) => {
+    const res = await api.get(`/faculty/unavailability/${id}/proposal`);
+    return res.data;
+  },
+  getPendingProposals: async () => {
+    const res = await api.get('/schedules/proposals/pending');
+    return res.data;
+  },
+  rejectProposal: async (id: string) => {
+    const res = await api.post(`/schedules/proposals/${id}/reject`);
+    return res.data;
+  },
+
   // WhatsApp Gateway
   getWhatsAppStatus: async () => {
     const res = await api.get('/whatsapp/status');

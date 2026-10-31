@@ -21,6 +21,9 @@ import {
   Lock,
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CalendarOff } from 'lucide-react';
+import { FacultyUnavailabilityModal } from '@/components/campus/FacultyUnavailabilityModal';
+import { AdminProposalsModal } from '@/components/campus/AdminProposalsModal';
 
 interface TimetableDashboardProps {
   highlightDay?: string | null;
@@ -166,6 +169,26 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
       }
     }
   }, [highlightDay]);
+
+  // Faculty Unavailability & Admin Proposals Modals
+  const [unavailabilityOpen, setUnavailabilityOpen] = useState(false);
+  const [adminProposalsOpen, setAdminProposalsOpen] = useState(false);
+  const [pendingProposalsCount, setPendingProposalsCount] = useState(0);
+
+  const fetchPendingProposalsCount = async () => {
+    if (user?.role === 'admin') {
+      try {
+        const res = await campusApi.getPendingProposals();
+        if (res.proposals) setPendingProposalsCount(res.proposals.length);
+      } catch {
+        // ignore
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchPendingProposalsCount();
+  }, [user?.role]);
 
   // Session Drawer Details & Rescheduling
   const [selectedSessionDetail, setSelectedSessionDetail] = useState<any | null>(null);
@@ -524,6 +547,32 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
+            {user?.role === 'faculty' && (
+              <button
+                onClick={() => setUnavailabilityOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-md text-xs font-semibold transition shadow-2xs cursor-pointer"
+                title="Mark Unavailable Slots & Trigger Conflict-Free Rescheduling"
+              >
+                <CalendarOff className="w-3.5 h-3.5" />
+                <span>Mark Unavailability</span>
+              </button>
+            )}
+
+            {user?.role === 'admin' && (
+              <button
+                onClick={() => setAdminProposalsOpen(true)}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition cursor-pointer border ${
+                  pendingProposalsCount > 0
+                    ? 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100 font-semibold shadow-2xs'
+                    : 'bg-white text-[#37352F] border-[#EBEBEA] hover:bg-[#F1F1EF]'
+                }`}
+                title="Review Pending Proposals"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
+                <span>Proposals ({pendingProposalsCount})</span>
+              </button>
+            )}
+
             {user?.role === 'admin' && (
               <button
                 onClick={handleAutoSchedule}
@@ -1115,6 +1164,27 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
           </div>
         </div>
       )}
+      {/* Faculty Unavailability Modal */}
+      <FacultyUnavailabilityModal
+        isOpen={unavailabilityOpen}
+        onClose={() => setUnavailabilityOpen(false)}
+        onSuccess={() => {
+          fetchTimetable();
+          fetchPendingProposalsCount();
+        }}
+        userFacultyId={user?.facultyId || undefined}
+        userFacultyName={user?.name || undefined}
+      />
+
+      {/* Admin Proposals Review Modal */}
+      <AdminProposalsModal
+        isOpen={adminProposalsOpen}
+        onClose={() => setAdminProposalsOpen(false)}
+        onActionComplete={() => {
+          fetchTimetable();
+          fetchPendingProposalsCount();
+        }}
+      />
     </div>
   );
 };
