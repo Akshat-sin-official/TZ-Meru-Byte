@@ -58,7 +58,6 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
   // Dynamic Collapsible Sections
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false);
   const [cohortMenuOpen, setCohortMenuOpen] = useState(true);
-  const [filtersOpen, setFiltersOpen] = useState(true);
   const [calendarOpen, setCalendarOpen] = useState(true);
   const [calendarMonth, setCalendarMonth] = useState<'OCT' | 'NOV'>('OCT');
 
@@ -474,39 +473,6 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
               )}
             </nav>
           </div>
-
-          {/* Quick Filters (only on timetable or bookings) */}
-          {!sidebarCollapsed && (activeTab === 'timetable' || activeTab === 'bookings') && (
-            <div className="pt-2 border-t border-[#E5E7EB]">
-              <div className="px-2 flex items-center justify-between text-[11px] font-semibold tracking-wider uppercase text-[#71717A] mb-1.5">
-                <span>View Filters</span>
-                <button
-                  onClick={() => setFiltersOpen(!filtersOpen)}
-                  className="text-[#71717A] hover:text-[#09090B] p-1 cursor-pointer"
-                >
-                  <ChevronDown className={`w-3 h-3 transition-transform ${filtersOpen ? 'rotate-180' : ''}`} />
-                </button>
-              </div>
-
-              {filtersOpen && (
-                <div className="grid grid-cols-2 gap-1.5 px-0.5">
-                  {(['all', 'labs', 'lectures', 'tutorials'] as const).map((filterKey) => (
-                    <button
-                      key={filterKey}
-                      onClick={() => onSelectQuickFilter?.(filterKey)}
-                      className={`px-2.5 py-1.5 text-xs rounded-md border transition text-center capitalize cursor-pointer font-medium ${
-                        quickFilter === filterKey
-                          ? 'bg-white text-[#09090B] border-[#E5E7EB] font-semibold shadow-2xs'
-                          : 'bg-transparent border-transparent text-[#52525B] hover:text-[#09090B] hover:bg-[#F4F4F5]'
-                      }`}
-                    >
-                      {filterKey === 'all' ? 'All Slots' : filterKey}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
 
           {/* Interactive Mini Calendar */}
           {!sidebarCollapsed && (
