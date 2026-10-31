@@ -24,6 +24,7 @@ import {
   Calendar,
   Clock,
   ShieldCheck,
+  ChevronLeft,
   ChevronRight,
   Info,
 } from 'lucide-react';
@@ -190,6 +191,21 @@ export const SpectraBookingsView: React.FC = () => {
       return true;
     });
   }, [requests, decisionsMap, statusFilter, searchQuery]);
+
+  // Pagination state (Show limited rows at once)
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(7);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, searchQuery, pageSize]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredRequests.length / pageSize));
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, filteredRequests.length);
+  const paginatedRequests = useMemo(() => {
+    return filteredRequests.slice(startIndex, endIndex);
+  }, [filteredRequests, startIndex, endIndex]);
 
   const getRankMeta = (categoryKey?: string) => {
     const found = PRIORITY_HIERARCHY.find((p) => p.key === categoryKey);
@@ -503,14 +519,14 @@ export const SpectraBookingsView: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#EBEBEA]">
-              {filteredRequests.length === 0 ? (
+              {paginatedRequests.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-12 text-center text-[#9B9A97] text-xs">
                     No booking requests matching the current filter.
                   </td>
                 </tr>
               ) : (
-                filteredRequests.map((r: any) => {
+                paginatedRequests.map((r: any) => {
                   const dec = decisionsMap.get(r.id);
                   const isApproved = dec?.status === 'approved';
                   const rankInfo = getRankMeta(r.effectiveCategory || r.requestedCategory);
@@ -584,6 +600,73 @@ export const SpectraBookingsView: React.FC = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Toolbar */}
+        {filteredRequests.length > 0 && (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 border-t border-[#EBEBEA] bg-[#FDFDFD] text-xs text-[#71717A]">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span>
+                Showing <strong className="text-[#09090B] font-mono">{startIndex + 1}</strong>–<strong className="text-[#09090B] font-mono">{endIndex}</strong> of{' '}
+                <strong className="text-[#09090B] font-mono">{filteredRequests.length}</strong> requests
+              </span>
+              <div className="flex items-center gap-1 sm:ml-3 sm:border-l sm:border-[#EBEBEA] sm:pl-3">
+                <span className="text-[11px]">Rows:</span>
+                {[5, 7, 10, 25].map((size) => (
+                  <button
+                    key={size}
+                    onClick={() => setPageSize(size)}
+                    className={`px-1.5 py-0.5 rounded text-[11px] font-mono transition cursor-pointer ${
+                      pageSize === size
+                        ? 'bg-[#09090B] text-white font-semibold'
+                        : 'text-[#71717A] hover:bg-[#F4F4F5] hover:text-[#09090B]'
+                    }`}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 select-none self-end sm:self-auto">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="p-1 rounded border border-[#EBEBEA] hover:bg-[#F4F4F5] disabled:opacity-40 disabled:cursor-not-allowed text-[#09090B] transition cursor-pointer"
+                title="Previous page"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </button>
+
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }).map((_, i) => {
+                  const pNum = i + 1;
+                  return (
+                    <button
+                      key={pNum}
+                      onClick={() => setCurrentPage(pNum)}
+                      className={`w-6 h-6 rounded text-xs font-mono font-medium transition cursor-pointer ${
+                        currentPage === pNum
+                          ? 'bg-[#09090B] text-white font-semibold shadow-2xs'
+                          : 'text-[#71717A] hover:bg-[#F4F4F5] hover:text-[#09090B]'
+                      }`}
+                    >
+                      {pNum}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="p-1 rounded border border-[#EBEBEA] hover:bg-[#F4F4F5] disabled:opacity-40 disabled:cursor-not-allowed text-[#09090B] transition cursor-pointer"
+                title="Next page"
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 4. Booking Detail Sheet Drawer */}
