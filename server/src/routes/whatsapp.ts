@@ -97,20 +97,22 @@ router.get('/status', async (req: Request, res: Response) => {
 
       if (botInst) {
         instanceId = botInst.id;
-        connected = Boolean(botInst.connected);
-        jid = botInst.jid || null;
-        qrcode = botInst.qrcode || null;
+        // JID is populated with phone number ONLY when phone is successfully paired
+        const isLinked = Boolean(botInst.jid && String(botInst.jid).includes('@s.whatsapp.net'));
+        connected = isLinked;
+        jid = isLinked ? botInst.jid : null;
 
-        // If not connected and no QR, request fresh QR via connect
-        if (!connected && !qrcode && botInst.id) {
+        // If not connected, always retrieve the active pairing QR code directly
+        if (!connected) {
           try {
-            const infoRes = await axios.get(`${EVOLUTION_URL}/instance/info/${botInst.id}`, {
-              headers: { apikey: EVOLUTION_GLOBAL_KEY },
+            const qrRes = await axios.get(`${EVOLUTION_URL}/instance/qr`, {
+              headers: { apikey: EVOLUTION_TOKEN },
               timeout: 3000,
             });
-            qrcode = infoRes.data?.data?.qrcode || null;
-            connected = Boolean(infoRes.data?.data?.connected);
-          } catch (_) {}
+            qrcode = qrRes.data?.data?.qrcode || botInst.qrcode || null;
+          } catch (_) {
+            qrcode = botInst.qrcode || null;
+          }
         }
       }
     } catch (e: any) {
@@ -139,7 +141,7 @@ router.get('/status', async (req: Request, res: Response) => {
 // Triggers pairing ceremony / refreshes QR code
 router.post('/connect', async (req: Request, res: Response) => {
   try {
-    const connRes = await axios.post(
+    await axios.post(
       `${EVOLUTION_URL}/instance/connect`,
       {},
       {
@@ -151,19 +153,23 @@ router.post('/connect', async (req: Request, res: Response) => {
       }
     );
 
-    // Fetch refreshed instance info to get QR code
-    const instRes = await axios.get(`${EVOLUTION_URL}/instance/all`, {
-      headers: { apikey: EVOLUTION_GLOBAL_KEY },
-      timeout: 3000,
-    });
-    const botInst = (instRes.data?.data || []).find((i: any) => i.name === EVOLUTION_INSTANCE);
+    // Short delay for QR generation
+    await new Promise((r) => setTimeout(r, 600));
+
+    let qrcode: string | null = null;
+    try {
+      const qrRes = await axios.get(`${EVOLUTION_URL}/instance/qr`, {
+        headers: { apikey: EVOLUTION_TOKEN },
+        timeout: 3000,
+      });
+      qrcode = qrRes.data?.data?.qrcode || null;
+    } catch (_) {}
 
     return res.json({
       success: true,
       message: 'Connection requested',
-      connected: Boolean(botInst?.connected),
-      qrcode: botInst?.qrcode || null,
-      raw: connRes.data,
+      connected: false,
+      qrcode,
     });
   } catch (err: any) {
     return res.status(500).json({ error: err.response?.data || err.message });

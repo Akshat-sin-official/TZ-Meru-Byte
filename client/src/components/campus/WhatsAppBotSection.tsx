@@ -39,7 +39,7 @@ export const WhatsAppBotSection: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [contacts, setContacts] = useState<Contact[]>([]);
-  
+
   // New contact form
   const [newPhone, setNewPhone] = useState('');
   const [newName, setNewName] = useState('');
@@ -78,14 +78,24 @@ export const WhatsAppBotSection: React.FC = () => {
     load();
   }, []);
 
+  // Auto-poll status when awaiting device pairing
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!status?.connected) {
+        fetchGatewayStatus();
+      }
+    }, 8000);
+    return () => clearInterval(interval);
+  }, [status?.connected]);
+
   const handleRefreshConnection = async () => {
     setRefreshing(true);
     try {
       await campusApi.connectWhatsApp();
       await fetchGatewayStatus();
-      toast.success('Connection handshake refreshed');
+      toast.success('Generated fresh WhatsApp QR pairing code');
     } catch (err: any) {
-      toast.error('Failed to refresh connection handshake');
+      toast.error('Failed to refresh pairing handshake');
     } finally {
       setRefreshing(false);
     }
@@ -93,23 +103,25 @@ export const WhatsAppBotSection: React.FC = () => {
 
   const handleAddContact = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPhone.trim()) {
-      toast.error('Phone number is required');
+    const clean = newPhone.replace(/[^0-9]/g, '');
+    if (!clean || clean.length < 5) {
+      toast.error('Enter a valid mobile number with country code (e.g. 919876543210)');
       return;
     }
     setAddingContact(true);
     try {
       await campusApi.addWhatsAppContact({
-        phone: newPhone.trim(),
+        phone: clean,
         name: newName.trim() || undefined,
         role: newRole,
       });
-      toast.success(`Registered +${newPhone.replace(/[^0-9]/g, '')} as ${newRole.toUpperCase()}`);
+      toast.success(`Registered +${clean} as ${newRole.toUpperCase()}`);
       setNewPhone('');
       setNewName('');
       await fetchContacts();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Failed to register contact');
+      const msg = err.response?.data?.error || err.message || 'Failed to register contact';
+      toast.error(msg);
     } finally {
       setAddingContact(false);
     }
@@ -268,30 +280,63 @@ export const WhatsAppBotSection: React.FC = () => {
         </Card>
       </div>
 
-      {/* QR Code Pairing Banner (If not yet connected or has QR) */}
-      {!isConnected && status?.qrcode && (
-        <Card className="border-2 border-dashed border-amber-300 bg-amber-50/40 rounded-xl p-5">
+      {/* Prominent QR Code Device Pairing Scanner (Always visible when not connected) */}
+      {!isConnected && (
+        <Card className="border-2 border-amber-300 bg-amber-50/50 rounded-xl p-5 shadow-sm">
           <div className="flex flex-col md:flex-row items-center gap-6">
-            <div className="bg-white p-3 rounded-xl border border-amber-200 shadow-sm shrink-0">
-              <img
-                src={status.qrcode}
-                alt="WhatsApp QR Code"
-                className="w-44 h-44 object-contain rounded-lg"
-              />
+            <div className="bg-white p-3 rounded-xl border border-amber-200 shadow-sm shrink-0 flex flex-col items-center justify-center min-w-[190px] min-h-[190px]">
+              {status?.qrcode ? (
+                <img
+                  src={status.qrcode}
+                  alt="WhatsApp Pairing QR Code"
+                  className="w-44 h-44 object-contain rounded-lg"
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center p-4 text-center">
+                  <RotateCw className="w-8 h-8 text-amber-600 animate-spin mb-2" />
+                  <p className="text-[11px] text-muted-foreground font-poppins">Awaiting fresh QR code...</p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleRefreshConnection}
+                    disabled={refreshing}
+                    className="mt-2 text-xs h-7 font-poppins cursor-pointer"
+                  >
+                    Generate QR
+                  </Button>
+                </div>
+              )}
             </div>
-            <div className="space-y-2.5 text-xs text-[#111926] font-poppins">
-              <div className="flex items-center gap-2">
-                <QrCode className="w-4 h-4 text-amber-700" />
-                <h3 className="text-sm font-bold text-amber-900">Pair Official Campus Phone with CIT Bot</h3>
+            <div className="space-y-3 text-xs text-[#111926] font-poppins flex-1">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <QrCode className="w-5 h-5 text-amber-700" />
+                  <h3 className="text-sm font-bold text-amber-900">Pair Official WhatsApp Phone with CIT Bot</h3>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleRefreshConnection}
+                  disabled={refreshing}
+                  className="text-xs h-7 gap-1 font-poppins bg-white hover:bg-slate-50 border-amber-200 cursor-pointer"
+                >
+                  <RotateCw className={`w-3 h-3 ${refreshing ? 'animate-spin' : ''}`} />
+                  {refreshing ? 'Refreshing...' : 'Regenerate QR'}
+                </Button>
               </div>
-              <ol className="list-decimal list-inside space-y-1 text-slate-700 leading-relaxed">
-                <li>Open <strong>WhatsApp</strong> on the official mobile phone.</li>
-                <li>Tap <strong>Settings</strong> (or three dots on Android) → <strong>Linked Devices</strong>.</li>
+
+              <ol className="list-decimal list-inside space-y-1 text-slate-700 leading-relaxed text-xs">
+                <li>Open <strong>WhatsApp</strong> on the campus official mobile phone.</li>
+                <li>Tap <strong>Settings</strong> (or 3 dots on Android) → <strong>Linked Devices</strong>.</li>
                 <li>Tap <strong>Link a Device</strong> and point your camera at this QR code.</li>
               </ol>
-              <p className="text-[11px] text-muted-foreground">
-                Once paired, faculty and club leads can immediately send booking requests and timetable queries via WhatsApp.
-              </p>
+
+              <div className="bg-white/80 p-2.5 rounded-lg border border-amber-200/80 text-[11px] text-amber-900 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 animate-pulse" />
+                <span>
+                  QR codes cycle every ~20 seconds. Once scanned, the system will instantly link and switch to <strong>Connected</strong>.
+                </span>
+              </div>
             </div>
           </div>
         </Card>
@@ -499,4 +544,3 @@ export const WhatsAppBotSection: React.FC = () => {
     </div>
   );
 };
-
