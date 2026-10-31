@@ -1,0 +1,27 @@
+:80 {
+    # 1. API proxy for CIT CampusOS
+    handle /api/* {
+        reverse_proxy server:5000
+    }
+
+    # 2. WhatsApp API & Webhook proxy
+    handle /wa/* {
+        uri strip_prefix /wa
+        reverse_proxy whatsapp:8080
+    }
+
+    # 3. WhatsApp Manager Web UI (on /wa-ui/)
+    handle_path /wa-ui* {
+        root * /var/www/whatsapp
+        file_server
+        try_files {path} /index.html
+    }
+
+    # 4. CIT CampusOS Main Frontend
+    handle {
+        root * /var/www/cit
+        file_server
+        try_files {path} /index.html
+    }
+}
+

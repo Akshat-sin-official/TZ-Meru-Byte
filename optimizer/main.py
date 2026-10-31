@@ -9,11 +9,25 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import uvicorn
 
-from optimizer.timetable_solver import solve_timetable
-from optimizer.exam_solver import solve_exams
-from optimizer.booking_engine import solve_bookings
-from optimizer.disruption_solver import solve_disruption_repair, apply_disruption_payload
-from optimizer.canonical_validator import validate_schedule
+import sys
+import os
+
+# Add parent directory to sys.path so 'import optimizer.*' or local imports work uniformly
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+try:
+    from optimizer.timetable_solver import solve_timetable
+    from optimizer.exam_solver import solve_exams
+    from optimizer.booking_engine import solve_bookings
+    from optimizer.disruption_solver import solve_disruption_repair, apply_disruption_payload
+    from optimizer.canonical_validator import validate_schedule
+except ImportError:
+    from timetable_solver import solve_timetable
+    from exam_solver import solve_exams
+    from booking_engine import solve_bookings
+    from disruption_solver import solve_disruption_repair, apply_disruption_payload
+    from canonical_validator import validate_schedule
 
 app = FastAPI(title="CIT CampusOS Optimization Service", version="1.0.0")
 
