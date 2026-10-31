@@ -7,8 +7,8 @@ const router = Router();
 const prisma = new PrismaClient();
 const OPTIMIZER_URL = process.env.OPTIMIZER_URL || 'http://127.0.0.1:8001';
 
-// GET active timetable
-router.get('/active', async (req, res) => {
+// GET active timetable (Role-scoped per RBAC Matrix in ini.md)
+router.get('/active', authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const dataset = await prisma.datasetVersion.findFirst({
       where: { isCurrent: true },
@@ -32,11 +32,52 @@ router.get('/active', async (req, res) => {
       return res.status(404).json({ error: 'No active schedule found' });
     }
 
+    const userRole = req.user?.role;
+    const userFacultyId = req.user?.facultyId;
+    const userDept = req.user?.department;
+
+    // Per ini.md Table 1: Club Reps have NO timetable access
+    if (userRole === Role.club) {
+      return res.status(403).json({
+        error: 'Forbidden: Club representatives are not authorized to view academic teaching timetables.',
+      });
+    }
+
     // Get supporting metadata
     const rooms = await prisma.room.findMany({ where: { datasetVersionId: dataset.id } });
     const faculty = await prisma.faculty.findMany({ where: { datasetVersionId: dataset.id } });
     const groups = await prisma.studentGroup.findMany({ where: { datasetVersionId: dataset.id } });
     const sessions = await prisma.session.findMany({ where: { datasetVersionId: dataset.id } });
+
+    let scopedAssignments = schedule.assignments;
+    let scopedFaculty = faculty;
+    let scopedGroups = groups;
+    let scopedSessions = sessions;
+
+    if (userRole === Role.faculty) {
+      // Faculty: Strictly view ONLY their own personal teaching timetable
+      const myFacultyId = userFacultyId || 'F19';
+      scopedSessions = sessions.filter((s) => s.facultyId === myFacultyId);
+      const sessionIds = new Set(scopedSessions.map((s) => s.externalId));
+      scopedAssignments = schedule.assignments.filter((a) => sessionIds.has(a.sessionExternalId));
+      scopedFaculty = faculty.filter((f) => f.externalId === myFacultyId);
+      const enrolledGroupIds = new Set(scopedSessions.flatMap((s) => (s.groups as string[]) || []));
+      scopedGroups = groups.filter((g) => enrolledGroupIds.has(g.externalId));
+    } else if (userRole === Role.department_coordinator) {
+      // Coordinator: View department timetable, department faculty, department cohorts
+      const dept = userDept || 'CSE';
+      scopedGroups = groups.filter((g) => g.department === dept || g.externalId.startsWith(dept));
+      scopedFaculty = faculty.filter((f) => f.department === dept);
+      const deptGroupIds = new Set(scopedGroups.map((g) => g.externalId));
+      const deptFacultyIds = new Set(scopedFaculty.map((f) => f.externalId));
+      scopedSessions = sessions.filter(
+        (s) =>
+          deptFacultyIds.has(s.facultyId) ||
+          ((s.groups as string[]) || []).some((g) => deptGroupIds.has(g))
+      );
+      const sessionIds = new Set(scopedSessions.map((s) => s.externalId));
+      scopedAssignments = schedule.assignments.filter((a) => sessionIds.has(a.sessionExternalId));
+    }
 
     return res.json({
       schedule: {
@@ -46,13 +87,13 @@ router.get('/active', async (req, res) => {
         hardViolations: schedule.hardViolations,
         softScoreTotal: schedule.softScoreTotal,
         activatedAt: schedule.activatedAt,
-        assignments: schedule.assignments,
+        assignments: scopedAssignments,
       },
       metadata: {
         rooms,
-        faculty,
-        studentGroups: groups,
-        sessions,
+        faculty: scopedFaculty,
+        studentGroups: scopedGroups,
+        sessions: scopedSessions,
         calendar: (dataset.rawJson as any)?.calendar,
       },
     });

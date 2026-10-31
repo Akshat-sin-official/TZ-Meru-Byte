@@ -45,6 +45,16 @@ export const AppContent: React.FC = () => {
     setActiveTab('timetable');
   };
 
+  // RBAC route enforcement per ini.md
+  React.useEffect(() => {
+    if (user?.role === 'club' && (activeTab === 'timetable' || activeTab === 'exams' || activeTab === 'disruptions')) {
+      setActiveTab('bookings');
+    }
+    if (user?.role === 'faculty' && activeTab === 'disruptions') {
+      setActiveTab('timetable');
+    }
+  }, [user?.role, activeTab]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#FAF9F6] flex flex-col items-center justify-center gap-3">
@@ -91,7 +101,7 @@ export const AppContent: React.FC = () => {
           <TimetableDashboard
             highlightDay={highlightDay}
             onSelectDay={setHighlightDay}
-            externalCohort={selectedCohort}
+            externalCohort={user?.role === 'faculty' ? undefined : selectedCohort}
             onCohortChange={setSelectedCohort}
             externalQuickFilter={quickFilter}
             onQuickFilterChange={setQuickFilter}

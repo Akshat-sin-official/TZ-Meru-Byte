@@ -7,8 +7,17 @@ const router = Router();
 const prisma = new PrismaClient();
 const OPTIMIZER_URL = process.env.OPTIMIZER_URL || 'http://127.0.0.1:8001';
 
-router.get('/active', async (req, res) => {
+router.get('/active', authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
+    const userRole = req.user?.role;
+    const userDept = req.user?.department;
+
+    if (userRole === Role.club) {
+      return res.status(403).json({
+        error: 'Forbidden: Club representatives are not authorized to access midsem exam timetables.',
+      });
+    }
+
     const dataset = await prisma.datasetVersion.findFirst({ where: { isCurrent: true } });
     if (!dataset) return res.status(404).json({ error: 'No dataset loaded' });
 
@@ -17,11 +26,21 @@ router.get('/active', async (req, res) => {
       include: { examAllocations: true },
     });
 
-    const examsMeta = await prisma.midsemExam.findMany({ where: { datasetVersionId: dataset.id } });
+    let examsMeta = await prisma.midsemExam.findMany({ where: { datasetVersionId: dataset.id } });
+    let allocations = activeSchedule?.examAllocations || [];
+
+    if (userRole === Role.department_coordinator && userDept) {
+      examsMeta = examsMeta.filter((e) =>
+        ((e.groups as string[]) || []).some((g) => g.startsWith(userDept))
+      );
+      const examIds = new Set(examsMeta.map((e) => e.externalId));
+      allocations = allocations.filter((a) => examIds.has(a.examExternalId));
+    }
+
     const rooms = await prisma.room.findMany({ where: { datasetVersionId: dataset.id } });
 
     return res.json({
-      allocations: activeSchedule?.examAllocations || [],
+      allocations,
       exams: examsMeta,
       rooms,
       calendar: (dataset.rawJson as any)?.calendar?.exam_week,

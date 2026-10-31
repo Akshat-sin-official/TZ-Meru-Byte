@@ -59,11 +59,17 @@ export const ExamsView: React.FC = () => {
     const s = new Set<string>();
     for (const e of exams) {
       if (Array.isArray(e.groups)) {
-        for (const g of e.groups) s.add(g);
+        for (const g of e.groups) {
+          if (user?.role === 'department_coordinator' && user.department) {
+            if (g.startsWith(user.department)) s.add(g);
+          } else {
+            s.add(g);
+          }
+        }
       }
     }
     return Array.from(s).sort();
-  }, [exams]);
+  }, [exams, user?.role, user?.department]);
 
   const filteredAllocations = useMemo(() => {
     return allocations.filter((a: any) => {
@@ -99,6 +105,17 @@ export const ExamsView: React.FC = () => {
     return (
       <div className="flex h-64 items-center justify-center text-xs text-ink-soft">
         Loading midsem exams...
+      </div>
+    );
+  }
+
+  if (user?.role === 'club') {
+    return (
+      <div className="bg-white border border-[#E5E7EB] rounded-xl p-8 text-center max-w-md mx-auto my-16 space-y-3 shadow-xs">
+        <h3 className="text-base font-semibold text-[#09090B]">Midsem Seating Matrix Restricted</h3>
+        <p className="text-xs text-[#52525B] leading-relaxed">
+          Club Representatives do not have operational clearance to inspect midsem examination seating grids per Institute RBAC policies.
+        </p>
       </div>
     );
   }

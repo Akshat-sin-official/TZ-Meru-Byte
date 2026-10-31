@@ -113,6 +113,17 @@ export const DisruptionsView: React.FC = () => {
     });
   }, [movedList, filterType, searchQuery]);
 
+  if (user?.role === 'club') {
+    return (
+      <div className="bg-white border border-[#E5E7EB] rounded-xl p-8 text-center max-w-md mx-auto my-16 space-y-3 shadow-xs">
+        <h3 className="text-base font-semibold text-[#09090B]">Disruptions Management Restricted</h3>
+        <p className="text-xs text-[#52525B] leading-relaxed">
+          Club Representatives do not have operational clearance to inspect or simulate academic timetable disruptions.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header and Controls */}

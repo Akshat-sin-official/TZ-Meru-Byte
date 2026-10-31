@@ -20,7 +20,7 @@ const PRIORITY_HIERARCHY_PAYLOAD = ROOM_PRIORITY_ORDER.map((k) => ({
   description: CATEGORY_META[k].description,
 }));
 
-router.get('/', async (req, res) => {
+router.get('/', authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const dataset = await prisma.datasetVersion.findFirst({ where: { isCurrent: true } });
     if (!dataset) return res.status(404).json({ error: 'No dataset loaded' });
@@ -35,16 +35,50 @@ router.get('/', async (req, res) => {
       },
     });
 
-    const requests = await prisma.bookingRequest.findMany({
+    let requests = await prisma.bookingRequest.findMany({
       where: { datasetVersionId: dataset.id },
       orderBy: { submittedAt: 'asc' },
     });
+
+    const userRole = req.user?.role;
+    const userName = req.user?.name || '';
+    const clubName = req.user?.clubName || '';
+
+    // Per ini.md Section 3: View all venue requests is Admin only; Others view own / department requests
+    if (userRole === Role.club) {
+      requests = requests.filter(
+        (r) =>
+          r.role === Role.club ||
+          (clubName && r.requester.toLowerCase().includes(clubName.toLowerCase())) ||
+          r.requester.toLowerCase().includes(userName.toLowerCase())
+      );
+    } else if (userRole === Role.faculty) {
+      requests = requests.filter(
+        (r) =>
+          r.role === Role.faculty ||
+          r.effectiveCategory === 'guest_lecture' ||
+          r.requester.toLowerCase().includes(userName.toLowerCase())
+      );
+    } else if (userRole === Role.department_coordinator) {
+      requests = requests.filter(
+        (r) =>
+          r.role === Role.department_coordinator ||
+          r.effectiveCategory === 'department_event' ||
+          r.requester.toLowerCase().includes('coordinator') ||
+          r.requester.toLowerCase().includes(userName.toLowerCase())
+      );
+    }
+
+    const scopedReqIds = new Set(requests.map((r) => r.id));
+    const scopedDecisions = (activeSchedule?.bookingDecisions || []).filter((d) =>
+      userRole === Role.admin ? true : scopedReqIds.has(d.requestId)
+    );
 
     const rooms = await prisma.room.findMany({ where: { datasetVersionId: dataset.id } });
 
     return res.json({
       requests,
-      decisions: activeSchedule?.bookingDecisions || [],
+      decisions: scopedDecisions,
       sessionOverrides: activeSchedule?.sessionOverrides || [],
       rooms,
       priorityOrder: (dataset.rawJson as any)?.priority_order || ROOM_PRIORITY_ORDER,

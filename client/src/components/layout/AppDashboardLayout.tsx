@@ -163,13 +163,13 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
     { id: 'Y1-A', label: 'First Year', sub: 'Sec A', hours: '36h' },
   ];
 
-  // RBAC Scoped Cohorts
+  // RBAC Scoped Cohorts per ini.md
   const visibleCohorts = useMemo(() => {
     if (user?.role === 'department_coordinator') {
       const dept = user.department || 'CSE';
       return cohorts.filter((c) => c.id.startsWith(dept));
     }
-    if (user?.role === 'club') {
+    if (user?.role === 'club' || user?.role === 'faculty') {
       return [];
     }
     return cohorts;
@@ -396,72 +396,84 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
                 </div>
               </button>
 
-              {/* Weekly Timetable */}
-              <div
-                className={`rounded-lg transition-all ${
-                  activeTab === 'timetable'
-                    ? 'bg-white border border-[#E5E7EB] shadow-2xs overflow-hidden'
-                    : ''
-                }`}
-              >
-                <button
-                  onClick={() => {
-                    setActiveTab('timetable');
-                  }}
-                  className={`w-full flex items-center justify-between px-3 py-2 text-[13.5px] transition cursor-pointer ${
+              {/* Weekly Timetable (Restricted: Club Reps do not have timetable access per RBAC) */}
+              {user?.role !== 'club' && (
+                <div
+                  className={`rounded-lg transition-all ${
                     activeTab === 'timetable'
-                      ? 'font-semibold text-[#09090B]'
-                      : 'text-[#3F3F46] hover:text-[#09090B] hover:bg-[#F4F4F5] font-medium'
+                      ? 'bg-white border border-[#E5E7EB] shadow-2xs overflow-hidden'
+                      : ''
                   }`}
-                  title="Weekly Timetable"
                 >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <CalendarDays className={`h-4 w-4 shrink-0 ${activeTab === 'timetable' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
-                    {!sidebarCollapsed && <span className="whitespace-nowrap">Weekly Timetable</span>}
-                  </div>
-                  {!sidebarCollapsed && (
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-[11px] font-mono font-medium text-[#52525B] bg-[#F4F4F5] px-1.5 py-0.5 rounded">
-                        189
-                      </span>
-                      <span
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setCohortMenuOpen(!cohortMenuOpen);
-                        }}
-                        className="p-1 rounded hover:bg-[#E5E7EB] text-[#71717A] hover:text-[#09090B] transition cursor-pointer"
-                      >
-                        <ChevronDown
-                          className={`h-3 w-3 transition-transform ${cohortMenuOpen ? 'rotate-180' : ''}`}
-                        />
-                      </span>
+                  <button
+                    onClick={() => {
+                      setActiveTab('timetable');
+                    }}
+                    className={`w-full flex items-center justify-between px-3 py-2 text-[13.5px] transition cursor-pointer ${
+                      activeTab === 'timetable'
+                        ? 'font-semibold text-[#09090B]'
+                        : 'text-[#3F3F46] hover:text-[#09090B] hover:bg-[#F4F4F5] font-medium'
+                    }`}
+                    title={user?.role === 'faculty' ? 'My Teaching Timetable' : user?.role === 'department_coordinator' ? 'Department Timetable' : 'Weekly Timetable'}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <CalendarDays className={`h-4 w-4 shrink-0 ${activeTab === 'timetable' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
+                      {!sidebarCollapsed && (
+                        <span className="whitespace-nowrap">
+                          {user?.role === 'faculty'
+                            ? 'My Timetable'
+                            : user?.role === 'department_coordinator'
+                            ? 'Dept Timetable'
+                            : 'Weekly Timetable'}
+                        </span>
+                      )}
+                    </div>
+                    {!sidebarCollapsed && (
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-[11px] font-mono font-medium text-[#52525B] bg-[#F4F4F5] px-1.5 py-0.5 rounded">
+                          {user?.role === 'faculty' ? (user.facultyId || 'F19') : '189'}
+                        </span>
+                        {visibleCohorts.length > 0 && (
+                          <span
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCohortMenuOpen(!cohortMenuOpen);
+                            }}
+                            className="p-1 rounded hover:bg-[#E5E7EB] text-[#71717A] hover:text-[#09090B] transition cursor-pointer"
+                          >
+                            <ChevronDown
+                              className={`h-3 w-3 transition-transform ${cohortMenuOpen ? 'rotate-180' : ''}`}
+                            />
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </button>
+
+                  {/* Sub-cohort list (Scoped by role) */}
+                  {!sidebarCollapsed && cohortMenuOpen && visibleCohorts.length > 0 && (
+                    <div className="ml-5 pl-2.5 pr-2 pb-2 pt-1 space-y-1 border-l border-[#E5E7EB] text-xs">
+                      {visibleCohorts.map((cohort) => {
+                        const isSelected = selectedCohort === cohort.id;
+                        return (
+                          <button
+                            key={cohort.id}
+                            onClick={() => onSelectCohort?.(cohort.id)}
+                            className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition text-left cursor-pointer ${
+                              isSelected
+                                ? 'bg-white font-semibold text-[#09090B] border border-[#E5E7EB] shadow-2xs'
+                                : 'text-[#52525B] hover:text-[#09090B] hover:bg-[#F4F4F5] font-medium'
+                            }`}
+                          >
+                            <span className="truncate whitespace-nowrap">{cohort.label}</span>
+                            <span className="text-[10.5px] font-mono text-[#71717A] shrink-0 ml-1">{cohort.hours}</span>
+                          </button>
+                        );
+                      })}
                     </div>
                   )}
-                </button>
-
-                {/* Sub-cohort list (Scoped by role) */}
-                {!sidebarCollapsed && cohortMenuOpen && visibleCohorts.length > 0 && (
-                  <div className="ml-5 pl-2.5 pr-2 pb-2 pt-1 space-y-1 border-l border-[#E5E7EB] text-xs">
-                    {visibleCohorts.map((cohort) => {
-                      const isSelected = selectedCohort === cohort.id;
-                      return (
-                        <button
-                          key={cohort.id}
-                          onClick={() => onSelectCohort?.(cohort.id)}
-                          className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition text-left cursor-pointer ${
-                            isSelected
-                              ? 'bg-white font-semibold text-[#09090B] border border-[#E5E7EB] shadow-2xs'
-                              : 'text-[#52525B] hover:text-[#09090B] hover:bg-[#F4F4F5] font-medium'
-                          }`}
-                        >
-                          <span className="truncate whitespace-nowrap">{cohort.label}</span>
-                          <span className="text-[10.5px] font-mono text-[#71717A] shrink-0 ml-1">{cohort.hours}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* Exams (Restricted to Admin, Coordinator, Faculty per RBAC Matrix) */}
               {user?.role !== 'club' && (

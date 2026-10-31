@@ -443,18 +443,8 @@ export const SpectraBookingsView: React.FC = () => {
         {/* 3. Filter Controls & Search Toolbar */}
         <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-[#EBEBEA]/80">
           <div className="flex items-center gap-2 flex-wrap">
-            {user?.role !== 'admin' && (
+            {user?.role === 'admin' ? (
               <div className="inline-flex bg-[#F7F6F3] p-0.5 rounded-md border border-[#EBEBEA] text-xs">
-                <button
-                  onClick={() => setScope('mine')}
-                  className={`px-3 py-1 rounded text-xs font-medium transition cursor-pointer ${
-                    scope === 'mine'
-                      ? 'bg-white text-[#09090B] shadow-2xs font-semibold'
-                      : 'text-[#71717A] hover:text-[#09090B]'
-                  }`}
-                >
-                  My Requests
-                </button>
                 <button
                   onClick={() => setScope('all')}
                   className={`px-3 py-1 rounded text-xs font-medium transition cursor-pointer ${
@@ -463,8 +453,13 @@ export const SpectraBookingsView: React.FC = () => {
                       : 'text-[#71717A] hover:text-[#09090B]'
                   }`}
                 >
-                  All Requests
+                  All Requests (Admin)
                 </button>
+              </div>
+            ) : (
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white border border-[#EBEBEA] rounded-md text-xs font-semibold text-[#09090B] shadow-2xs">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <span>{user?.role === 'department_coordinator' ? 'Department Requests' : 'My Requests'}</span>
               </div>
             )}
 

@@ -16,6 +16,9 @@ import {
   Printer,
   ChevronDown,
   ChevronRight,
+  GraduationCap,
+  ShieldAlert,
+  Lock,
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -43,12 +46,17 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
   const [solving, setSolving] = useState(false);
   const [data, setData] = useState<any>(null);
 
-  // Filters (Auto-scoped by Role per RBAC Matrix)
+  // Filters (Auto-scoped by Role per RBAC Matrix in ini.md)
+  const isFaculty = user?.role === 'faculty';
+  const facultySelfId = user?.facultyId || 'F19';
+
   const [filterType, setFilterType] = useState<'group' | 'faculty' | 'room'>(
-    user?.role === 'faculty' ? 'faculty' : 'group'
+    isFaculty ? 'faculty' : 'group'
   );
   const [selectedFilter, setSelectedFilter] = useState<string>(
-    externalCohort || (user?.role === 'faculty' ? (user.facultyId || 'F01') : 'CSE-2')
+    isFaculty
+      ? facultySelfId
+      : externalCohort || (user?.role === 'department_coordinator' && user.department ? `${user.department}-1` : 'CSE-2')
   );
   const [quickFilter, setQuickFilter] = useState<'all' | 'labs' | 'lectures' | 'tutorials'>(
     externalQuickFilter || 'all'
@@ -57,12 +65,33 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
   useEffect(() => {
     if (user?.role === 'faculty') {
       setFilterType('faculty');
-      setSelectedFilter(user.facultyId || 'F01');
+      setSelectedFilter(user.facultyId || 'F19');
     } else if (user?.role === 'department_coordinator' && user.department) {
       setFilterType('group');
       setSelectedFilter(`${user.department}-1`);
     }
   }, [user?.role, user?.facultyId, user?.department]);
+
+  // Scoped Collections per RBAC Matrix
+  const availableGroups = useMemo(() => {
+    const all = metadata.studentGroups || [];
+    if (user?.role === 'department_coordinator' && user.department) {
+      return all.filter((g: any) => g.department === user.department || g.externalId.startsWith(user.department));
+    }
+    return all;
+  }, [metadata.studentGroups, user?.role, user?.department]);
+
+  const availableFaculty = useMemo(() => {
+    const all = metadata.faculty || [];
+    if (user?.role === 'faculty') {
+      const myId = user.facultyId || 'F19';
+      return all.filter((f: any) => f.externalId === myId);
+    }
+    if (user?.role === 'department_coordinator' && user.department) {
+      return all.filter((f: any) => f.department === user.department);
+    }
+    return all;
+  }, [metadata.faculty, user?.role, user?.department, user?.facultyId]);
 
   // Collapsed Days state
   const [collapsedDays, setCollapsedDays] = useState<Record<string, boolean>>({});
@@ -94,11 +123,12 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
   };
 
   useEffect(() => {
-    if (externalCohort) {
+    // Only apply external cohort if NOT faculty role
+    if (externalCohort && user?.role !== 'faculty') {
       setFilterType('group');
       setSelectedFilter(externalCohort);
     }
-  }, [externalCohort]);
+  }, [externalCohort, user?.role]);
 
   useEffect(() => {
     if (externalQuickFilter) {
@@ -435,6 +465,18 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
     return cells;
   };
 
+  if (user?.role === 'club') {
+    return (
+      <div className="bg-white border border-[#E5E7EB] rounded-xl p-8 text-center max-w-md mx-auto my-16 space-y-3 shadow-xs">
+        <ShieldAlert className="w-10 h-10 text-amber-600 mx-auto" />
+        <h3 className="text-base font-semibold text-[#09090B]">Academic Schedule Matrix Restricted</h3>
+        <p className="text-xs text-[#52525B] leading-relaxed">
+          Club Representatives do not have operational clearance to inspect academic teaching timetables per Institute RBAC policies. Please use the Spectra Bookings portal for event venue allocations.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4 font-sans text-[#37352F] antialiased print-container">
       {/* Official Institutional Letterhead for PDF / Print */}
@@ -557,43 +599,53 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
           </div>
         </div>
 
-        {/* 3. Filter Controls Toolbar */}
+        {/* 3. Filter Controls Toolbar (Role-Secured per RBAC Matrix) */}
         <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-[#EBEBEA]/80">
-          <div className="inline-flex bg-[#F7F6F3] p-0.5 rounded-md border border-[#EBEBEA] text-xs">
-            <button
-              onClick={() => {
-                setFilterType('group');
-                setSelectedFilter(metadata.studentGroups?.[0]?.externalId || 'CSE-2');
-              }}
-              className={`px-2.5 py-1 rounded text-xs font-medium transition cursor-pointer ${
-                filterType === 'group' ? 'bg-white text-[#37352F] shadow-2xs font-semibold' : 'text-[#787774] hover:text-[#37352F]'
-              }`}
-            >
-              By Cohort
-            </button>
-            <button
-              onClick={() => {
-                setFilterType('faculty');
-                setSelectedFilter(metadata.faculty?.[0]?.externalId || 'F01');
-              }}
-              className={`px-2.5 py-1 rounded text-xs font-medium transition cursor-pointer ${
-                filterType === 'faculty' ? 'bg-white text-[#37352F] shadow-2xs font-semibold' : 'text-[#787774] hover:text-[#37352F]'
-              }`}
-            >
-              By Faculty
-            </button>
-            <button
-              onClick={() => {
-                setFilterType('room');
-                setSelectedFilter(metadata.rooms?.[0]?.externalId || 'LH-1');
-              }}
-              className={`px-2.5 py-1 rounded text-xs font-medium transition cursor-pointer ${
-                filterType === 'room' ? 'bg-white text-[#37352F] shadow-2xs font-semibold' : 'text-[#787774] hover:text-[#37352F]'
-              }`}
-            >
-              By Venue
-            </button>
-          </div>
+          {user?.role === 'faculty' ? (
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#FAF9F6] border border-[#E5E7EB] rounded-lg text-xs font-semibold text-[#09090B] shadow-2xs">
+              <GraduationCap className="w-3.5 h-3.5 text-[#71717A]" />
+              <span>Personal Schedule</span>
+              <span className="text-[10px] font-mono font-medium text-[#71717A] bg-[#F4F4F5] px-1.5 py-0.5 rounded border border-[#E5E7EB]">
+                {facultySelfId}
+              </span>
+            </div>
+          ) : (
+            <div className="inline-flex bg-[#F7F6F3] p-0.5 rounded-md border border-[#EBEBEA] text-xs">
+              <button
+                onClick={() => {
+                  setFilterType('group');
+                  setSelectedFilter(availableGroups[0]?.externalId || 'CSE-2');
+                }}
+                className={`px-2.5 py-1 rounded text-xs font-medium transition cursor-pointer ${
+                  filterType === 'group' ? 'bg-white text-[#37352F] shadow-2xs font-semibold' : 'text-[#787774] hover:text-[#37352F]'
+                }`}
+              >
+                By Cohort {user?.role === 'department_coordinator' ? `(${user.department || 'Dept'})` : ''}
+              </button>
+              <button
+                onClick={() => {
+                  setFilterType('faculty');
+                  setSelectedFilter(availableFaculty[0]?.externalId || 'F01');
+                }}
+                className={`px-2.5 py-1 rounded text-xs font-medium transition cursor-pointer ${
+                  filterType === 'faculty' ? 'bg-white text-[#37352F] shadow-2xs font-semibold' : 'text-[#787774] hover:text-[#37352F]'
+                }`}
+              >
+                By Faculty {user?.role === 'department_coordinator' ? `(${user.department || 'Dept'})` : ''}
+              </button>
+              <button
+                onClick={() => {
+                  setFilterType('room');
+                  setSelectedFilter(metadata.rooms?.[0]?.externalId || 'LH-1');
+                }}
+                className={`px-2.5 py-1 rounded text-xs font-medium transition cursor-pointer ${
+                  filterType === 'room' ? 'bg-white text-[#37352F] shadow-2xs font-semibold' : 'text-[#787774] hover:text-[#37352F]'
+                }`}
+              >
+                By Venue
+              </button>
+            </div>
+          )}
 
           <div className="flex items-center gap-1.5 flex-wrap text-xs">
             <button
@@ -640,34 +692,42 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
               Tutorials
             </button>
 
-            {/* Target Select Dropdown */}
-            <div className="w-52 ml-1">
-              <Select value={selectedFilter} onValueChange={setSelectedFilter}>
-                <SelectTrigger className="h-7 text-xs bg-white border-[#EBEBEA] text-[#37352F]">
-                  <SelectValue placeholder="Select target..." />
-                </SelectTrigger>
-                <SelectContent className="max-h-60 bg-white">
-                  {filterType === 'group' &&
-                    (metadata.studentGroups || []).map((g: any) => (
-                      <SelectItem key={g.externalId} value={g.externalId} className="text-xs">
-                        {g.externalId} — {g.name} ({g.size})
-                      </SelectItem>
-                    ))}
-                  {filterType === 'faculty' &&
-                    (metadata.faculty || []).map((f: any) => (
-                      <SelectItem key={f.externalId} value={f.externalId} className="text-xs">
-                        {f.externalId} — {f.name}
-                      </SelectItem>
-                    ))}
-                  {filterType === 'room' &&
-                    (metadata.rooms || []).map((r: any) => (
-                      <SelectItem key={r.externalId} value={r.externalId} className="text-xs">
-                        {r.externalId} ({r.type}, Cap {r.capacity})
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Target Select Dropdown or Locked Faculty Badge */}
+            {user?.role === 'faculty' ? (
+              <div className="h-7 text-xs bg-[#FAF9F6] border border-[#E5E7EB] text-[#09090B] px-2.5 py-1 rounded-md font-medium flex items-center gap-1.5 shadow-2xs ml-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <span className="truncate max-w-[170px]">{user.name || `Instructor ${facultySelfId}`}</span>
+                <Lock className="w-3 h-3 text-[#71717A] shrink-0 ml-0.5" />
+              </div>
+            ) : (
+              <div className="w-52 ml-1">
+                <Select value={selectedFilter} onValueChange={setSelectedFilter}>
+                  <SelectTrigger className="h-7 text-xs bg-white border-[#EBEBEA] text-[#37352F]">
+                    <SelectValue placeholder="Select target..." />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-60 bg-white">
+                    {filterType === 'group' &&
+                      availableGroups.map((g: any) => (
+                        <SelectItem key={g.externalId} value={g.externalId} className="text-xs">
+                          {g.externalId} — {g.name} ({g.size})
+                        </SelectItem>
+                      ))}
+                    {filterType === 'faculty' &&
+                      availableFaculty.map((f: any) => (
+                        <SelectItem key={f.externalId} value={f.externalId} className="text-xs">
+                          {f.externalId} — {f.name}
+                        </SelectItem>
+                      ))}
+                    {filterType === 'room' &&
+                      (metadata.rooms || []).map((r: any) => (
+                        <SelectItem key={r.externalId} value={r.externalId} className="text-xs">
+                          {r.externalId} ({r.type}, Cap {r.capacity})
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
         </div>
       </div>

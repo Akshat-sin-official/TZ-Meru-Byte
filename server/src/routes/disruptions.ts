@@ -9,9 +9,15 @@ const router = Router();
 const prisma = new PrismaClient();
 const OPTIMIZER_URL = process.env.OPTIMIZER_URL || 'http://127.0.0.1:8001';
 
-// GET baseline vs repaired disruption diff (pre-computed fallback)
-router.get('/latest', async (req, res) => {
+// GET baseline vs repaired disruption diff (pre-computed fallback per RBAC in ini.md)
+router.get('/latest', authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
+    if (req.user?.role === Role.club) {
+      return res.status(403).json({
+        error: 'Forbidden: Club representatives are not authorized to view academic disruption diffs.',
+      });
+    }
+
     const exportsDir = path.resolve(process.cwd(), '../exports');
     const basePath = path.join(exportsDir, 'schedule.json');
     const afterPath = path.join(exportsDir, 'schedule_after.json');
