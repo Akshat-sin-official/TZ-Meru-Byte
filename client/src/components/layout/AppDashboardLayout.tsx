@@ -16,11 +16,12 @@ import {
   ChevronRight,
   ChevronLeft,
   Check,
+  MessageSquare,
 } from 'lucide-react';
 import { campusApi } from '@/services/api';
 import { toast } from 'sonner';
 
-export type CampusTab = 'dashboard' | 'timetable' | 'exams' | 'bookings' | 'disruptions';
+export type CampusTab = 'dashboard' | 'timetable' | 'exams' | 'bookings' | 'disruptions' | 'whatsapp';
 
 interface AppDashboardLayoutProps {
   activeTab: CampusTab;
@@ -471,6 +472,27 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
                   )}
                 </button>
               )}
+
+              {/* WhatsApp Bot Channel */}
+              <button
+                onClick={() => setActiveTab('whatsapp')}
+                className={`w-full flex items-center justify-between px-3 py-2 text-[13.5px] rounded-lg transition cursor-pointer ${
+                  activeTab === 'whatsapp'
+                    ? 'bg-white font-semibold text-[#09090B] border border-[#E5E7EB] shadow-2xs'
+                    : 'text-[#3F3F46] hover:text-[#09090B] hover:bg-[#F4F4F5] border border-transparent font-medium'
+                }`}
+                title="WhatsApp Bot & Hotline"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <MessageSquare className={`h-4 w-4 shrink-0 ${activeTab === 'whatsapp' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
+                  {!sidebarCollapsed && <span className="whitespace-nowrap">WhatsApp Bot</span>}
+                </div>
+                {!sidebarCollapsed && (
+                  <span className="text-[11px] font-mono font-medium text-[#52525B] bg-[#F4F4F5] px-1.5 py-0.5 rounded shrink-0">
+                    Live
+                  </span>
+                )}
+              </button>
             </nav>
           </div>
 

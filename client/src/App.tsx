@@ -7,6 +7,7 @@ import { TimetableDashboard } from '@/pages/campus/TimetableDashboard';
 import { ExamsView } from '@/pages/campus/ExamsView';
 import { SpectraBookingsView } from '@/pages/campus/SpectraBookingsView';
 import { DisruptionsView } from '@/pages/campus/DisruptionsView';
+import { WhatsAppBotSection } from '@/components/campus/WhatsAppBotSection';
 import { AICopilotDrawer } from '@/components/campus/AICopilotDrawer';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -100,6 +101,19 @@ export const AppContent: React.FC = () => {
         {activeTab === 'exams' && <ExamsView />}
         {activeTab === 'bookings' && <SpectraBookingsView />}
         {activeTab === 'disruptions' && <DisruptionsView />}
+        {activeTab === 'whatsapp' && (
+          <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-4">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold font-poppins text-[#111926] tracking-tight">
+                WhatsApp Operations Center
+              </h1>
+              <p className="text-xs text-muted-foreground mt-0.5 font-poppins">
+                Evolution-Go v2 Gateway · Live QR Device Pairing · Campus Phone & Role Directory
+              </p>
+            </div>
+            <WhatsAppBotSection />
+          </div>
+        )}
       </div>
 
       {/* AI Copilot Drawer */}
