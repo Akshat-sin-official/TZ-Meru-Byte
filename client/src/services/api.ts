@@ -96,6 +96,10 @@ export const campusApi = {
   },
 
   // Disruptions
+  getLatestDisruption: async () => {
+    const res = await api.get('/disruptions/latest');
+    return res.data;
+  },
   submitDisruption: async (disruptionPayload: any) => {
     const res = await api.post('/disruptions/submit', disruptionPayload);
     return res.data;

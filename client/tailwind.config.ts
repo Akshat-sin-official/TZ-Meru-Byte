@@ -112,7 +112,7 @@ export default {
 			},
 			fontFamily: {
 				sans: [
-					'Franca DEMO',
+					'Inter',
 					'Plus Jakarta Sans',
 					'Space Grotesk',
 					'ui-sans-serif',

@@ -1,11 +1,72 @@
 import { Router, Response } from 'express';
 import { PrismaClient, Role, ScheduleStatus } from '@prisma/client';
 import axios from 'axios';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { authenticate, requireRole, AuthenticatedRequest } from '../middleware/auth.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = Router();
 const prisma = new PrismaClient();
 const OPTIMIZER_URL = process.env.OPTIMIZER_URL || 'http://127.0.0.1:8001';
+
+// GET baseline vs repaired disruption diff (pre-computed fallback)
+router.get('/latest', async (req, res) => {
+  try {
+    const exportsDir = path.resolve(__dirname, '../../../exports');
+    const basePath = path.join(exportsDir, 'schedule.json');
+    const afterPath = path.join(exportsDir, 'schedule_after.json');
+
+    if (!fs.existsSync(basePath) || !fs.existsSync(afterPath)) {
+      return res.json({ available: false });
+    }
+
+    const baseSchedule = JSON.parse(fs.readFileSync(basePath, 'utf-8'));
+    const afterSchedule = JSON.parse(fs.readFileSync(afterPath, 'utf-8'));
+
+    const baseMap = new Map<string, { day: string; start: number; room: string }>();
+    for (const b of baseSchedule.sessions || []) {
+      baseMap.set(b.session_id, { day: b.day, start: b.start_period, room: b.room_id });
+    }
+
+    const movedSessions: Array<{
+      sessionId: string;
+      oldSlot: { day: string; start: number; room: string };
+      newSlot: { day: string; start: number; room: string };
+      type: 'time_changed' | 'room_only_changed';
+    }> = [];
+
+    for (const a of afterSchedule.sessions || []) {
+      const orig = baseMap.get(a.session_id);
+      if (orig) {
+        if (orig.day !== a.day || orig.start !== a.start_period || orig.room !== a.room_id) {
+          const type = orig.day !== a.day || orig.start !== a.start_period ? 'time_changed' : 'room_only_changed';
+          movedSessions.push({
+            sessionId: a.session_id,
+            oldSlot: orig,
+            newSlot: { day: a.day, start: a.start_period, room: a.room_id },
+            type,
+          });
+        }
+      }
+    }
+
+    return res.json({
+      available: true,
+      summary: {
+        totalMoved: movedSessions.length,
+        timeChanged: movedSessions.filter((m) => m.type === 'time_changed').length,
+        roomOnlyChanged: movedSessions.filter((m) => m.type === 'room_only_changed').length,
+      },
+      movedSessions,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
 
 // Submit disruption and solve repair
 router.post('/submit', authenticate, requireRole([Role.admin]), async (req: AuthenticatedRequest, res: Response) => {
