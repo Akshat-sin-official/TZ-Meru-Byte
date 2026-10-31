@@ -254,31 +254,28 @@ export const TimetableDashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header and Controls */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-border/40">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#E5E7EB]">
         <div>
-          <span className="text-[12px] font-bold uppercase tracking-[0.2em] text-ink-soft font-poppins">
-            ACADEMIC SCHEDULE · SEMESTER 1
-          </span>
-          <h2 className="mt-1 text-[28px] font-bold font-poppins text-ink tracking-tight">
-            Weekly Master Timetable
+          <h2 className="text-xl font-bold font-poppins text-[#111926] tracking-tight">
+            Academic Timetable Grid
           </h2>
-          <p className="text-xs text-ink-soft mt-1">
-            {assignments.length} total sessions · 0 hard violations · Filtered: {filteredAssignments.length} sessions
+          <p className="text-xs text-muted-foreground mt-0.5 font-poppins">
+            {assignments.length} total sessions · 0 hard clashes · Showing {filteredAssignments.length} sessions
           </p>
         </div>
 
         <div className="flex items-center flex-wrap gap-2.5">
           {/* Filter Type Toggle */}
-          <div className="flex items-center rounded-full border border-border/80 bg-white p-1 text-xs shadow-2xs">
+          <div className="flex items-center rounded-lg border border-[#E5E7EB] bg-white p-0.5 text-xs shadow-2xs">
             <button
               onClick={() => {
                 setFilterType('group');
                 setSelectedFilter(metadata.studentGroups[0]?.externalId || 'CSE-2');
               }}
-              className={`px-3 py-1 rounded-full text-xs font-bold font-poppins transition-all cursor-pointer ${
+              className={`px-3 py-1 rounded-md text-xs font-bold font-poppins transition-all cursor-pointer ${
                 filterType === 'group'
-                  ? 'bg-ink text-white shadow-xs'
-                  : 'text-ink-soft hover:text-ink'
+                  ? 'bg-primary text-white shadow-xs'
+                  : 'text-muted-foreground hover:text-[#111926]'
               }`}
             >
               Group
@@ -288,10 +285,10 @@ export const TimetableDashboard: React.FC = () => {
                 setFilterType('faculty');
                 setSelectedFilter(metadata.faculty[0]?.externalId || 'F01');
               }}
-              className={`px-3 py-1 rounded-full text-xs font-bold font-poppins transition-all cursor-pointer ${
+              className={`px-3 py-1 rounded-md text-xs font-bold font-poppins transition-all cursor-pointer ${
                 filterType === 'faculty'
-                  ? 'bg-ink text-white shadow-xs'
-                  : 'text-ink-soft hover:text-ink'
+                  ? 'bg-primary text-white shadow-xs'
+                  : 'text-muted-foreground hover:text-[#111926]'
               }`}
             >
               Faculty
@@ -301,10 +298,10 @@ export const TimetableDashboard: React.FC = () => {
                 setFilterType('room');
                 setSelectedFilter(metadata.rooms[0]?.externalId || 'LH-1');
               }}
-              className={`px-3 py-1 rounded-full text-xs font-bold font-poppins transition-all cursor-pointer ${
+              className={`px-3 py-1 rounded-md text-xs font-bold font-poppins transition-all cursor-pointer ${
                 filterType === 'room'
-                  ? 'bg-ink text-white shadow-xs'
-                  : 'text-ink-soft hover:text-ink'
+                  ? 'bg-primary text-white shadow-xs'
+                  : 'text-muted-foreground hover:text-[#111926]'
               }`}
             >
               Room
@@ -313,7 +310,7 @@ export const TimetableDashboard: React.FC = () => {
 
           {/* Target Selector */}
           <Select value={selectedFilter} onValueChange={setSelectedFilter}>
-            <SelectTrigger className="w-48 h-8 rounded-full text-xs bg-white border-border/80 font-poppins font-medium shadow-2xs">
+            <SelectTrigger className="w-48 h-8 rounded-lg text-xs bg-white border-[#E5E7EB] font-poppins font-medium shadow-2xs">
               <SelectValue placeholder="Select target..." />
             </SelectTrigger>
             <SelectContent className="max-h-60 rounded-xl">
@@ -332,7 +329,7 @@ export const TimetableDashboard: React.FC = () => {
             <button
               onClick={handleSolve}
               disabled={solving}
-              className="rounded-full bg-gradient-to-r from-primary to-indigo-600 hover:from-primary/95 text-white shadow-xs hover:shadow-md font-bold font-poppins px-4 py-1.5 text-xs flex items-center gap-1.5 cursor-pointer"
+              className="rounded-lg bg-primary hover:bg-primary/95 text-white shadow-xs font-bold font-poppins px-3.5 py-1.5 text-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-70"
             >
               {solving ? <RotateCw className="w-3.5 h-3.5 animate-spin" /> : null}
               <span>{solving ? 'Solving...' : 'Re-Optimize'}</span>
@@ -342,22 +339,22 @@ export const TimetableDashboard: React.FC = () => {
       </div>
 
       {/* Clean Compact Timetable Grid */}
-      <div className="rounded-[24px] border border-border/70 bg-white overflow-x-auto shadow-[0_4px_25px_-5px_rgba(0,0,0,0.03)] p-2">
+      <div className="rounded-xl border border-[#E5E7EB] bg-white overflow-x-auto shadow-xs p-1.5">
         <table className="w-full text-left text-xs border-collapse table-fixed min-w-[860px]">
           <thead>
-            <tr className="border-b border-border/60 bg-[#FAF9F6] text-ink-soft">
-              <th className="p-2 w-14 text-center font-bold font-poppins border-r border-border/60">Day</th>
-              <th className="p-1.5 text-center border-r border-border/60 font-bold font-poppins">P1<br /><span className="text-[10px] text-ink-soft/60 font-normal">08:00</span></th>
-              <th className="p-1.5 text-center border-r border-border/60 font-bold font-poppins">P2<br /><span className="text-[10px] text-ink-soft/60 font-normal">09:00</span></th>
-              <th className="p-1.5 text-center border-r border-border/60 font-bold font-poppins">P3<br /><span className="text-[10px] text-ink-soft/60 font-normal">10:00</span></th>
-              <th className="p-1.5 text-center border-r border-border/60 font-bold font-poppins">P4<br /><span className="text-[10px] text-ink-soft/60 font-normal">11:00</span></th>
-              <th className="p-1.5 text-center border-r border-border/60 font-bold font-poppins">P5<br /><span className="text-[10px] text-ink-soft/60 font-normal">12:00</span></th>
-              <th className="p-1 w-12 text-center border-r border-border/60 bg-slate-50 text-[10px] text-ink-soft font-bold font-poppins">
-                Lunch<br /><span className="text-[9px] text-ink-soft/50 font-normal">13:00</span>
+            <tr className="border-b border-[#E5E7EB] bg-[#FAF9F6] text-muted-foreground">
+              <th className="p-2 w-14 text-center font-bold font-poppins border-r border-[#E5E7EB]">Day</th>
+              <th className="p-1.5 text-center border-r border-[#E5E7EB] font-bold font-poppins">P1<br /><span className="text-[10px] text-muted-foreground/70 font-normal">08:00</span></th>
+              <th className="p-1.5 text-center border-r border-[#E5E7EB] font-bold font-poppins">P2<br /><span className="text-[10px] text-muted-foreground/70 font-normal">09:00</span></th>
+              <th className="p-1.5 text-center border-r border-[#E5E7EB] font-bold font-poppins">P3<br /><span className="text-[10px] text-muted-foreground/70 font-normal">10:00</span></th>
+              <th className="p-1.5 text-center border-r border-[#E5E7EB] font-bold font-poppins">P4<br /><span className="text-[10px] text-muted-foreground/70 font-normal">11:00</span></th>
+              <th className="p-1.5 text-center border-r border-[#E5E7EB] font-bold font-poppins">P5<br /><span className="text-[10px] text-muted-foreground/70 font-normal">12:00</span></th>
+              <th className="p-1 w-12 text-center border-r border-[#E5E7EB] bg-slate-50 text-[10px] text-muted-foreground font-bold font-poppins">
+                Lunch<br /><span className="text-[9px] text-muted-foreground/60 font-normal">13:00</span>
               </th>
-              <th className="p-1.5 text-center border-r border-border/60 font-bold font-poppins">P6<br /><span className="text-[10px] text-ink-soft/60 font-normal">14:00</span></th>
-              <th className="p-1.5 text-center border-r border-border/60 font-bold font-poppins">P7<br /><span className="text-[10px] text-ink-soft/60 font-normal">15:00</span></th>
-              <th className="p-1.5 text-center border-r border-border/60 font-bold font-poppins">P8<br /><span className="text-[10px] text-ink-soft/60 font-normal">16:00</span></th>
+              <th className="p-1.5 text-center border-r border-[#E5E7EB] font-bold font-poppins">P6<br /><span className="text-[10px] text-muted-foreground/70 font-normal">14:00</span></th>
+              <th className="p-1.5 text-center border-r border-[#E5E7EB] font-bold font-poppins">P7<br /><span className="text-[10px] text-muted-foreground/70 font-normal">15:00</span></th>
+              <th className="p-1.5 text-center border-r border-[#E5E7EB] font-bold font-poppins">P8<br /><span className="text-[10px] text-muted-foreground/70 font-normal">16:00</span></th>
               <th className="p-1.5 text-center font-bold font-poppins">P9<br /><span className="text-[10px] text-ink-soft/60 font-normal">17:00</span></th>
             </tr>
           </thead>

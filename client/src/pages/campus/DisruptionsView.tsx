@@ -103,25 +103,22 @@ export const DisruptionsView: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header and Controls */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-border/40">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#E5E7EB]">
         <div>
-          <span className="text-[12px] font-bold uppercase tracking-[0.2em] text-ink-soft font-poppins">
-            CONTINUOUS OPERATIONS · STABILITY SOLVER
-          </span>
-          <h2 className="mt-1 text-[28px] font-bold font-poppins text-ink tracking-tight">
-            Disruption Recovery & Stability Repair
+          <h2 className="text-xl font-bold font-poppins text-[#111926] tracking-tight">
+            Disruptions & Stability Recovery
           </h2>
-          <p className="text-xs text-ink-soft mt-1">
+          <p className="text-xs text-muted-foreground mt-0.5 font-poppins">
             2-Stage CP-SAT Optimization: 100× Time Change Penalty + 10× Room Change Penalty · 0 hard violations
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           {user?.role === 'admin' && (
             <button
               onClick={handleRunRepair}
               disabled={solving}
-              className="rounded-full bg-gradient-to-r from-primary to-indigo-600 hover:from-primary/95 text-white shadow-xs hover:shadow-md font-bold font-poppins px-5 py-2 text-xs flex items-center gap-2 cursor-pointer"
+              className="rounded-lg bg-primary hover:bg-primary/95 text-white shadow-xs font-bold font-poppins px-3.5 py-1.5 text-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-70"
             >
               {solving ? <RotateCw className="w-3.5 h-3.5 animate-spin" /> : null}
               <span>{solving ? 'Solving Repair...' : 'Simulate Disruption'}</span>
@@ -131,9 +128,9 @@ export const DisruptionsView: React.FC = () => {
           <a
             href="http://localhost:5000/api/exports/schedule_after.json"
             download="schedule_after.json"
-            className="rounded-full border border-border/80 bg-white hover:bg-slate-50 text-ink shadow-2xs hover:border-primary/40 active:scale-98 transition-all font-bold font-poppins px-4 py-2 text-xs inline-flex items-center gap-1.5"
+            className="rounded-lg border border-[#E5E7EB] bg-white hover:bg-slate-50 text-[#111926] shadow-2xs font-bold font-poppins px-3.5 py-1.5 text-xs inline-flex items-center gap-1.5 transition"
           >
-            <Download className="w-3.5 h-3.5 text-ink-soft" />
+            <Download className="w-3.5 h-3.5 text-muted-foreground" />
             <span>schedule_after.json</span>
           </a>
         </div>
@@ -144,15 +141,15 @@ export const DisruptionsView: React.FC = () => {
         {sampleDisruption.changes.map((ch: any, idx: number) => (
           <div
             key={idx}
-            className="rounded-[24px] border border-border/70 bg-white p-5 space-y-2 shadow-[0_4px_25px_-5px_rgba(0,0,0,0.03)]"
+            className="rounded-xl border border-[#E5E7EB] bg-white p-4 space-y-1.5 shadow-xs"
           >
-            <div className="text-[10px] font-bold text-ink-soft font-poppins uppercase tracking-wider">
+            <div className="text-[10px] font-bold text-muted-foreground font-poppins uppercase tracking-wider">
               {ch.type.replace('_', ' ')}
             </div>
-            <div className="text-sm font-bold font-poppins text-ink font-mono">
+            <div className="text-xs font-bold font-poppins text-[#111926] font-mono">
               {ch.faculty_id || ch.room_id || ch.session?.id}
             </div>
-            <div className="text-xs text-ink-soft truncate">
+            <div className="text-xs text-muted-foreground truncate">
               {ch.reason || 'Added emergency session'}
             </div>
           </div>
@@ -164,33 +161,33 @@ export const DisruptionsView: React.FC = () => {
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
             <div className="flex items-center gap-2.5">
-              <div className="flex items-center rounded-full border border-border/80 bg-white p-1 text-xs shadow-2xs">
+              <div className="flex items-center rounded-lg border border-[#E5E7EB] bg-white p-0.5 text-xs shadow-2xs">
                 <button
                   onClick={() => setFilterType('all')}
-                  className={`px-3 py-1 rounded-full text-xs font-bold font-poppins transition-all cursor-pointer ${
+                  className={`px-3 py-1 rounded-md text-xs font-bold font-poppins transition-all cursor-pointer ${
                     filterType === 'all'
-                      ? 'bg-ink text-white shadow-xs'
-                      : 'text-ink-soft hover:text-ink'
+                      ? 'bg-primary text-white shadow-xs'
+                      : 'text-muted-foreground hover:text-[#111926]'
                   }`}
                 >
                   All Moved ({repairResult.summary?.totalMoved || 0})
                 </button>
                 <button
                   onClick={() => setFilterType('time')}
-                  className={`px-3 py-1 rounded-full text-xs font-bold font-poppins transition-all cursor-pointer ${
+                  className={`px-3 py-1 rounded-md text-xs font-bold font-poppins transition-all cursor-pointer ${
                     filterType === 'time'
-                      ? 'bg-ink text-white shadow-xs'
-                      : 'text-ink-soft hover:text-ink'
+                      ? 'bg-primary text-white shadow-xs'
+                      : 'text-muted-foreground hover:text-[#111926]'
                   }`}
                 >
                   Time Changed ({repairResult.summary?.timeChanged || 0})
                 </button>
                 <button
                   onClick={() => setFilterType('room')}
-                  className={`px-3 py-1 rounded-full text-xs font-bold font-poppins transition-all cursor-pointer ${
+                  className={`px-3 py-1 rounded-md text-xs font-bold font-poppins transition-all cursor-pointer ${
                     filterType === 'room'
-                      ? 'bg-ink text-white shadow-xs'
-                      : 'text-ink-soft hover:text-ink'
+                      ? 'bg-primary text-white shadow-xs'
+                      : 'text-muted-foreground hover:text-[#111926]'
                   }`}
                 >
                   Room Only ({repairResult.summary?.roomOnlyChanged || 0})
@@ -201,19 +198,19 @@ export const DisruptionsView: React.FC = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search session or room..."
-                className="w-48 h-8 rounded-full text-xs bg-white border-border/80 font-poppins font-medium shadow-2xs"
+                className="w-48 h-8 rounded-lg text-xs bg-white border-[#E5E7EB] font-poppins font-medium shadow-2xs"
               />
             </div>
 
-            <div className="text-xs text-ink-soft font-poppins font-bold">
-              Stability Score: {repairResult.summary?.timeChanged * 100 + repairResult.summary?.roomOnlyChanged * 10} penalty points
+            <div className="text-xs text-muted-foreground font-poppins font-semibold">
+              Stability Score: <span className="font-mono text-[#111926] font-bold">{repairResult.summary?.timeChanged * 100 + repairResult.summary?.roomOnlyChanged * 10} penalty pts</span>
             </div>
           </div>
 
-          <div className="rounded-[24px] border border-border/70 bg-white overflow-x-auto shadow-[0_4px_25px_-5px_rgba(0,0,0,0.03)] p-2">
+          <div className="rounded-xl border border-[#E5E7EB] bg-white overflow-x-auto shadow-xs">
             <table className="w-full text-left text-xs border-collapse min-w-[700px]">
               <thead>
-                <tr className="border-b border-border/60 bg-[#FAF9F6] text-ink-soft font-bold font-poppins">
+                <tr className="border-b border-[#E5E7EB] bg-[#FAF9F6] text-muted-foreground font-bold font-poppins">
                   <th className="p-3 w-28">Session</th>
                   <th className="p-3">Original Assignment</th>
                   <th className="p-3">Repaired Assignment</th>
@@ -221,33 +218,33 @@ export const DisruptionsView: React.FC = () => {
                   <th className="p-3">Impact</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-[#E5E7EB]">
                 {filteredMoved.map((m: any) => {
                   const isTimeChanged = m.type === 'time_changed';
                   return (
                     <tr
                       key={m.sessionId}
-                      className="border-b border-border/60 last:border-b-0 hover:bg-[#FAF9F6]/50 transition"
+                      className="hover:bg-slate-50/60 transition"
                     >
-                      <td className="p-3 font-mono font-bold text-ink">{m.sessionId}</td>
-                      <td className="p-3 text-ink-soft font-mono text-[11px]">
+                      <td className="p-3 font-mono font-bold text-[#111926]">{m.sessionId}</td>
+                      <td className="p-3 text-muted-foreground font-mono text-[11px]">
                         {m.oldSlot.day} P{m.oldSlot.start} in {m.oldSlot.room}
                       </td>
-                      <td className="p-3 font-bold text-ink font-mono text-[11px]">
+                      <td className="p-3 font-bold text-[#111926] font-mono text-[11px]">
                         {m.newSlot.day} P{m.newSlot.start} in {m.newSlot.room}
                       </td>
                       <td className="p-3">
                         <span
-                          className={`inline-block px-3 py-0.5 rounded-full text-[10px] font-bold font-poppins ${
+                          className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold font-poppins ${
                             isTimeChanged
-                              ? 'text-amber-800 bg-[#F5E3D2]'
-                              : 'text-[#6D28D9] bg-[#EDE9FE]'
+                              ? 'text-amber-800 bg-amber-50 border border-amber-200'
+                              : 'text-purple-700 bg-purple-50 border border-purple-200'
                           }`}
                         >
                           {isTimeChanged ? 'Time & Room Changed' : 'Room Reassigned Only'}
                         </span>
                       </td>
-                      <td className="p-3 text-[11px] text-ink-soft">
+                      <td className="p-3 text-[11px] text-muted-foreground">
                         {isTimeChanged ? 'Rescheduled due to room/faculty block' : 'Adjacent available room swap'}
                       </td>
                     </tr>

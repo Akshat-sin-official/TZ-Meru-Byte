@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { CampusAuthProvider, useCampusAuth } from '@/contexts/CampusAuthContext';
 import { LoginPage } from '@/pages/auth/LoginPage';
-import { CampusHeader, CampusTab } from '@/components/layout/CampusHeader';
+import { AppDashboardLayout, CampusTab } from '@/components/layout/AppDashboardLayout';
 import { RoleDashboardRouter } from '@/pages/dashboard/RoleDashboardRouter';
 import { TimetableDashboard } from '@/pages/campus/TimetableDashboard';
 import { ExamsView } from '@/pages/campus/ExamsView';
@@ -44,17 +44,13 @@ export const AppContent: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] text-ink flex flex-col font-sans selection:bg-primary/10 selection:text-primary">
-      {/* Top Navbar matching docs/UI/website-ui Nav.tsx */}
-      <CampusHeader
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        openCopilot={() => setCopilotOpen(true)}
-        onRefreshData={handleRefreshData}
-      />
-
-      {/* Main View Area with Bento Grid & Workspace Layout */}
-      <main className="flex-1 max-w-[1280px] w-full mx-auto px-6 py-8" key={refreshKey}>
+    <AppDashboardLayout
+      activeTab={activeTab}
+      setActiveTab={setActiveTab}
+      openCopilot={() => setCopilotOpen(true)}
+      onRefreshData={handleRefreshData}
+    >
+      <div key={refreshKey}>
         {activeTab === 'dashboard' && (
           <RoleDashboardRouter
             onNavigateTab={setActiveTab}
@@ -65,7 +61,7 @@ export const AppContent: React.FC = () => {
         {activeTab === 'exams' && <ExamsView />}
         {activeTab === 'bookings' && <SpectraBookingsView />}
         {activeTab === 'disruptions' && <DisruptionsView />}
-      </main>
+      </div>
 
       {/* AI Copilot Drawer */}
       <AICopilotDrawer
@@ -76,7 +72,7 @@ export const AppContent: React.FC = () => {
 
       {/* Toast Notifications */}
       <Sonner position="top-right" richColors />
-    </div>
+    </AppDashboardLayout>
   );
 };
 

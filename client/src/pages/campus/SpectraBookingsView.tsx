@@ -94,48 +94,45 @@ export const SpectraBookingsView: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header and Controls */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-border/40">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#E5E7EB]">
         <div>
-          <span className="text-[12px] font-bold uppercase tracking-[0.2em] text-ink-soft font-poppins">
-            SPECTRA WEEK '27 · VENUE MATCHING
-          </span>
-          <h2 className="mt-1 text-[28px] font-bold font-poppins text-ink tracking-tight">
-            Cultural Fest Allocations
+          <h2 className="text-xl font-bold font-poppins text-[#111926] tracking-tight">
+            Spectra Week Allocations
           </h2>
-          <p className="text-xs text-ink-soft mt-1">
+          <p className="text-xs text-muted-foreground mt-0.5 font-poppins">
             Score: 66.0 / 70.0 · {approvedCount} approved · {rejectedCount} rejected · 0 priority inversions
           </p>
         </div>
 
         <div className="flex items-center flex-wrap gap-2.5">
           {/* Status Tabs */}
-          <div className="flex items-center rounded-full border border-border/80 bg-white p-1 text-xs shadow-2xs">
+          <div className="flex items-center rounded-lg border border-[#E5E7EB] bg-white p-0.5 text-xs shadow-2xs">
             <button
               onClick={() => setStatusFilter('all')}
-              className={`px-3 py-1 rounded-full text-xs font-bold font-poppins transition-all cursor-pointer ${
+              className={`px-3 py-1 rounded-md text-xs font-bold font-poppins transition-all cursor-pointer ${
                 statusFilter === 'all'
-                  ? 'bg-ink text-white shadow-xs'
-                  : 'text-ink-soft hover:text-ink'
+                  ? 'bg-primary text-white shadow-xs'
+                  : 'text-muted-foreground hover:text-[#111926]'
               }`}
             >
               All ({requests.length})
             </button>
             <button
               onClick={() => setStatusFilter('approved')}
-              className={`px-3 py-1 rounded-full text-xs font-bold font-poppins transition-all cursor-pointer ${
+              className={`px-3 py-1 rounded-md text-xs font-bold font-poppins transition-all cursor-pointer ${
                 statusFilter === 'approved'
-                  ? 'bg-ink text-white shadow-xs'
-                  : 'text-ink-soft hover:text-ink'
+                  ? 'bg-primary text-white shadow-xs'
+                  : 'text-muted-foreground hover:text-[#111926]'
               }`}
             >
               Approved ({approvedCount})
             </button>
             <button
               onClick={() => setStatusFilter('rejected')}
-              className={`px-3 py-1 rounded-full text-xs font-bold font-poppins transition-all cursor-pointer ${
+              className={`px-3 py-1 rounded-md text-xs font-bold font-poppins transition-all cursor-pointer ${
                 statusFilter === 'rejected'
-                  ? 'bg-ink text-white shadow-xs'
-                  : 'text-ink-soft hover:text-ink'
+                  ? 'bg-primary text-white shadow-xs'
+                  : 'text-muted-foreground hover:text-[#111926]'
               }`}
             >
               Rejected ({rejectedCount})
@@ -146,14 +143,14 @@ export const SpectraBookingsView: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search request or room..."
-            className="w-48 h-8 rounded-full text-xs bg-white border-border/80 font-poppins font-medium shadow-2xs"
+            className="w-48 h-8 rounded-lg text-xs bg-white border-[#E5E7EB] font-poppins font-medium shadow-2xs"
           />
 
           {user?.role === 'admin' && (
             <button
               onClick={handleSolve}
               disabled={solving}
-              className="rounded-full bg-gradient-to-r from-primary to-indigo-600 hover:from-primary/95 text-white shadow-xs hover:shadow-md font-bold font-poppins px-4 py-1.5 text-xs flex items-center gap-1.5 cursor-pointer"
+              className="rounded-lg bg-primary hover:bg-primary/95 text-white shadow-xs font-bold font-poppins px-3.5 py-1.5 text-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-70"
             >
               {solving ? <RotateCw className="w-3.5 h-3.5 animate-spin" /> : null}
               <span>{solving ? 'Allocating...' : 'Re-Allocate'}</span>
@@ -163,10 +160,10 @@ export const SpectraBookingsView: React.FC = () => {
       </div>
 
       {/* Clean Table */}
-      <div className="rounded-[24px] border border-border/70 bg-white overflow-x-auto shadow-[0_4px_25px_-5px_rgba(0,0,0,0.03)] p-2">
+      <div className="rounded-xl border border-[#E5E7EB] bg-white overflow-x-auto shadow-xs">
         <table className="w-full text-left text-xs border-collapse min-w-[720px]">
           <thead>
-            <tr className="border-b border-border/60 bg-[#FAF9F6] text-ink-soft font-bold font-poppins">
+            <tr className="border-b border-[#E5E7EB] bg-[#FAF9F6] text-muted-foreground font-bold font-poppins">
               <th className="p-3 w-16">ID</th>
               <th className="p-3">Title & Requester</th>
               <th className="p-3">Role</th>
@@ -176,7 +173,7 @@ export const SpectraBookingsView: React.FC = () => {
               <th className="p-3">Decision Note</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-[#E5E7EB]">
             {filteredRequests.map((r: any) => {
               const dec = decisionsMap.get(r.id);
               const isApproved = dec?.status === 'approved';
@@ -185,34 +182,34 @@ export const SpectraBookingsView: React.FC = () => {
                 <tr
                   key={r.id}
                   onClick={() => setSelectedRequest({ request: r, decision: dec })}
-                  className="border-b border-border/60 last:border-b-0 hover:bg-[#FAF9F6]/50 cursor-pointer transition"
+                  className="hover:bg-slate-50/60 cursor-pointer transition"
                 >
-                  <td className="p-3 font-mono font-bold text-ink">{r.externalId}</td>
+                  <td className="p-3 font-mono font-bold text-[#111926]">{r.externalId}</td>
                   <td className="p-3">
-                    <div className="font-bold font-poppins text-xs text-ink">{r.title}</div>
-                    <div className="text-[11px] text-ink-soft">{r.requester}</div>
+                    <div className="font-bold font-poppins text-xs text-[#111926]">{r.title}</div>
+                    <div className="text-[11px] text-muted-foreground">{r.requester}</div>
                   </td>
-                  <td className="p-3 capitalize text-ink-soft text-[11px]">
+                  <td className="p-3 capitalize text-muted-foreground text-[11px]">
                     {r.role.replace('_', ' ')}
                   </td>
-                  <td className="p-3 font-bold text-ink">{r.attendance} pax</td>
+                  <td className="p-3 font-mono font-medium text-[#111926]">{r.attendance} pax</td>
                   <td className="p-3 font-medium">
                     {dec?.roomExternalId ? (
-                      <span className="text-ink font-mono text-[11px] font-bold flex items-center gap-1">
+                      <span className="text-[#111926] font-mono text-[11px] font-bold flex items-center gap-1">
                         <MapPin className="w-3.5 h-3.5 text-primary" />
                         {dec.roomExternalId} · {dec.day} P{dec.startPeriod}–P{dec.endPeriod}
                       </span>
                     ) : (
-                      <span className="text-ink-soft/50">—</span>
+                      <span className="text-muted-foreground/50">—</span>
                     )}
                   </td>
                   <td className="p-3">
                     {dec ? (
                       <span
-                        className={`inline-block px-3 py-0.5 rounded-full text-[10px] font-bold font-poppins ${
+                        className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold font-poppins ${
                           isApproved
-                            ? 'text-[#2D5A27] bg-[#DDECD4]'
-                            : 'text-ink-soft bg-slate-100'
+                            ? 'text-emerald-700 bg-emerald-50 border border-emerald-200'
+                            : 'text-muted-foreground bg-slate-100 border border-slate-200'
                         }`}
                       >
                         {dec.status.replace('_', ' ')}

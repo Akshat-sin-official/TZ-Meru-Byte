@@ -106,26 +106,23 @@ export const ExamsView: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header and Controls */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-border/40">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#E5E7EB]">
         <div>
-          <span className="text-[12px] font-bold uppercase tracking-[0.2em] text-ink-soft font-poppins">
-            EXAMINATION CONTROLLER · MIDSEM WEEK
-          </span>
-          <h2 className="mt-1 text-[28px] font-bold font-poppins text-ink tracking-tight">
+          <h2 className="text-xl font-bold font-poppins text-[#111926] tracking-tight">
             Midsem Examination Seating
           </h2>
-          <p className="text-xs text-ink-soft mt-1">
+          <p className="text-xs text-muted-foreground mt-0.5 font-poppins">
             {allocations.length} total exams · Half-capacity enforced (Rule E1) · 0 group multi-exam clashes
           </p>
         </div>
 
         <div className="flex items-center flex-wrap gap-2.5">
-          <div className="flex items-center gap-1.5 text-xs text-ink-soft">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <span className="font-poppins font-bold">Group:</span>
             <select
               value={groupFilter}
               onChange={(e) => setGroupFilter(e.target.value)}
-              className="h-8 text-xs bg-white border border-border/80 rounded-full px-3 text-ink font-poppins font-medium shadow-2xs focus:outline-none"
+              className="h-8 text-xs bg-white border border-[#E5E7EB] rounded-lg px-2.5 text-[#111926] font-poppins font-medium shadow-2xs focus:outline-none"
             >
               <option value="all">All Groups</option>
               {allGroups.map((g) => (
@@ -140,14 +137,14 @@ export const ExamsView: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search exam or room..."
-            className="w-48 h-8 rounded-full text-xs bg-white border-border/80 font-poppins font-medium shadow-2xs"
+            className="w-48 h-8 rounded-lg text-xs bg-white border-[#E5E7EB] font-poppins font-medium shadow-2xs"
           />
 
           {user?.role === 'admin' && (
             <button
               onClick={handleSolve}
               disabled={solving}
-              className="rounded-full bg-gradient-to-r from-primary to-indigo-600 hover:from-primary/95 text-white shadow-xs hover:shadow-md font-bold font-poppins px-4 py-1.5 text-xs flex items-center gap-1.5 cursor-pointer"
+              className="rounded-lg bg-primary hover:bg-primary/95 text-white shadow-xs font-bold font-poppins px-3.5 py-1.5 text-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-70"
             >
               {solving ? <RotateCw className="w-3.5 h-3.5 animate-spin" /> : null}
               <span>{solving ? 'Solving...' : 'Re-Schedule'}</span>
@@ -157,7 +154,7 @@ export const ExamsView: React.FC = () => {
       </div>
 
       {/* Clean Grid by Day */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {days.map((day: string) => {
           const amExams = slotMap.get(`${day}_AM`) || [];
           const pmExams = slotMap.get(`${day}_PM`) || [];
@@ -166,11 +163,11 @@ export const ExamsView: React.FC = () => {
           return (
             <div
               key={day}
-              className="rounded-[24px] border border-border/70 bg-white p-5 space-y-4 shadow-[0_4px_25px_-5px_rgba(0,0,0,0.03)] hover:border-primary/40 transition"
+              className="rounded-xl border border-[#E5E7EB] bg-white p-4 space-y-3 shadow-xs hover:border-primary/40 transition"
             >
-              <div className="flex items-center justify-between pb-2 border-b border-border/60">
-                <span className="font-poppins font-bold text-sm text-ink">{day}</span>
-                <span className="text-[11px] font-bold font-poppins text-ink-soft bg-slate-100 px-2.5 py-0.5 rounded-full">
+              <div className="flex items-center justify-between pb-2 border-b border-[#E5E7EB]">
+                <span className="font-poppins font-bold text-xs text-[#111926]">{day}</span>
+                <span className="text-[10px] font-bold font-poppins text-muted-foreground bg-[#FAF9F6] border border-[#E5E7EB] px-2 py-0.5 rounded-md">
                   {totalInDay} exams
                 </span>
               </div>

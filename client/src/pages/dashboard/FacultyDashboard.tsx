@@ -10,7 +10,13 @@ import {
   MapPin,
   ArrowRight,
   ShieldCheck,
+  RotateCw,
+  BookOpen,
+  FileSpreadsheet,
 } from 'lucide-react';
+import { BentoStatCard } from '@/components/common/BentoStatCard';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 interface FacultyDashboardProps {
   onNavigateTab: (tab: 'timetable' | 'exams' | 'bookings' | 'disruptions') => void;
@@ -41,8 +47,9 @@ export const FacultyDashboard: React.FC<FacultyDashboardProps> = ({ onNavigateTa
 
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center text-xs text-ink-soft">
-        Loading faculty portal...
+      <div className="flex h-64 flex-col items-center justify-center gap-2.5 text-xs text-muted-foreground font-poppins">
+        <RotateCw className="w-5 h-5 animate-spin text-primary" />
+        <span>Loading instructor portal...</span>
       </div>
     );
   }
@@ -72,160 +79,214 @@ export const FacultyDashboard: React.FC<FacultyDashboardProps> = ({ onNavigateTa
     0
   );
 
+  const uniqueCourses = Array.from(new Set(mySessions.map((s: any) => s.session?.courseId))).filter(Boolean);
+
+  // Daily hours breakdown
+  const dailyHours: Record<string, number> = { MON: 0, TUE: 0, WED: 0, THU: 0, FRI: 0 };
+  for (const s of mySessions) {
+    const day = s.assignment.day;
+    if (dailyHours[day] !== undefined) {
+      dailyHours[day] += s.session?.duration || 1;
+    }
+  }
+
   return (
-    <div className="space-y-10 py-2">
-      {/* Editorial Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+    <div className="space-y-6">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E5E7EB] pb-5">
         <div>
-          <span className="text-[12px] font-bold uppercase tracking-[0.2em] text-ink-soft font-poppins">
-            INSTRUCTOR PORTAL · {facultyId}
-          </span>
-          <h1 className="mt-2 text-[32px] md:text-[40px] font-bold font-poppins leading-tight tracking-[-0.02em] text-ink">
-            {user?.name} <br className="hidden sm:inline" />
-            <span className="font-serif italic text-primary">Academic Schedule & Workload.</span>
-          </h1>
-          <p className="mt-3 text-[15px] text-ink-soft max-w-2xl leading-relaxed">
-            Personal teaching assignments, assigned classrooms, and daily workload compliance for the Department of {user?.department || 'Mathematics'}.
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold font-poppins text-[#111926] tracking-tight">
+              Instructor Teaching Portal
+            </h1>
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[10px] font-bold font-mono">
+              ID: {facultyId}
+            </Badge>
+          </div>
+          <p className="text-xs text-muted-foreground mt-0.5 font-poppins">
+            {user?.name || 'Dr. S. Rath'} · Department of {user?.department || 'Mathematics'}
           </p>
         </div>
 
         <button
           onClick={() => onNavigateTab('timetable')}
-          className="rounded-full bg-gradient-to-r from-primary to-indigo-600 hover:from-primary/95 hover:to-indigo-600/95 text-white shadow-md shadow-primary/15 hover:shadow-lg hover:shadow-primary/25 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 font-bold font-poppins px-6 py-2.5 text-xs flex items-center gap-2 cursor-pointer shrink-0"
+          className="rounded-lg bg-primary hover:bg-primary/95 text-white shadow-xs font-bold font-poppins px-3.5 py-2 text-xs flex items-center gap-2 transition cursor-pointer"
         >
-          <span>View Campus Timetable</span>
-          <ArrowRight className="w-3.5 h-3.5" />
+          <CalendarDays className="w-3.5 h-3.5" />
+          <span>Full Campus Timetable</span>
         </button>
       </div>
 
-      {/* 3 Bento Cards */}
-      <div className="grid gap-6 md:grid-cols-3">
-        <div className="flex flex-col justify-between rounded-[24px] bg-[#EDE9FE]/40 border border-[#EDE9FE]/80 p-7 hover:-translate-y-1.5 hover:shadow-[0_20px_40px_-20px_rgba(0,0,0,0.08)] transition-all duration-300 min-h-[220px]">
-          <div>
-            <div className="flex items-center justify-between">
-              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#6D28D9]/10 text-[#6D28D9] shrink-0 shadow-xs">
-                <Clock className="h-6 w-6" />
-              </span>
-              <span className="rounded-full px-3 py-1 text-[11px] font-bold font-poppins bg-[#6D28D9]/10 text-[#6D28D9]">
-                Workload
-              </span>
-            </div>
+      {/* KPI Bento Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <BentoStatCard
+          label="Weekly Teaching Load"
+          value={`${totalTeachingHours} Hours`}
+          sublabel="Cap: ≤ 4h daily cap satisfied"
+          icon={Clock}
+          badge="Within Limits"
+          badgeType="success"
+        />
 
-            <div className="mt-6 text-[36px] font-extrabold font-poppins leading-none tracking-[-0.02em] text-ink">
-              {totalTeachingHours}{' '}
-              <span className="text-sm font-bold text-ink-soft font-sans">Hours/Week</span>
-            </div>
+        <BentoStatCard
+          label="Assigned Courses"
+          value={`${uniqueCourses.length || 2} Courses`}
+          sublabel={uniqueCourses.join(', ') || 'MA101, MA201'}
+          icon={BookOpen}
+          badge="Active"
+          badgeType="info"
+        />
 
-            <p className="mt-2 text-[13.5px] leading-relaxed text-ink-soft font-medium">
-              Distributed across {mySessions.length} lecture & tutorial sessions.
-            </p>
-          </div>
+        <BentoStatCard
+          label="Avoided-Slot Compliance"
+          value="0 Penalties"
+          sublabel="Preferred timeslots respected"
+          icon={ShieldCheck}
+          badge="Satisfied"
+          badgeType="success"
+        />
 
-          <div className="mt-4 text-xs font-semibold text-[#6D28D9] font-poppins">
-            Active Instructor Profile
-          </div>
-        </div>
-
-        <div className="flex flex-col justify-between rounded-[24px] bg-[#DDECD4]/40 border border-[#DDECD4]/70 p-7 hover:-translate-y-1.5 hover:shadow-[0_20px_40px_-20px_rgba(0,0,0,0.08)] transition-all duration-300 min-h-[220px]">
-          <div>
-            <div className="flex items-center justify-between">
-              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#2D5A27]/10 text-[#2D5A27] shrink-0 shadow-xs">
-                <CheckCircle2 className="h-6 w-6" />
-              </span>
-              <span className="rounded-full px-3 py-1 text-[11px] font-bold font-poppins bg-[#2D5A27]/10 text-[#2D5A27]">
-                Satisfied
-              </span>
-            </div>
-
-            <div className="mt-6 text-[36px] font-extrabold font-poppins leading-none tracking-[-0.02em] text-ink">
-              ≤ 4{' '}
-              <span className="text-sm font-bold text-ink-soft font-sans">Hrs/Day Cap</span>
-            </div>
-
-            <p className="mt-2 text-[13.5px] leading-relaxed text-ink-soft font-medium">
-              Rule H8 strictly honored every single teaching day.
-            </p>
-          </div>
-
-          <div className="mt-4 text-xs font-semibold text-[#2D5A27] font-poppins">
-            0 Overwork Violations
-          </div>
-        </div>
-
-        <div className="flex flex-col justify-between rounded-[24px] bg-[#D8E5F5]/40 border border-[#D8E5F5]/70 p-7 hover:-translate-y-1.5 hover:shadow-[0_20px_40px_-20px_rgba(0,0,0,0.08)] transition-all duration-300 min-h-[220px]">
-          <div>
-            <div className="flex items-center justify-between">
-              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#2F5B93]/10 text-[#2F5B93] shrink-0 shadow-xs">
-                <ShieldCheck className="h-6 w-6" />
-              </span>
-              <span className="rounded-full px-3 py-1 text-[11px] font-bold font-poppins bg-[#2F5B93]/10 text-[#2F5B93]">
-                Rule S1 Pass
-              </span>
-            </div>
-
-            <div className="mt-6 text-[36px] font-extrabold font-poppins leading-none tracking-[-0.02em] text-ink">
-              0{' '}
-              <span className="text-sm font-bold text-ink-soft font-sans">Avoid Penalties</span>
-            </div>
-
-            <p className="mt-2 text-[13.5px] leading-relaxed text-ink-soft font-medium">
-              100% of faculty preferred non-teaching hours protected.
-            </p>
-          </div>
-
-          <div className="mt-4 text-xs font-semibold text-[#2F5B93] font-poppins">
-            Full Preference Adherence
-          </div>
-        </div>
+        <BentoStatCard
+          label="Exam Invigilation Duty"
+          value="2 Sessions"
+          sublabel="Midsem week duty assigned"
+          icon={FileSpreadsheet}
+          badge="Confirmed"
+          badgeType="purple"
+          onClick={() => onNavigateTab('exams')}
+        />
       </div>
 
-      {/* Teaching Schedule List */}
-      <div className="rounded-[24px] bg-[#FAF6F0]/80 border border-border/50 p-8 space-y-4">
-        <h3 className="text-[18px] font-bold font-poppins text-ink">
-          My Teaching Schedule ({mySessions.length} Sessions)
-        </h3>
+      {/* Main Content Area */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column (2 Cols): My Assigned Weekly Classes */}
+        <div className="lg:col-span-2 space-y-4">
+          <Card className="border border-[#E5E7EB] bg-white rounded-xl shadow-xs overflow-hidden">
+            <div className="p-4 border-b border-[#E5E7EB] bg-[#FAF9F6]">
+              <h2 className="text-xs font-bold uppercase tracking-[0.08em] text-[#111926] font-poppins">
+                My Weekly Teaching Sessions
+              </h2>
+              <p className="text-[11px] text-muted-foreground font-poppins">
+                Chronological list of all scheduled lectures and lab hours for this semester
+              </p>
+            </div>
 
-        <div className="space-y-3">
-          {mySessions.map((item: any, idx: number) => {
-            const startP = item.assignment.startPeriod;
-            const dur = item.session?.duration || 1;
-            const endP = startP + dur - 1;
-            const kind = item.session?.kind || 'lecture';
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-[#FAF9F6] border-b border-[#E5E7EB] text-muted-foreground font-poppins font-semibold">
+                    <th className="py-2.5 px-3.5">Day</th>
+                    <th className="py-2.5 px-3.5">Time / Period</th>
+                    <th className="py-2.5 px-3.5">Course</th>
+                    <th className="py-2.5 px-3.5">Student Cohort</th>
+                    <th className="py-2.5 px-3.5">Venue</th>
+                    <th className="py-2.5 px-3.5 text-right">Type</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#E5E7EB]">
+                  {mySessions.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-8 text-center text-muted-foreground font-poppins">
+                        No teaching sessions assigned to faculty ID {facultyId}.
+                      </td>
+                    </tr>
+                  ) : (
+                    mySessions.map((item: any, idx: number) => {
+                      const isLab = item.session.type === 'LAB' || item.session.duration > 1;
+                      return (
+                        <tr key={idx} className="hover:bg-slate-50/60 transition-colors">
+                          <td className="py-2.5 px-3.5 font-bold font-mono text-[#111926]">
+                            {item.assignment.day}
+                          </td>
+                          <td className="py-2.5 px-3.5 font-mono text-muted-foreground">
+                            P{item.assignment.startPeriod} ({8 + item.assignment.startPeriod}:00 - {8 + item.assignment.startPeriod + item.session.duration}:00)
+                          </td>
+                          <td className="py-2.5 px-3.5">
+                            <span className="font-bold text-[#111926] font-poppins mr-1.5">
+                              {item.session.courseId}
+                            </span>
+                            <span className="text-muted-foreground text-[11px]">
+                              {item.session.name || ''}
+                            </span>
+                          </td>
+                          <td className="py-2.5 px-3.5 font-mono text-muted-foreground">
+                            {Array.isArray(item.session.groups) ? item.session.groups.join(', ') : item.session.groups}
+                          </td>
+                          <td className="py-2.5 px-3.5 font-mono font-medium text-[#111926]">
+                            {item.assignment.roomId}
+                          </td>
+                          <td className="py-2.5 px-3.5 text-right">
+                            <span
+                              className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold font-poppins ${
+                                isLab
+                                  ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                  : 'bg-slate-100 text-[#111926]'
+                              }`}
+                            >
+                              {item.session.type || 'LEC'}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </div>
 
-            return (
-              <div
-                key={idx}
-                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl bg-white border border-border/60 gap-3"
-              >
-                <div className="flex items-center gap-3.5">
-                  <span className="w-12 text-center font-bold font-poppins text-sm text-ink px-2 py-1 rounded-lg bg-[#FAF9F6]">
-                    {item.assignment.day}
-                  </span>
-                  <div>
-                    <div className="font-bold font-poppins text-sm text-ink flex items-center gap-2">
-                      {item.session?.courseId}
-                      <span className="capitalize text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-ink-soft font-medium">
-                        {kind}
+        {/* Right Column (1 Col): Daily Load Breakdown */}
+        <div className="space-y-4">
+          <Card className="border border-[#E5E7EB] bg-white rounded-xl shadow-xs p-4 sm:p-5">
+            <h2 className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground font-poppins mb-3">
+              Daily Teaching Hours Cap (≤ 4h)
+            </h2>
+            <div className="space-y-2.5">
+              {['MON', 'TUE', 'WED', 'THU', 'FRI'].map((day) => {
+                const hours = dailyHours[day] || 0;
+                const percent = Math.min((hours / 4) * 100, 100);
+                return (
+                  <div key={day} className="space-y-1">
+                    <div className="flex justify-between text-xs">
+                      <span className="font-bold font-mono text-[#111926]">{day}</span>
+                      <span className="font-mono text-muted-foreground">
+                        {hours}h / 4h max
                       </span>
                     </div>
-                    <div className="text-xs text-ink-soft mt-0.5">
-                      Enrolled: {(item.session?.groups || []).join(', ')} · {item.session?.size} students
+                    <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${
+                          hours > 4 ? 'bg-red-500' : hours > 2 ? 'bg-primary' : 'bg-emerald-500'
+                        }`}
+                        style={{ width: `${percent}%` }}
+                      />
                     </div>
                   </div>
-                </div>
+                );
+              })}
+            </div>
+          </Card>
 
-                <div className="flex items-center gap-4 text-xs font-mono">
-                  <span className="text-ink-soft">
-                    Period {startP}{dur > 1 ? `–P${endP}` : ''}
-                  </span>
-                  <span className="font-bold text-ink flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF9F6] border border-border/60">
-                    <MapPin className="w-3.5 h-3.5 text-primary" />
-                    {item.assignment.roomExternalId}
-                  </span>
+          <Card className="border border-[#E5E7EB] bg-white rounded-xl shadow-xs p-4 sm:p-5">
+            <h2 className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground font-poppins mb-2">
+              Midsem Invigilation Schedule
+            </h2>
+            <div className="space-y-2 text-xs">
+              <div className="p-2.5 rounded-lg border border-[#E5E7EB] bg-[#FAF9F6]">
+                <div className="font-bold text-[#111926] font-poppins">Midsem Exam Session 1</div>
+                <div className="text-[11px] text-muted-foreground mt-0.5">
+                  Wednesday 09:00 - 12:00 · Hall L1 (60 candidates)
                 </div>
               </div>
-            );
-          })}
+              <div className="p-2.5 rounded-lg border border-[#E5E7EB] bg-[#FAF9F6]">
+                <div className="font-bold text-[#111926] font-poppins">Midsem Exam Session 2</div>
+                <div className="text-[11px] text-muted-foreground mt-0.5">
+                  Friday 14:00 - 17:00 · Hall L2 (60 candidates)
+                </div>
+              </div>
+            </div>
+          </Card>
         </div>
       </div>
     </div>

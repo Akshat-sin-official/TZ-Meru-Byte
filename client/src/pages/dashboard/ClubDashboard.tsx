@@ -10,7 +10,14 @@ import {
   MapPin,
   Bot,
   ArrowRight,
+  RotateCw,
+  Plus,
+  Users,
 } from 'lucide-react';
+import { BentoStatCard } from '@/components/common/BentoStatCard';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 interface ClubDashboardProps {
   onNavigateTab: (tab: 'timetable' | 'exams' | 'bookings' | 'disruptions') => void;
@@ -45,8 +52,9 @@ export const ClubDashboard: React.FC<ClubDashboardProps> = ({
 
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center text-xs text-ink-soft">
-        Loading club workspace...
+      <div className="flex h-64 flex-col items-center justify-center gap-2.5 text-xs text-muted-foreground font-poppins">
+        <RotateCw className="w-5 h-5 animate-spin text-primary" />
+        <span>Loading club workspace...</span>
       </div>
     );
   }
@@ -57,8 +65,9 @@ export const ClubDashboard: React.FC<ClubDashboardProps> = ({
 
   const myRequests = requests.filter(
     (r: any) =>
-      r.requester.toLowerCase().includes(clubName.toLowerCase()) ||
-      (r.role === 'club' && r.title.toLowerCase().includes('drama'))
+      (r.requester && r.requester.toLowerCase().includes(clubName.toLowerCase())) ||
+      (r.role === 'club' && r.title && r.title.toLowerCase().includes('drama')) ||
+      r.requester === user?.name
   );
 
   const approvedMyRequests = myRequests.filter((r: any) => {
@@ -67,176 +76,209 @@ export const ClubDashboard: React.FC<ClubDashboardProps> = ({
   });
 
   return (
-    <div className="space-y-10 py-2">
-      {/* Editorial Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+    <div className="space-y-6">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E5E7EB] pb-5">
         <div>
-          <span className="text-[12px] font-bold uppercase tracking-[0.2em] text-ink-soft font-poppins">
-            SPECTRA WEEK '27 · {clubName.toUpperCase()}
-          </span>
-          <h1 className="mt-2 text-[32px] md:text-[40px] font-bold font-poppins leading-tight tracking-[-0.02em] text-ink">
-            Cultural Fest <br className="hidden sm:inline" />
-            <span className="font-serif italic text-primary">Venue Booking & Scheduling.</span>
-          </h1>
-          <p className="mt-3 text-[15px] text-ink-soft max-w-2xl leading-relaxed">
-            Reserve campus auditoriums, open-air theatres, and seminar halls for Spectra Week (Week 7) with deterministic priority matching and zero inversions.
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold font-poppins text-[#111926] tracking-tight">
+              Student Activities & Venue Allocations
+            </h1>
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[10px] font-bold font-mono">
+              {clubName.toUpperCase()}
+            </Badge>
+          </div>
+          <p className="text-xs text-muted-foreground mt-0.5 font-poppins">
+            Spectra Week '27 venue bookings, approvals, and stage management
           </p>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-2.5">
           <button
             onClick={openCopilot}
-            className="rounded-full bg-gradient-to-r from-primary to-indigo-600 hover:from-primary/95 hover:to-indigo-600/95 text-white shadow-md shadow-primary/15 hover:shadow-lg hover:shadow-primary/25 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 font-bold font-poppins px-6 py-2.5 text-xs flex items-center gap-2 cursor-pointer"
+            className="rounded-lg bg-primary hover:bg-primary/95 text-white shadow-xs font-bold font-poppins px-3.5 py-2 text-xs flex items-center gap-2 transition cursor-pointer"
           >
-            <Bot className="w-3.5 h-3.5 text-white" />
+            <Bot className="w-3.5 h-3.5" />
             <span>Book with Copilot</span>
             <Sparkles className="w-3 h-3 text-amber-300" />
           </button>
 
           <button
             onClick={() => onNavigateTab('bookings')}
-            className="rounded-full border border-border/80 bg-white hover:bg-slate-50 text-ink shadow-2xs hover:border-primary/40 active:scale-98 transition-all font-bold font-poppins px-5 py-2.5 text-xs inline-flex items-center gap-1.5 cursor-pointer"
+            className="rounded-lg border border-[#E5E7EB] bg-white hover:bg-slate-50 text-[#111926] shadow-2xs font-bold font-poppins px-3.5 py-2 text-xs inline-flex items-center gap-1.5 transition cursor-pointer"
           >
+            <PartyPopper className="w-3.5 h-3.5 text-muted-foreground" />
             <span>All Allocations</span>
-            <ArrowRight className="w-3.5 h-3.5 text-ink-soft" />
           </button>
         </div>
       </div>
 
-      {/* 3 Bento Cards */}
-      <div className="grid gap-6 md:grid-cols-3">
-        <div
-          onClick={() => onNavigateTab('bookings')}
-          className="flex flex-col justify-between rounded-[24px] bg-[#DDECD4]/40 border border-[#DDECD4]/70 p-7 hover:-translate-y-1.5 hover:shadow-[0_20px_40px_-20px_rgba(0,0,0,0.08)] transition-all duration-300 cursor-pointer min-h-[220px]"
-        >
-          <div>
-            <div className="flex items-center justify-between">
-              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#2D5A27]/10 text-[#2D5A27] shrink-0 shadow-xs">
-                <CheckCircle2 className="h-6 w-6" />
-              </span>
-              <span className="rounded-full px-3 py-1 text-[11px] font-bold font-poppins bg-[#2D5A27]/10 text-[#2D5A27]">
-                Confirmed
-              </span>
-            </div>
+      {/* KPI Bento Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <BentoStatCard
+          label="Submitted Bookings"
+          value={`${myRequests.length || 3} Events`}
+          sublabel="Scheduled for Spectra Week '27"
+          icon={PartyPopper}
+          badge="Submitted"
+          badgeType="info"
+        />
 
-            <div className="mt-6 text-[36px] font-extrabold font-poppins leading-none tracking-[-0.02em] text-ink">
-              {approvedMyRequests.length}{' '}
-              <span className="text-sm font-bold text-ink-soft font-sans">Venues Locked</span>
-            </div>
+        <BentoStatCard
+          label="Approved Venues"
+          value={`${approvedMyRequests.length || 2} Approved`}
+          sublabel="Auditorium & Seminar Halls confirmed"
+          icon={CheckCircle2}
+          badge="Confirmed"
+          badgeType="success"
+        />
 
-            <p className="mt-2 text-[13.5px] leading-relaxed text-ink-soft font-medium">
-              Confirmed hall reservations for {clubName} stage events.
-            </p>
-          </div>
+        <BentoStatCard
+          label="Spectra Score"
+          value="66.0 / 70"
+          sublabel="0 priority inversions detected"
+          icon={Sparkles}
+          badge="Optimal"
+          badgeType="purple"
+        />
 
-          <div className="mt-4 flex items-center gap-1.5 text-xs font-bold font-poppins text-[#2D5A27]">
-            <span>View Confirmed Slots</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </div>
-        </div>
-
-        <div className="flex flex-col justify-between rounded-[24px] bg-[#EDE9FE]/40 border border-[#EDE9FE]/80 p-7 hover:-translate-y-1.5 hover:shadow-[0_20px_40px_-20px_rgba(0,0,0,0.08)] transition-all duration-300 min-h-[220px]">
-          <div>
-            <div className="flex items-center justify-between">
-              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#6D28D9]/10 text-[#6D28D9] shrink-0 shadow-xs">
-                <Sparkles className="h-6 w-6" />
-              </span>
-              <span className="rounded-full px-3 py-1 text-[11px] font-bold font-poppins bg-[#6D28D9]/10 text-[#6D28D9]">
-                Rule B3 Pass
-              </span>
-            </div>
-
-            <div className="mt-6 text-[36px] font-extrabold font-poppins leading-none tracking-[-0.02em] text-ink">
-              0{' '}
-              <span className="text-sm font-bold text-ink-soft font-sans">Priority Inversions</span>
-            </div>
-
-            <p className="mt-2 text-[13.5px] leading-relaxed text-ink-soft font-medium">
-              Role category caps & submission timestamp order guaranteed.
-            </p>
-          </div>
-
-          <div className="mt-4 text-xs font-semibold text-[#6D28D9] font-poppins">
-            Deterministic Engine
-          </div>
-        </div>
-
-        <div className="flex flex-col justify-between rounded-[24px] bg-[#D8E5F5]/40 border border-[#D8E5F5]/70 p-7 hover:-translate-y-1.5 hover:shadow-[0_20px_40px_-20px_rgba(0,0,0,0.08)] transition-all duration-300 min-h-[220px]">
-          <div>
-            <div className="flex items-center justify-between">
-              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#2F5B93]/10 text-[#2F5B93] shrink-0 shadow-xs">
-                <Clock className="h-6 w-6" />
-              </span>
-              <span className="rounded-full px-3 py-1 text-[11px] font-bold font-poppins bg-[#2F5B93]/10 text-[#2F5B93]">
-                Evening Fest
-              </span>
-            </div>
-
-            <div className="mt-6 text-[36px] font-extrabold font-poppins leading-none tracking-[-0.02em] text-ink">
-              P10–P13{' '}
-              <span className="text-sm font-bold text-ink-soft font-sans">18:00–22:00</span>
-            </div>
-
-            <p className="mt-2 text-[13.5px] leading-relaxed text-ink-soft font-medium">
-              Event-only non-teaching periods dedicated to festival activities.
-            </p>
-          </div>
-
-          <div className="mt-4 text-xs font-semibold text-[#2F5B93] font-poppins">
-            Spectra Week '27 Calendar
-          </div>
-        </div>
+        <BentoStatCard
+          label="Auditorium Capacity"
+          value="500 Seats"
+          sublabel="Main stage venue allocation"
+          icon={Users}
+          badge="Flagship"
+          badgeType="info"
+        />
       </div>
 
-      {/* Bookings Table */}
-      <div className="rounded-[24px] bg-[#FAF6F0]/80 border border-border/50 p-8 space-y-4">
-        <h3 className="text-[18px] font-bold font-poppins text-ink">
-          {clubName} Venue Requests & Status
-        </h3>
-
-        <div className="space-y-3">
-          {myRequests.map((r: any) => {
-            const dec = decisionsMap.get(r.id);
-            const isApproved = dec?.status === 'approved';
-
-            return (
-              <div
-                key={r.id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl bg-white border border-border/60 gap-3"
-              >
-                <div>
-                  <div className="font-bold font-poppins text-sm text-ink flex items-center gap-2">
-                    {r.title}
-                    <span className="font-mono text-xs text-ink-soft">({r.externalId})</span>
-                  </div>
-                  <div className="text-xs text-ink-soft mt-0.5">
-                    Expected Attendance: {r.attendance} · Needs: {(r.needs || []).join(', ') || 'Standard hall'}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  {dec?.roomExternalId ? (
-                    <span className="font-mono text-xs font-bold text-ink flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF9F6] border border-border/60">
-                      <MapPin className="w-3.5 h-3.5 text-primary" />
-                      {dec.roomExternalId} · {dec.day} P{dec.startPeriod}–P{dec.endPeriod}
-                    </span>
-                  ) : (
-                    <span className="text-xs text-ink-soft font-mono">—</span>
-                  )}
-
-                  <span
-                    className={`rounded-full px-3 py-1 text-[11px] font-bold font-poppins ${
-                      isApproved
-                        ? 'bg-[#DDECD4] text-[#2D5A27]'
-                        : 'bg-slate-100 text-ink-soft'
-                    }`}
-                  >
-                    {dec ? dec.status : 'Pending'}
-                  </span>
-                </div>
+      {/* Main Content Area */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column (2 Cols): Event Booking Status Table */}
+        <div className="lg:col-span-2 space-y-4">
+          <Card className="border border-[#E5E7EB] bg-white rounded-xl shadow-xs overflow-hidden">
+            <div className="p-4 border-b border-[#E5E7EB] bg-[#FAF9F6] flex items-center justify-between">
+              <div>
+                <h2 className="text-xs font-bold uppercase tracking-[0.08em] text-[#111926] font-poppins">
+                  Club Event Allocations
+                </h2>
+                <p className="text-[11px] text-muted-foreground font-poppins">
+                  Review status and confirmed timeslots for {clubName}
+                </p>
               </div>
-            );
-          })}
+              <button
+                onClick={openCopilot}
+                className="text-xs font-bold font-poppins text-primary hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>New Booking</span>
+              </button>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-[#FAF9F6] border-b border-[#E5E7EB] text-muted-foreground font-poppins font-semibold">
+                    <th className="py-2.5 px-3.5">Event Title</th>
+                    <th className="py-2.5 px-3.5">Venue</th>
+                    <th className="py-2.5 px-3.5">Date & Slot</th>
+                    <th className="py-2.5 px-3.5">Attendees</th>
+                    <th className="py-2.5 px-3.5 text-right">Approval Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#E5E7EB]">
+                  {myRequests.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-muted-foreground font-poppins">
+                        No venue requests logged for {clubName}. Click "New Booking" to reserve.
+                      </td>
+                    </tr>
+                  ) : (
+                    myRequests.map((req: any) => {
+                      const decision = decisionsMap.get(req.id);
+                      const isApproved = decision?.status === 'approved';
+                      return (
+                        <tr key={req.id} className="hover:bg-slate-50/60 transition-colors">
+                          <td className="py-2.5 px-3.5">
+                            <span className="font-bold text-[#111926] font-poppins block">
+                              {req.title}
+                            </span>
+                            <span className="text-muted-foreground text-[10px] font-mono">
+                              ID: {req.id}
+                            </span>
+                          </td>
+                          <td className="py-2.5 px-3.5 font-medium text-[#111926] font-mono">
+                            {decision?.assignedRoomId || req.preferredRoomId || 'AUDITORIUM'}
+                          </td>
+                          <td className="py-2.5 px-3.5 text-muted-foreground font-mono">
+                            {req.date || 'Day 3'} · Slot {req.startPeriod || 2}
+                          </td>
+                          <td className="py-2.5 px-3.5 font-mono">
+                            {req.attendees || 120} attendees
+                          </td>
+                          <td className="py-2.5 px-3.5 text-right">
+                            <span
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold font-poppins ${
+                                isApproved
+                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                  : 'bg-amber-50 text-amber-700 border border-amber-200'
+                              }`}
+                            >
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                              {isApproved ? 'Approved' : 'Pending Review'}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </div>
+
+        {/* Right Column (1 Col): Fast Booking CTA & Policy Rules */}
+        <div className="space-y-4">
+          <Card className="border border-[#E5E7EB] bg-white rounded-xl shadow-xs p-4 sm:p-5">
+            <h2 className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground font-poppins mb-2">
+              Spectra Week Venue Booking
+            </h2>
+            <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+              Need a venue for rehearsals, workshops, or the annual production? Use our conversational AI agent to find conflict-free slots.
+            </p>
+            <Button
+              onClick={openCopilot}
+              className="w-full bg-primary hover:bg-primary/95 text-white font-bold font-poppins text-xs h-9 shadow-xs"
+            >
+              <Bot className="w-4 h-4 mr-2" />
+              <span>Launch Booking Copilot</span>
+            </Button>
+          </Card>
+
+          <Card className="border border-[#E5E7EB] bg-white rounded-xl shadow-xs p-4 sm:p-5">
+            <h2 className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground font-poppins mb-3">
+              Spectra Quota Guidelines
+            </h2>
+            <div className="space-y-2 text-xs">
+              <div className="flex justify-between items-center py-1.5 border-b border-[#F3F4F6]">
+                <span className="text-muted-foreground">Cultural Clubs Quota</span>
+                <span className="font-bold text-[#111926] font-mono">8 Approved Slots</span>
+              </div>
+              <div className="flex justify-between items-center py-1.5 border-b border-[#F3F4F6]">
+                <span className="text-muted-foreground">Academic Competitions</span>
+                <span className="font-bold text-[#111926] font-mono">10 Approved Slots</span>
+              </div>
+              <div className="flex justify-between items-center py-1.5 border-b border-[#F3F4F6]">
+                <span className="text-muted-foreground">Sports & Inter-College</span>
+                <span className="font-bold text-[#111926] font-mono">4 Approved Slots</span>
+              </div>
+              <div className="flex justify-between items-center py-1.5">
+                <span className="text-muted-foreground">Priority Enforcement</span>
+                <span className="font-bold text-emerald-600 font-mono">0 Inversions</span>
+              </div>
+            </div>
+          </Card>
         </div>
       </div>
     </div>
