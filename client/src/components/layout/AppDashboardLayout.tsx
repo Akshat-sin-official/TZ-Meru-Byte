@@ -13,10 +13,8 @@ import {
   Search,
   PanelLeftClose,
   PanelLeft,
-  Calendar,
   ChevronRight,
   ChevronLeft,
-  SlidersHorizontal,
   Check,
 } from 'lucide-react';
 import { campusApi } from '@/services/api';
@@ -187,33 +185,33 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#FAF9F6] font-sans antialiased text-[#18181B]">
-      {/* Minimal Notion/Linear Styled Sidebar */}
+      {/* Refined Minimalist Sidebar */}
       <aside
         className={`hidden lg:flex flex-col flex-shrink-0 z-30 select-none h-full relative transition-all duration-200 ease-in-out border-r border-[#E5E7EB] bg-[#FBFBFA] ${
-          sidebarCollapsed ? 'w-14' : 'w-[260px]'
+          sidebarCollapsed ? 'w-16' : 'w-[270px]'
         }`}
       >
         {/* Workspace Header */}
-        <div className="px-3 py-2.5 border-b border-[#E5E7EB] flex items-center justify-between relative" ref={workspaceRef}>
+        <div className="px-3.5 py-3 border-b border-[#E5E7EB] flex items-center justify-between relative" ref={workspaceRef}>
           {!sidebarCollapsed ? (
             <div
               onClick={() => setWorkspaceMenuOpen(!workspaceMenuOpen)}
-              className="flex items-center gap-2 p-1 rounded-md hover:bg-[#F4F4F5] transition cursor-pointer group min-w-0"
+              className="flex items-center gap-2.5 p-1 rounded-md hover:bg-[#F4F4F5] transition cursor-pointer group min-w-0"
               title="Workspace Menu"
             >
-              <div className="w-5 h-5 rounded bg-white border border-[#E5E7EB] flex items-center justify-center text-[10px] font-semibold text-[#18181B] shrink-0 shadow-2xs">
+              <div className="w-6 h-6 rounded bg-white border border-[#E5E7EB] flex items-center justify-center text-xs font-semibold text-[#18181B] shrink-0 shadow-2xs">
                 🏛
               </div>
-              <div className="flex flex-col min-w-0 text-left">
-                <span className="text-xs font-semibold tracking-tight text-[#18181B] truncate">
+              <div className="flex flex-col min-w-0 text-left justify-center">
+                <span className="text-[13.5px] font-semibold tracking-tight text-[#09090B] leading-tight truncate">
                   CIT CampusOS
                 </span>
-                <span className="text-[10px] text-[#71717A] font-mono leading-none">
+                <span className="text-[11px] font-medium text-[#52525B] leading-tight mt-0.5">
                   Autumn 2027
                 </span>
               </div>
               <ChevronDown
-                className={`h-3 w-3 text-[#A1A1AA] group-hover:text-[#18181B] transition shrink-0 ml-0.5 ${
+                className={`h-3.5 w-3.5 text-[#71717A] group-hover:text-[#18181B] transition shrink-0 ml-1 ${
                   workspaceMenuOpen ? 'rotate-180' : ''
                 }`}
               />
@@ -221,7 +219,7 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
           ) : (
             <div
               onClick={() => setSidebarCollapsed(false)}
-              className="mx-auto w-6 h-6 rounded bg-white border border-[#E5E7EB] flex items-center justify-center text-[10px] font-semibold text-[#18181B] cursor-pointer shadow-2xs"
+              className="mx-auto w-7 h-7 rounded bg-white border border-[#E5E7EB] flex items-center justify-center text-xs font-semibold text-[#18181B] cursor-pointer shadow-2xs"
             >
               🏛
             </div>
@@ -229,62 +227,62 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
 
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="p-1 rounded-md hover:bg-[#F4F4F5] text-[#71717A] hover:text-[#18181B] transition cursor-pointer"
+            className="p-1.5 rounded-md hover:bg-[#F4F4F5] text-[#71717A] hover:text-[#09090B] transition cursor-pointer"
             title={sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
           >
             {sidebarCollapsed ? (
-              <PanelLeft className="h-3.5 w-3.5" />
+              <PanelLeft className="h-4 w-4" />
             ) : (
-              <PanelLeftClose className="h-3.5 w-3.5" />
+              <PanelLeftClose className="h-4 w-4" />
             )}
           </button>
 
           {/* Minimal Workspace Popover Menu */}
           {workspaceMenuOpen && !sidebarCollapsed && (
-            <div className="absolute left-3 top-12 w-[236px] bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-50 p-1.5 space-y-1.5">
-              <div className="px-2 py-0.5 text-[9px] font-medium uppercase tracking-wider text-[#A1A1AA]">
+            <div className="absolute left-3.5 top-14 w-[245px] bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-50 p-2 space-y-1.5">
+              <div className="px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-wider text-[#71717A]">
                 Academic Terms
               </div>
               <button
                 onClick={() => setWorkspaceMenuOpen(false)}
-                className="w-full flex items-center justify-between px-2 py-1.5 rounded bg-[#F4F4F5] text-xs font-medium text-[#18181B] text-left transition"
+                className="w-full flex items-center justify-between px-2.5 py-2 rounded bg-[#F4F4F5] text-[13px] font-medium text-[#09090B] text-left transition"
               >
-                <div className="flex items-center gap-1.5">
-                  <Check className="w-3 h-3 text-[#18181B]" />
+                <div className="flex items-center gap-2">
+                  <Check className="w-3.5 h-3.5 text-[#09090B]" />
                   <span>Autumn 2027</span>
                 </div>
-                <span className="text-[9px] font-mono text-[#71717A]">Active</span>
+                <span className="text-[10px] font-mono font-medium text-[#52525B]">Active</span>
               </button>
               <button
                 onClick={() => {
                   toast.info('Spring 2028 is in draft cycle.');
                   setWorkspaceMenuOpen(false);
                 }}
-                className="w-full flex items-center justify-between px-2 py-1.5 rounded hover:bg-[#F4F4F5] text-xs text-[#71717A] hover:text-[#18181B] text-left transition cursor-pointer"
+                className="w-full flex items-center justify-between px-2.5 py-2 rounded hover:bg-[#F4F4F5] text-[13px] text-[#52525B] hover:text-[#09090B] text-left transition cursor-pointer"
               >
-                <span className="pl-4.5">Spring 2028</span>
-                <span className="text-[9px] font-mono text-[#A1A1AA]">Draft</span>
+                <span className="pl-5.5">Spring 2028</span>
+                <span className="text-[10px] font-mono text-[#71717A]">Draft</span>
               </button>
 
-              <div className="border-t border-[#F4F4F5] pt-1">
-                <div className="px-2 py-1 text-[10px] text-[#71717A] flex items-center justify-between">
+              <div className="border-t border-[#F4F4F5] pt-1.5">
+                <div className="px-2 py-1 text-[11.5px] text-[#52525B] flex items-center justify-between font-medium">
                   <span>Engine</span>
-                  <span className="font-mono text-[9px] text-[#71717A]">CP-SAT 9.8</span>
+                  <span className="font-mono text-[10px] text-[#52525B]">CP-SAT 9.8</span>
                 </div>
               </div>
 
               {user?.role === 'admin' && (
-                <div className="border-t border-[#F4F4F5] pt-1">
+                <div className="border-t border-[#F4F4F5] pt-1.5">
                   <button
                     onClick={() => {
                       setWorkspaceMenuOpen(false);
                       handleResetData();
                     }}
                     disabled={resetting}
-                    className="w-full flex items-center gap-1.5 px-2 py-1 rounded text-xs text-[#71717A] hover:text-[#18181B] hover:bg-[#F4F4F5] transition cursor-pointer"
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-xs font-medium text-[#71717A] hover:text-red-700 hover:bg-red-50/50 transition cursor-pointer"
                   >
-                    <RotateCw className={`w-3 h-3 ${resetting ? 'animate-spin' : ''}`} />
-                    <span>Reset Baseline</span>
+                    <RotateCw className={`w-3.5 h-3.5 ${resetting ? 'animate-spin' : ''}`} />
+                    <span>Reset Baseline Data</span>
                   </button>
                 </div>
               )}
@@ -293,58 +291,58 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
         </div>
 
         {/* Scrollable Nav Section */}
-        <div className="p-2 flex-1 overflow-y-auto space-y-3 scrollbar-none">
+        <div className="p-3 flex-1 overflow-y-auto space-y-4 scrollbar-none">
           {/* Quick Search */}
           {!sidebarCollapsed ? (
             <button
               onClick={openCopilot}
-              className="w-full flex items-center justify-between px-2.5 py-1.5 text-xs text-[#71717A] hover:text-[#18181B] rounded-md hover:bg-[#F4F4F5] transition border border-transparent hover:border-[#E5E7EB] cursor-pointer"
+              className="w-full flex items-center justify-between px-3 py-2 text-[13px] font-medium text-[#52525B] hover:text-[#09090B] rounded-lg hover:bg-[#F4F4F5] transition border border-[#E5E7EB] bg-white cursor-pointer shadow-2xs"
             >
-              <div className="flex items-center gap-2">
-                <Search className="h-3.5 w-3.5 text-[#A1A1AA]" />
-                <span className="text-[11.5px]">Quick find...</span>
+              <div className="flex items-center gap-2.5">
+                <Search className="h-4 w-4 text-[#71717A]" />
+                <span>Quick find...</span>
               </div>
-              <kbd className="text-[10px] font-mono bg-white border border-[#E5E7EB] text-[#71717A] px-1 py-0.2 rounded shadow-2xs">
+              <kbd className="text-[10.5px] font-mono font-medium bg-[#F4F4F5] border border-[#E5E7EB] text-[#52525B] px-1.5 py-0.5 rounded">
                 ⌘K
               </kbd>
             </button>
           ) : (
             <button
               onClick={openCopilot}
-              className="w-full flex items-center justify-center py-1.5 text-[#71717A] hover:text-[#18181B] rounded-md hover:bg-[#F4F4F5] transition cursor-pointer"
+              className="w-full flex items-center justify-center py-2 text-[#52525B] hover:text-[#09090B] rounded-md hover:bg-[#F4F4F5] transition cursor-pointer"
               title="Search (⌘K)"
             >
-              <Search className="h-3.5 w-3.5" />
+              <Search className="h-4 w-4" />
             </button>
           )}
 
           {/* Nav: Schedules */}
           <div>
             {!sidebarCollapsed && (
-              <div className="px-2 text-[9.5px] font-medium tracking-wider uppercase text-[#A1A1AA] mb-1">
+              <div className="px-2 text-[11px] font-semibold tracking-wider uppercase text-[#71717A] mb-1.5">
                 Schedules
               </div>
             )}
-            <nav className="space-y-0.5">
+            <nav className="space-y-1">
               {/* Overview */}
               <button
                 onClick={() => setActiveTab('dashboard')}
-                className={`w-full flex items-center justify-between px-2 py-1.5 text-xs rounded-md transition cursor-pointer ${
+                className={`w-full flex items-center justify-between px-3 py-2 text-[13.5px] rounded-lg transition cursor-pointer ${
                   activeTab === 'dashboard'
-                    ? 'bg-white font-medium text-[#18181B] border border-[#E5E7EB] shadow-2xs'
-                    : 'text-[#71717A] hover:text-[#18181B] hover:bg-[#F4F4F5] border border-transparent'
+                    ? 'bg-white font-semibold text-[#09090B] border border-[#E5E7EB] shadow-2xs'
+                    : 'text-[#3F3F46] hover:text-[#09090B] hover:bg-[#F4F4F5] border border-transparent font-medium'
                 }`}
                 title="Overview Dashboard"
               >
-                <div className="flex items-center gap-2">
-                  <LayoutDashboard className="h-3.5 w-3.5 text-[#71717A]" />
+                <div className="flex items-center gap-2.5">
+                  <LayoutDashboard className={`h-4 w-4 ${activeTab === 'dashboard' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
                   {!sidebarCollapsed && <span>Overview</span>}
                 </div>
               </button>
 
               {/* Weekly Timetable */}
               <div
-                className={`rounded-md transition-all ${
+                className={`rounded-lg transition-all ${
                   activeTab === 'timetable'
                     ? 'bg-white border border-[#E5E7EB] shadow-2xs overflow-hidden'
                     : ''
@@ -355,29 +353,31 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
                     setActiveTab('timetable');
                     setCohortMenuOpen(true);
                   }}
-                  className={`w-full flex items-center justify-between px-2 py-1.5 text-xs transition cursor-pointer ${
+                  className={`w-full flex items-center justify-between px-3 py-2 text-[13.5px] transition cursor-pointer ${
                     activeTab === 'timetable'
-                      ? 'font-medium text-[#18181B]'
-                      : 'text-[#71717A] hover:text-[#18181B] hover:bg-[#F4F4F5]'
+                      ? 'font-semibold text-[#09090B]'
+                      : 'text-[#3F3F46] hover:text-[#09090B] hover:bg-[#F4F4F5] font-medium'
                   }`}
                   title="Weekly Timetable"
                 >
-                  <div className="flex items-center gap-2">
-                    <CalendarDays className="h-3.5 w-3.5 text-[#71717A]" />
+                  <div className="flex items-center gap-2.5">
+                    <CalendarDays className={`h-4 w-4 ${activeTab === 'timetable' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
                     {!sidebarCollapsed && <span>Weekly Timetable</span>}
                   </div>
                   {!sidebarCollapsed && (
-                    <div className="flex items-center gap-1">
-                      <span className="text-[10px] font-mono text-[#71717A]">189</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-mono font-medium text-[#52525B] bg-[#F4F4F5] px-1.5 py-0.5 rounded">
+                        189
+                      </span>
                       <span
                         onClick={(e) => {
                           e.stopPropagation();
                           setCohortMenuOpen(!cohortMenuOpen);
                         }}
-                        className="p-0.5 rounded hover:bg-[#F4F4F5] text-[#A1A1AA] transition"
+                        className="p-1 rounded hover:bg-[#E5E7EB] text-[#71717A] hover:text-[#09090B] transition cursor-pointer"
                       >
                         <ChevronDown
-                          className={`h-2.5 w-2.5 transition-transform ${cohortMenuOpen ? 'rotate-180' : ''}`}
+                          className={`h-3 w-3 transition-transform ${cohortMenuOpen ? 'rotate-180' : ''}`}
                         />
                       </span>
                     </div>
@@ -386,21 +386,21 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
 
                 {/* Sub-cohort list */}
                 {!sidebarCollapsed && cohortMenuOpen && (
-                  <div className="pl-4 pr-1.5 pb-1.5 pt-0.5 space-y-0.5 border-t border-[#F4F4F5] bg-[#FBFBFA] text-[11px]">
+                  <div className="ml-5 pl-2.5 pr-2 pb-2 pt-1 space-y-1 border-l border-[#E5E7EB] text-xs">
                     {cohorts.map((cohort) => {
                       const isSelected = selectedCohort === cohort.id;
                       return (
                         <button
                           key={cohort.id}
                           onClick={() => onSelectCohort?.(cohort.id)}
-                          className={`w-full flex items-center justify-between px-2 py-1 rounded transition text-left cursor-pointer ${
+                          className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition text-left cursor-pointer ${
                             isSelected
-                              ? 'bg-white font-medium text-[#18181B] border border-[#E5E7EB] shadow-2xs'
-                              : 'text-[#71717A] hover:text-[#18181B] hover:bg-[#F4F4F5]'
+                              ? 'bg-white font-semibold text-[#09090B] border border-[#E5E7EB] shadow-2xs'
+                              : 'text-[#52525B] hover:text-[#09090B] hover:bg-[#F4F4F5] font-medium'
                           }`}
                         >
                           <span className="truncate">{cohort.label}</span>
-                          <span className="text-[9px] font-mono text-[#A1A1AA]">{cohort.hours}</span>
+                          <span className="text-[10.5px] font-mono text-[#71717A]">{cohort.hours}</span>
                         </button>
                       );
                     })}
@@ -411,38 +411,42 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
               {/* Exams */}
               <button
                 onClick={() => setActiveTab('exams')}
-                className={`w-full flex items-center justify-between px-2 py-1.5 text-xs rounded-md transition cursor-pointer ${
+                className={`w-full flex items-center justify-between px-3 py-2 text-[13.5px] rounded-lg transition cursor-pointer ${
                   activeTab === 'exams'
-                    ? 'bg-white font-medium text-[#18181B] border border-[#E5E7EB] shadow-2xs'
-                    : 'text-[#71717A] hover:text-[#18181B] hover:bg-[#F4F4F5] border border-transparent'
+                    ? 'bg-white font-semibold text-[#09090B] border border-[#E5E7EB] shadow-2xs'
+                    : 'text-[#3F3F46] hover:text-[#09090B] hover:bg-[#F4F4F5] border border-transparent font-medium'
                 }`}
                 title="Exam Schedule"
               >
-                <div className="flex items-center gap-2">
-                  <FileSpreadsheet className="h-3.5 w-3.5 text-[#71717A]" />
+                <div className="flex items-center gap-2.5">
+                  <FileSpreadsheet className={`h-4 w-4 ${activeTab === 'exams' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
                   {!sidebarCollapsed && <span>Exam Timetable</span>}
                 </div>
                 {!sidebarCollapsed && (
-                  <span className="text-[10px] font-mono text-[#71717A]">Midsem</span>
+                  <span className="text-[11px] font-mono font-medium text-[#52525B] bg-[#F4F4F5] px-1.5 py-0.5 rounded">
+                    Midsem
+                  </span>
                 )}
               </button>
 
               {/* Spectra Fest */}
               <button
                 onClick={() => setActiveTab('bookings')}
-                className={`w-full flex items-center justify-between px-2 py-1.5 text-xs rounded-md transition cursor-pointer ${
+                className={`w-full flex items-center justify-between px-3 py-2 text-[13.5px] rounded-lg transition cursor-pointer ${
                   activeTab === 'bookings'
-                    ? 'bg-white font-medium text-[#18181B] border border-[#E5E7EB] shadow-2xs'
-                    : 'text-[#71717A] hover:text-[#18181B] hover:bg-[#F4F4F5] border border-transparent'
+                    ? 'bg-white font-semibold text-[#09090B] border border-[#E5E7EB] shadow-2xs'
+                    : 'text-[#3F3F46] hover:text-[#09090B] hover:bg-[#F4F4F5] border border-transparent font-medium'
                 }`}
                 title="Fest Bookings"
               >
-                <div className="flex items-center gap-2">
-                  <PartyPopper className="h-3.5 w-3.5 text-[#71717A]" />
+                <div className="flex items-center gap-2.5">
+                  <PartyPopper className={`h-4 w-4 ${activeTab === 'bookings' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
                   {!sidebarCollapsed && <span>Spectra Bookings</span>}
                 </div>
                 {!sidebarCollapsed && (
-                  <span className="text-[10px] font-mono text-[#71717A]">Oct 22-24</span>
+                  <span className="text-[11px] font-mono font-medium text-[#52525B] bg-[#F4F4F5] px-1.5 py-0.5 rounded">
+                    Oct 22-24
+                  </span>
                 )}
               </button>
 
@@ -450,19 +454,21 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
               {(user?.role === 'admin' || user?.role === 'department_coordinator') && (
                 <button
                   onClick={() => setActiveTab('disruptions')}
-                  className={`w-full flex items-center justify-between px-2 py-1.5 text-xs rounded-md transition cursor-pointer ${
+                  className={`w-full flex items-center justify-between px-3 py-2 text-[13.5px] rounded-lg transition cursor-pointer ${
                     activeTab === 'disruptions'
-                      ? 'bg-white font-medium text-[#18181B] border border-[#E5E7EB] shadow-2xs'
-                      : 'text-[#71717A] hover:text-[#18181B] hover:bg-[#F4F4F5] border border-transparent'
+                      ? 'bg-white font-semibold text-[#09090B] border border-[#E5E7EB] shadow-2xs'
+                      : 'text-[#3F3F46] hover:text-[#09090B] hover:bg-[#F4F4F5] border border-transparent font-medium'
                   }`}
                   title="Disruptions & Recovery"
                 >
-                  <div className="flex items-center gap-2">
-                    <AlertTriangle className="h-3.5 w-3.5 text-[#71717A]" />
+                  <div className="flex items-center gap-2.5">
+                    <AlertTriangle className={`h-4 w-4 ${activeTab === 'disruptions' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
                     {!sidebarCollapsed && <span>Disruptions</span>}
                   </div>
                   {!sidebarCollapsed && (
-                    <span className="text-[9px] font-mono text-[#71717A]">0 Clashes</span>
+                    <span className="text-[11px] font-mono font-medium text-[#52525B] bg-[#F4F4F5] px-1.5 py-0.5 rounded">
+                      0 Clashes
+                    </span>
                   )}
                 </button>
               )}
@@ -472,26 +478,26 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
           {/* Quick Filters (only on timetable or bookings) */}
           {!sidebarCollapsed && (activeTab === 'timetable' || activeTab === 'bookings') && (
             <div className="pt-2 border-t border-[#E5E7EB]">
-              <div className="px-2 flex items-center justify-between text-[9.5px] font-medium tracking-wider uppercase text-[#A1A1AA] mb-1">
+              <div className="px-2 flex items-center justify-between text-[11px] font-semibold tracking-wider uppercase text-[#71717A] mb-1.5">
                 <span>View Filters</span>
                 <button
                   onClick={() => setFiltersOpen(!filtersOpen)}
-                  className="text-[#A1A1AA] hover:text-[#18181B] p-0.5 cursor-pointer"
+                  className="text-[#71717A] hover:text-[#09090B] p-1 cursor-pointer"
                 >
-                  <ChevronDown className={`w-2.5 h-2.5 transition-transform ${filtersOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-3 h-3 transition-transform ${filtersOpen ? 'rotate-180' : ''}`} />
                 </button>
               </div>
 
               {filtersOpen && (
-                <div className="grid grid-cols-2 gap-1 px-0.5">
+                <div className="grid grid-cols-2 gap-1.5 px-0.5">
                   {(['all', 'labs', 'lectures', 'tutorials'] as const).map((filterKey) => (
                     <button
                       key={filterKey}
                       onClick={() => onSelectQuickFilter?.(filterKey)}
-                      className={`px-2 py-1 text-[11px] rounded border transition text-center capitalize cursor-pointer ${
+                      className={`px-2.5 py-1.5 text-xs rounded-md border transition text-center capitalize cursor-pointer font-medium ${
                         quickFilter === filterKey
-                          ? 'bg-white text-[#18181B] border-[#E5E7EB] font-medium shadow-2xs'
-                          : 'bg-transparent border-transparent text-[#71717A] hover:text-[#18181B] hover:bg-[#F4F4F5]'
+                          ? 'bg-white text-[#09090B] border-[#E5E7EB] font-semibold shadow-2xs'
+                          : 'bg-transparent border-transparent text-[#52525B] hover:text-[#09090B] hover:bg-[#F4F4F5]'
                       }`}
                     >
                       {filterKey === 'all' ? 'All Slots' : filterKey}
@@ -505,40 +511,40 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
           {/* Interactive Mini Calendar */}
           {!sidebarCollapsed && (
             <div className="pt-2 border-t border-[#E5E7EB]">
-              <div className="bg-white border border-[#E5E7EB] rounded-lg p-2.5 shadow-2xs">
+              <div className="bg-white border border-[#E5E7EB] rounded-lg p-3 shadow-2xs">
                 {/* Calendar Header */}
-                <div className="flex items-center justify-between mb-2 px-0.5">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-semibold text-[#18181B]">
+                <div className="flex items-center justify-between mb-2.5 px-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-[#09090B]">
                       {calendarMonth === 'OCT' ? 'October 2027' : 'November 2027'}
                     </span>
-                    <span className="text-[9px] font-mono text-[#71717A]">
+                    <span className="text-[10px] font-mono font-medium text-[#52525B] bg-[#F4F4F5] px-1 py-0.2 rounded">
                       {calendarMonth === 'OCT' ? 'Wk 42' : 'Wk 45'}
                     </span>
                   </div>
-                  <div className="flex items-center gap-0.5 text-[#71717A]">
+                  <div className="flex items-center gap-1 text-[#52525B]">
                     <button
                       onClick={() => setCalendarMonth('OCT')}
-                      className={`p-0.5 rounded hover:bg-[#F4F4F5] transition cursor-pointer ${
-                        calendarMonth === 'OCT' ? 'text-[#18181B]' : 'text-[#A1A1AA]'
+                      className={`p-1 rounded hover:bg-[#F4F4F5] transition cursor-pointer ${
+                        calendarMonth === 'OCT' ? 'text-[#09090B] font-semibold' : 'text-[#71717A]'
                       }`}
                     >
-                      <ChevronLeft className="h-3 w-3" />
+                      <ChevronLeft className="h-3.5 w-3.5" />
                     </button>
                     <button
                       onClick={() => setCalendarMonth('NOV')}
-                      className={`p-0.5 rounded hover:bg-[#F4F4F5] transition cursor-pointer ${
-                        calendarMonth === 'NOV' ? 'text-[#18181B]' : 'text-[#A1A1AA]'
+                      className={`p-1 rounded hover:bg-[#F4F4F5] transition cursor-pointer ${
+                        calendarMonth === 'NOV' ? 'text-[#09090B] font-semibold' : 'text-[#71717A]'
                       }`}
                     >
-                      <ChevronRight className="h-3 w-3" />
+                      <ChevronRight className="h-3.5 w-3.5" />
                     </button>
                     <button
                       onClick={() => setCalendarOpen(!calendarOpen)}
-                      className="p-0.5 rounded hover:bg-[#F4F4F5] text-[#A1A1AA] hover:text-[#18181B] transition cursor-pointer ml-1"
+                      className="p-1 rounded hover:bg-[#F4F4F5] text-[#71717A] hover:text-[#09090B] transition cursor-pointer ml-1"
                     >
                       <ChevronDown
-                        className={`h-3 w-3 transition-transform ${calendarOpen ? 'rotate-180' : ''}`}
+                        className={`h-3.5 w-3.5 transition-transform ${calendarOpen ? 'rotate-180' : ''}`}
                       />
                     </button>
                   </div>
@@ -546,7 +552,7 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
 
                 {calendarOpen && (
                   <>
-                    <div className="grid grid-cols-7 gap-0.5 text-center text-[10px] font-medium text-[#A1A1AA] mb-1">
+                    <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold text-[#71717A] mb-1.5">
                       <span>M</span>
                       <span>T</span>
                       <span>W</span>
@@ -557,11 +563,11 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
                     </div>
 
                     {calendarMonth === 'OCT' ? (
-                      <div className="grid grid-cols-7 gap-0.5 text-center text-[10.5px]">
-                        <span className="text-[#D4D4D8] py-0.5">27</span>
-                        <span className="text-[#D4D4D8] py-0.5">28</span>
-                        <span className="text-[#D4D4D8] py-0.5">29</span>
-                        <span className="text-[#D4D4D8] py-0.5">30</span>
+                      <div className="grid grid-cols-7 gap-1 text-center text-xs">
+                        <span className="text-[#A1A1AA] py-1">27</span>
+                        <span className="text-[#A1A1AA] py-1">28</span>
+                        <span className="text-[#A1A1AA] py-1">29</span>
+                        <span className="text-[#A1A1AA] py-1">30</span>
 
                         {[...Array(31)].map((_, i) => {
                           const date = i + 1;
@@ -573,29 +579,29 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
                             <button
                               key={date}
                               onClick={() => handleDateClick(date)}
-                              className={`py-0.5 rounded transition cursor-pointer select-none relative ${
+                              className={`py-1 rounded transition cursor-pointer select-none relative font-medium ${
                                 isSelected
-                                  ? 'bg-[#18181B] text-white font-medium shadow-2xs'
+                                  ? 'bg-[#09090B] text-white font-semibold shadow-2xs'
                                   : 'text-[#18181B] hover:bg-[#F4F4F5]'
                               }`}
                             >
                               <span>{date}</span>
                               {(isMidsem || isSpectra) && !isSelected && (
-                                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-0.5 rounded-full bg-[#71717A]" />
+                                <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-0.5 rounded-full bg-[#52525B]" />
                               )}
                             </button>
                           );
                         })}
                       </div>
                     ) : (
-                      <div className="grid grid-cols-7 gap-0.5 text-center text-[10.5px]">
+                      <div className="grid grid-cols-7 gap-1 text-center text-xs">
                         {[...Array(30)].map((_, i) => {
                           const date = i + 1;
                           return (
                             <button
                               key={date}
                               onClick={() => handleDateClick(date)}
-                              className="py-0.5 rounded transition cursor-pointer select-none text-[#18181B] hover:bg-[#F4F4F5]"
+                              className="py-1 rounded transition cursor-pointer select-none text-[#18181B] hover:bg-[#F4F4F5] font-medium"
                             >
                               {date}
                             </button>
@@ -605,13 +611,13 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
                     )}
 
                     {selectedDay && (
-                      <div className="mt-2 pt-1.5 border-t border-[#F4F4F5] flex items-center justify-between text-[10px]">
-                        <span className="text-[#71717A]">
-                          Filtered: <strong className="text-[#18181B]">{selectedDay}</strong>
+                      <div className="mt-2.5 pt-2 border-t border-[#F4F4F5] flex items-center justify-between text-[11px]">
+                        <span className="text-[#52525B]">
+                          Filtered: <strong className="text-[#09090B]">{selectedDay}</strong>
                         </span>
                         <button
                           onClick={() => onSelectDay?.(null)}
-                          className="text-[#71717A] hover:text-[#18181B] underline cursor-pointer"
+                          className="text-[#52525B] hover:text-[#09090B] font-medium underline cursor-pointer"
                         >
                           Clear
                         </button>
@@ -625,47 +631,47 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
         </div>
 
         {/* Footer: Segmented Role Switcher & Profile */}
-        <div className="p-2.5 border-t border-[#E5E7EB] space-y-2 bg-[#FBFBFA] shrink-0">
+        <div className="p-3 border-t border-[#E5E7EB] space-y-2.5 bg-[#FBFBFA] shrink-0">
           {!sidebarCollapsed ? (
             <>
               {/* Minimal Segmented Role Control */}
-              <div className="flex items-center justify-between text-[11px] bg-[#F4F4F5] p-0.5 rounded-md border border-[#E5E7EB]">
+              <div className="flex items-center justify-between text-xs bg-[#F4F4F5] p-0.5 rounded-lg border border-[#E5E7EB]">
                 <button
                   onClick={() => loginDemo('admin')}
-                  className={`flex-1 py-1 rounded text-center transition cursor-pointer ${
+                  className={`flex-1 py-1.5 rounded-md text-center transition cursor-pointer font-medium ${
                     user?.role === 'admin'
-                      ? 'bg-white text-[#18181B] font-medium shadow-2xs'
-                      : 'text-[#71717A] hover:text-[#18181B]'
+                      ? 'bg-white text-[#09090B] font-semibold shadow-2xs'
+                      : 'text-[#52525B] hover:text-[#09090B]'
                   }`}
                 >
                   Admin
                 </button>
                 <button
                   onClick={() => loginDemo('department_coordinator')}
-                  className={`flex-1 py-1 rounded text-center transition cursor-pointer ${
+                  className={`flex-1 py-1.5 rounded-md text-center transition cursor-pointer font-medium ${
                     user?.role === 'department_coordinator'
-                      ? 'bg-white text-[#18181B] font-medium shadow-2xs'
-                      : 'text-[#71717A] hover:text-[#18181B]'
+                      ? 'bg-white text-[#09090B] font-semibold shadow-2xs'
+                      : 'text-[#52525B] hover:text-[#09090B]'
                   }`}
                 >
                   Coord
                 </button>
                 <button
                   onClick={() => loginDemo('faculty')}
-                  className={`flex-1 py-1 rounded text-center transition cursor-pointer ${
+                  className={`flex-1 py-1.5 rounded-md text-center transition cursor-pointer font-medium ${
                     user?.role === 'faculty'
-                      ? 'bg-white text-[#18181B] font-medium shadow-2xs'
-                      : 'text-[#71717A] hover:text-[#18181B]'
+                      ? 'bg-white text-[#09090B] font-semibold shadow-2xs'
+                      : 'text-[#52525B] hover:text-[#09090B]'
                   }`}
                 >
                   Faculty
                 </button>
                 <button
                   onClick={() => loginDemo('club')}
-                  className={`flex-1 py-1 rounded text-center transition cursor-pointer ${
+                  className={`flex-1 py-1.5 rounded-md text-center transition cursor-pointer font-medium ${
                     user?.role === 'club'
-                      ? 'bg-white text-[#18181B] font-medium shadow-2xs'
-                      : 'text-[#71717A] hover:text-[#18181B]'
+                      ? 'bg-white text-[#09090B] font-semibold shadow-2xs'
+                      : 'text-[#52525B] hover:text-[#09090B]'
                   }`}
                 >
                   Club
@@ -673,16 +679,16 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
               </div>
 
               {/* User Profile Card */}
-              <div className="flex items-center justify-between pt-0.5">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-6 h-6 rounded-full bg-white border border-[#E5E7EB] flex items-center justify-center text-[10px] font-semibold text-[#18181B] shrink-0 shadow-2xs">
+              <div className="flex items-center justify-between pt-1">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-7 h-7 rounded-full bg-white border border-[#E5E7EB] flex items-center justify-center text-xs font-semibold text-[#09090B] shrink-0 shadow-2xs">
                     {getInitials(user?.name)}
                   </div>
                   <div className="truncate min-w-0 text-left">
-                    <p className="text-xs font-medium text-[#18181B] truncate">
+                    <p className="text-[13px] font-semibold text-[#09090B] leading-tight truncate">
                       {user?.name || getRoleLabel(user?.role)}
                     </p>
-                    <p className="text-[10px] text-[#71717A] truncate">
+                    <p className="text-[11px] font-medium text-[#52525B] leading-tight mt-0.5 truncate">
                       {getRoleLabel(user?.role)}
                     </p>
                   </div>
@@ -690,16 +696,16 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
                 <button
                   onClick={logout}
                   title="Sign Out"
-                  className="text-[#71717A] hover:text-[#18181B] p-1 rounded hover:bg-[#F4F4F5] transition cursor-pointer shrink-0"
+                  className="text-[#71717A] hover:text-red-700 p-1.5 rounded-md hover:bg-[#F4F4F5] transition cursor-pointer shrink-0"
                 >
-                  <LogOut className="h-3.5 w-3.5" />
+                  <LogOut className="h-4 w-4" />
                 </button>
               </div>
             </>
           ) : (
             <div className="flex flex-col items-center gap-2">
               <div
-                className="w-6 h-6 rounded-full bg-white border border-[#E5E7EB] flex items-center justify-center text-[10px] font-semibold text-[#18181B] shadow-2xs cursor-pointer"
+                className="w-7 h-7 rounded-full bg-white border border-[#E5E7EB] flex items-center justify-center text-xs font-semibold text-[#09090B] shadow-2xs cursor-pointer"
                 title={`${user?.name} (${getRoleLabel(user?.role)})`}
               >
                 {getInitials(user?.name)}
@@ -707,9 +713,9 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
               <button
                 onClick={logout}
                 title="Sign Out"
-                className="text-[#71717A] hover:text-[#18181B] p-1 rounded hover:bg-[#F4F4F5] transition cursor-pointer"
+                className="text-[#71717A] hover:text-red-700 p-1 rounded-md hover:bg-[#F4F4F5] transition cursor-pointer"
               >
-                <LogOut className="h-3.5 w-3.5" />
+                <LogOut className="h-4 w-4" />
               </button>
             </div>
           )}
@@ -719,11 +725,11 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
       {/* Main Content Area */}
       <div className="flex flex-1 flex-col h-full overflow-y-auto scrollbar-thin">
         {/* Top Header */}
-        <header className="h-13 border-b border-[#E5E7EB] bg-white px-6 flex items-center justify-between shrink-0 sticky top-0 z-30 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-[#71717A]">CIT CampusOS</span>
-            <span className="text-[#D4D4D8]">/</span>
-            <span className="font-medium text-[#18181B] capitalize">
+        <header className="h-14 border-b border-[#E5E7EB] bg-white px-6 flex items-center justify-between shrink-0 sticky top-0 z-30 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+          <div className="flex items-center gap-2 text-[13px]">
+            <span className="text-[#52525B] font-medium">CIT CampusOS</span>
+            <span className="text-[#A1A1AA]">/</span>
+            <span className="font-semibold text-[#09090B] capitalize">
               {activeTab === 'timetable'
                 ? 'Weekly Timetable'
                 : activeTab === 'exams'
@@ -736,8 +742,8 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
             </span>
             {selectedDay && (
               <>
-                <span className="text-[#D4D4D8]">/</span>
-                <span className="text-[#18181B] bg-[#F4F4F5] px-1.5 py-0.5 rounded font-mono text-[10.5px]">
+                <span className="text-[#A1A1AA]">/</span>
+                <span className="text-[#09090B] bg-[#F4F4F5] border border-[#E5E7EB] px-2 py-0.5 rounded font-mono text-xs font-medium">
                   {selectedDay}
                 </span>
               </>
@@ -745,7 +751,7 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[#E5E7EB] bg-[#FBFBFA] text-[#18181B] text-[11px] font-mono">
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full border border-[#E5E7EB] bg-[#FBFBFA] text-[#09090B] text-xs font-mono font-medium">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
               0 Hard Violations · CP-SAT
             </div>
@@ -754,17 +760,17 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
               <button
                 onClick={handleResetData}
                 disabled={resetting}
-                className="rounded-md border border-[#E5E7EB] bg-white hover:bg-[#F4F4F5] text-xs font-medium text-[#71717A] hover:text-[#18181B] px-2.5 py-1 flex items-center gap-1.5 transition shadow-2xs cursor-pointer"
+                className="rounded-md border border-[#E5E7EB] bg-white hover:bg-[#F4F4F5] text-xs font-semibold text-[#52525B] hover:text-[#09090B] px-3 py-1.5 flex items-center gap-1.5 transition shadow-2xs cursor-pointer"
                 title="Restore default baseline"
               >
-                <RotateCw className={`w-3 h-3 ${resetting ? 'animate-spin' : ''}`} />
+                <RotateCw className={`w-3.5 h-3.5 ${resetting ? 'animate-spin' : ''}`} />
                 <span>Reset</span>
               </button>
             )}
 
             <button
               onClick={openCopilot}
-              className="rounded-md bg-[#18181B] hover:bg-[#27272A] text-white shadow-2xs font-medium px-3 py-1 text-xs flex items-center gap-1.5 cursor-pointer transition"
+              className="rounded-md bg-[#09090B] hover:bg-[#27272A] text-white shadow-2xs font-medium px-3.5 py-1.5 text-xs flex items-center gap-1.5 cursor-pointer transition"
             >
               <Bot className="w-3.5 h-3.5" />
               <span>Ask Copilot</span>
