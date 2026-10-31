@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { campusApi } from '@/services/api';
 import { useCampusAuth } from '@/contexts/CampusAuthContext';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { toast } from 'sonner';
+import { RotateCw, CheckCircle2 } from 'lucide-react';
 
 export const ExamsView: React.FC = () => {
   const { user } = useCampusAuth();
@@ -34,7 +34,7 @@ export const ExamsView: React.FC = () => {
   const handleSolve = async () => {
     setSolving(true);
     try {
-      toast.info('Scheduling midsem exams...');
+      toast.info('Scheduling midsem exams with CP-SAT...');
       await campusApi.generateExams();
       toast.success('Exams scheduled with 0 conflicts');
       await fetchExams();
@@ -55,13 +55,6 @@ export const ExamsView: React.FC = () => {
     return map;
   }, [exams]);
 
-  const roomsMap = useMemo(() => {
-    const map = new Map<string, any>();
-    for (const r of rooms) map.set(r.externalId, r);
-    return map;
-  }, [rooms]);
-
-  // Extract all distinct student groups
   const allGroups = useMemo(() => {
     const s = new Set<string>();
     for (const e of exams) {
@@ -72,7 +65,6 @@ export const ExamsView: React.FC = () => {
     return Array.from(s).sort();
   }, [exams]);
 
-  // Filtered allocations
   const filteredAllocations = useMemo(() => {
     return allocations.filter((a: any) => {
       const exam = examsMap.get(a.examExternalId);
@@ -105,38 +97,35 @@ export const ExamsView: React.FC = () => {
 
   if (loading || !data) {
     return (
-      <div className="flex h-64 items-center justify-center text-xs text-[#71717A]">
+      <div className="flex h-64 items-center justify-center text-xs text-ink-soft">
         Loading midsem exams...
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto py-6 px-6 space-y-4">
+    <div className="space-y-6">
       {/* Header and Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E5E7EB]">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-border/40">
         <div>
-          <div className="flex items-center gap-2">
-            <h2 className="font-heading text-base font-semibold text-[#111827]">
-              Midsem Examinations
-            </h2>
-            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-              Half-Capacity Enforced
-            </span>
-          </div>
-          <p className="text-xs text-[#71717A] mt-0.5">
-            {allocations.length} total exams scheduled · Showing {filteredAllocations.length} · 0 group multi-exam clashes
+          <span className="text-[12px] font-bold uppercase tracking-[0.2em] text-ink-soft font-poppins">
+            EXAMINATION CONTROLLER · MIDSEM WEEK
+          </span>
+          <h2 className="mt-1 text-[28px] font-bold font-poppins text-ink tracking-tight">
+            Midsem Examination Seating
+          </h2>
+          <p className="text-xs text-ink-soft mt-1">
+            {allocations.length} total exams · Half-capacity enforced (Rule E1) · 0 group multi-exam clashes
           </p>
         </div>
 
         <div className="flex items-center flex-wrap gap-2.5">
-          {/* Quick Group Filter */}
-          <div className="flex items-center gap-1.5 text-xs text-[#71717A]">
-            <span>Group:</span>
+          <div className="flex items-center gap-1.5 text-xs text-ink-soft">
+            <span className="font-poppins font-bold">Group:</span>
             <select
               value={groupFilter}
               onChange={(e) => setGroupFilter(e.target.value)}
-              className="h-7 text-xs bg-white border border-[#E5E7EB] rounded px-2 text-[#111827] focus:outline-none focus:border-[#7C3AED]"
+              className="h-8 text-xs bg-white border border-border/80 rounded-full px-3 text-ink font-poppins font-medium shadow-2xs focus:outline-none"
             >
               <option value="all">All Groups</option>
               {allGroups.map((g) => (
@@ -151,24 +140,24 @@ export const ExamsView: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search exam or room..."
-            className="w-36 h-7 text-xs bg-white border-[#E5E7EB]"
+            className="w-48 h-8 rounded-full text-xs bg-white border-border/80 font-poppins font-medium shadow-2xs"
           />
 
           {user?.role === 'admin' && (
-            <Button
-              size="sm"
+            <button
               onClick={handleSolve}
               disabled={solving}
-              className="h-7 px-3 text-xs font-medium bg-[#7C3AED] hover:bg-[#6D28D9] text-white"
+              className="rounded-full bg-gradient-to-r from-primary to-indigo-600 hover:from-primary/95 text-white shadow-xs hover:shadow-md font-bold font-poppins px-4 py-1.5 text-xs flex items-center gap-1.5 cursor-pointer"
             >
-              {solving ? 'Solving...' : 'Re-Schedule'}
-            </Button>
+              {solving ? <RotateCw className="w-3.5 h-3.5 animate-spin" /> : null}
+              <span>{solving ? 'Solving...' : 'Re-Schedule'}</span>
+            </button>
           )}
         </div>
       </div>
 
-      {/* Clean Compact Matrix by Day */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      {/* Clean Grid by Day */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {days.map((day: string) => {
           const amExams = slotMap.get(`${day}_AM`) || [];
           const pmExams = slotMap.get(`${day}_PM`) || [];
@@ -177,11 +166,13 @@ export const ExamsView: React.FC = () => {
           return (
             <div
               key={day}
-              className="rounded-lg border border-[#E5E7EB] bg-white p-3 space-y-2.5 shadow-2xs hover:border-[#7C3AED]/30 transition"
+              className="rounded-[24px] border border-border/70 bg-white p-5 space-y-4 shadow-[0_4px_25px_-5px_rgba(0,0,0,0.03)] hover:border-primary/40 transition"
             >
-              <div className="flex items-center justify-between pb-1.5 border-b border-[#E5E7EB]">
-                <span className="font-heading font-semibold text-xs text-[#111827]">{day}</span>
-                <span className="text-[10px] text-[#71717A] font-mono">{totalInDay} exams</span>
+              <div className="flex items-center justify-between pb-2 border-b border-border/60">
+                <span className="font-poppins font-bold text-sm text-ink">{day}</span>
+                <span className="text-[11px] font-bold font-poppins text-ink-soft bg-slate-100 px-2.5 py-0.5 rounded-full">
+                  {totalInDay} exams
+                </span>
               </div>
 
               {sessions.map((sess) => {
@@ -189,15 +180,15 @@ export const ExamsView: React.FC = () => {
                 const timeLabel = sess === 'AM' ? '09:30–11:30' : '14:00–16:00';
 
                 return (
-                  <div key={sess} className="space-y-1">
-                    <div className="flex items-center justify-between text-[10px] text-[#71717A]">
-                      <span className="font-medium text-[#111827]">
-                        {sess} Session <span className="font-normal text-[#9CA3AF]">({timeLabel})</span>
+                  <div key={sess} className="space-y-2">
+                    <div className="flex items-center justify-between text-[11px] text-ink-soft font-poppins font-bold">
+                      <span className="text-ink">
+                        {sess} Session <span className="font-normal text-ink-soft/60">({timeLabel})</span>
                       </span>
                       <span>{items.length}</span>
                     </div>
 
-                    <div className="space-y-1">
+                    <div className="space-y-1.5">
                       {items.length > 0 ? (
                         items.map((exItem: any) => {
                           const exam = examsMap.get(exItem.examExternalId);
@@ -205,25 +196,25 @@ export const ExamsView: React.FC = () => {
                             <div
                               key={exItem.id}
                               onClick={() => setSelectedExam({ allocation: exItem, exam })}
-                              className="group p-1.5 rounded border border-[#E5E7EB] bg-[#FAF9F6] hover:bg-white hover:border-[#7C3AED]/50 cursor-pointer transition text-xs flex items-center justify-between"
+                              className="group p-2.5 rounded-xl border border-border/70 bg-[#FAF9F6] hover:bg-white hover:border-primary/50 cursor-pointer transition text-xs flex items-center justify-between shadow-2xs"
                             >
                               <div className="min-w-0 pr-1">
-                                <div className="font-semibold text-xs text-[#111827] truncate font-heading">
+                                <div className="font-bold text-xs text-ink truncate font-poppins">
                                   {exItem.examExternalId}
                                 </div>
-                                <div className="text-[10px] text-[#71717A] truncate">
+                                <div className="text-[11px] text-ink-soft truncate mt-0.5">
                                   {exItem.rooms.join(', ')} · {exam?.size || 0} students
                                 </div>
                               </div>
-                              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
-                                Valid
+                              <span className="text-[9px] font-bold font-poppins px-2 py-0.5 rounded-full bg-[#DDECD4] text-[#2D5A27] shrink-0">
+                                Half-Cap OK
                               </span>
                             </div>
                           );
                         })
                       ) : (
-                        <div className="p-1 text-center text-[10px] text-[#9CA3AF] border border-dashed border-[#E5E7EB] rounded">
-                          No exams
+                        <div className="p-2 text-center text-[10px] text-ink-soft/50 border border-dashed border-border/60 rounded-xl">
+                          No exams scheduled
                         </div>
                       )}
                     </div>
@@ -237,55 +228,55 @@ export const ExamsView: React.FC = () => {
 
       {/* Exam Detail Sheet */}
       <Sheet open={!!selectedExam} onOpenChange={() => setSelectedExam(null)}>
-        <SheetContent className="w-full sm:max-w-md p-6 space-y-5 bg-white">
+        <SheetContent className="w-full sm:max-w-md p-6 space-y-6 bg-white overflow-y-auto font-sans">
           <SheetHeader className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="text-xs uppercase font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="text-xs uppercase font-mono px-2.5 py-0.5 rounded-full bg-[#DDECD4] text-[#2D5A27] font-bold">
                 Midsem Exam
               </span>
-              <span className="text-xs text-[#71717A]">
+              <span className="text-xs text-ink-soft">
                 {selectedExam?.allocation?.day} · Session {selectedExam?.allocation?.session}
               </span>
             </div>
-            <SheetTitle className="font-heading text-lg font-semibold text-[#111827]">
+            <SheetTitle className="font-poppins text-xl font-bold text-ink">
               {selectedExam?.allocation?.examExternalId}
             </SheetTitle>
           </SheetHeader>
 
           {selectedExam && (
             <div className="space-y-4 text-xs">
-              <div className="p-3.5 rounded-lg border border-[#E5E7EB] bg-[#FAF9F6] space-y-2">
-                <div className="text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider">
+              <div className="p-4 rounded-2xl border border-border/70 bg-[#FAF9F6] space-y-2">
+                <div className="text-[11px] font-bold text-ink font-poppins uppercase tracking-wider">
                   Venue & Capacity Breakdown
                 </div>
                 <div className="space-y-1.5">
                   <div className="flex justify-between">
-                    <span className="text-[#71717A]">Total Examinees:</span>
-                    <span className="font-semibold text-[#111827]">
+                    <span className="text-ink-soft">Total Examinees:</span>
+                    <span className="font-bold text-ink">
                       {selectedExam.exam?.size} students
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-[#71717A]">Assigned Venues:</span>
-                    <span className="font-medium text-[#111827]">
+                    <span className="text-ink-soft">Assigned Venues:</span>
+                    <span className="font-bold text-ink">
                       {selectedExam.allocation.rooms.join(', ')}
                     </span>
                   </div>
-                  <div className="pt-1 border-t border-[#E5E7EB] text-[11px] text-[#4B5563]">
+                  <div className="pt-2 border-t border-border/60 text-[11px] text-[#4B5563] leading-relaxed">
                     Under the Half-Capacity rule (E1), total room capacity must equal or exceed twice the number of students ({selectedExam.exam?.size * 2} seats required).
                   </div>
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-lg border border-[#E5E7EB] bg-white space-y-2">
-                <div className="text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider">
+              <div className="p-4 rounded-2xl border border-border/70 bg-white space-y-2">
+                <div className="text-[11px] font-bold text-ink font-poppins uppercase tracking-wider">
                   Enrolled Student Groups
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {(selectedExam.exam?.groups || []).map((g: string) => (
                     <span
                       key={g}
-                      className="px-2 py-0.5 rounded border border-[#E5E7EB] bg-[#FAF9F6] text-[#111827] text-xs font-mono"
+                      className="px-2.5 py-1 rounded-full border border-border/80 bg-[#FAF9F6] text-ink text-xs font-bold font-poppins"
                     >
                       {g}
                     </span>

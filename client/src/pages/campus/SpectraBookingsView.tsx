@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { toast } from 'sonner';
+import { PartyPopper, CheckCircle2, RotateCw, MapPin, Sparkles } from 'lucide-react';
 
 export const SpectraBookingsView: React.FC = () => {
   const { user } = useCampusAuth();
@@ -34,7 +35,7 @@ export const SpectraBookingsView: React.FC = () => {
   const handleSolve = async () => {
     setSolving(true);
     try {
-      toast.info('Allocating venues with CP-SAT deterministic ranker...');
+      toast.info('Allocating venues with deterministic priority matcher...');
       await campusApi.solveBookings();
       toast.success('Venues allocated with 0 inversions');
       await fetchBookings();
@@ -49,7 +50,7 @@ export const SpectraBookingsView: React.FC = () => {
 
   const decisionsMap = useMemo(() => {
     const map = new Map<string, any>();
-    for (const d of decisions) map.set(d.requestId, d);
+    for (const d of decisions) decisionsMap.set(d.requestId, d);
     return map;
   }, [decisions]);
 
@@ -84,62 +85,57 @@ export const SpectraBookingsView: React.FC = () => {
 
   if (loading || !data) {
     return (
-      <div className="flex h-64 items-center justify-center text-xs text-[#71717A]">
+      <div className="flex h-64 items-center justify-center text-xs text-ink-soft">
         Loading Spectra Week bookings...
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto py-6 px-6 space-y-4">
+    <div className="space-y-6">
       {/* Header and Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E5E7EB]">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-border/40">
         <div>
-          <div className="flex items-center gap-2">
-            <h2 className="font-heading text-base font-semibold text-[#111827]">
-              Spectra Week Venue Allocations
-            </h2>
-            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-purple-50 text-[#7C3AED] border border-purple-200">
-              Score: 66.0 / 70.0
-            </span>
-            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-              0 Priority Inversions
-            </span>
-          </div>
-          <p className="text-xs text-[#71717A] mt-0.5">
-            Deterministic tie-breaking with role-category caps: {approvedCount} approved · {rejectedCount} rejected
+          <span className="text-[12px] font-bold uppercase tracking-[0.2em] text-ink-soft font-poppins">
+            SPECTRA WEEK '27 · VENUE MATCHING
+          </span>
+          <h2 className="mt-1 text-[28px] font-bold font-poppins text-ink tracking-tight">
+            Cultural Fest Allocations
+          </h2>
+          <p className="text-xs text-ink-soft mt-1">
+            Score: 66.0 / 70.0 · {approvedCount} approved · {rejectedCount} rejected · 0 priority inversions
           </p>
         </div>
 
         <div className="flex items-center flex-wrap gap-2.5">
           {/* Status Tabs */}
-          <div className="flex items-center rounded border border-[#E5E7EB] bg-white p-0.5 text-xs">
+          <div className="flex items-center rounded-full border border-border/80 bg-white p-1 text-xs shadow-2xs">
             <button
               onClick={() => setStatusFilter('all')}
-              className={`px-2.5 py-1 rounded text-xs font-medium transition ${
+              className={`px-3 py-1 rounded-full text-xs font-bold font-poppins transition-all cursor-pointer ${
                 statusFilter === 'all'
-                  ? 'bg-[#111827] text-white'
-                  : 'text-[#71717A] hover:text-[#111827]'
+                  ? 'bg-ink text-white shadow-xs'
+                  : 'text-ink-soft hover:text-ink'
               }`}
             >
               All ({requests.length})
             </button>
             <button
               onClick={() => setStatusFilter('approved')}
-              className={`px-2.5 py-1 rounded text-xs font-medium transition ${
+              className={`px-3 py-1 rounded-full text-xs font-bold font-poppins transition-all cursor-pointer ${
                 statusFilter === 'approved'
-                  ? 'bg-[#111827] text-white'
-                  : 'text-[#71717A] hover:text-[#111827]'
+                  ? 'bg-ink text-white shadow-xs'
+                  : 'text-ink-soft hover:text-ink'
               }`}
             >
               Approved ({approvedCount})
             </button>
             <button
               onClick={() => setStatusFilter('rejected')}
-              className={`px-2.5 py-1 rounded text-xs font-medium transition ${
+              className={`px-3 py-1 rounded-full text-xs font-bold font-poppins transition-all cursor-pointer ${
                 statusFilter === 'rejected'
-                  ? 'bg-[#111827] text-white'
-                  : 'text-[#71717A] hover:text-[#111827]'
+                  ? 'bg-ink text-white shadow-xs'
+                  : 'text-ink-soft hover:text-ink'
               }`}
             >
               Rejected ({rejectedCount})
@@ -150,34 +146,34 @@ export const SpectraBookingsView: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search request or room..."
-            className="w-44 h-7 text-xs bg-white border-[#E5E7EB]"
+            className="w-48 h-8 rounded-full text-xs bg-white border-border/80 font-poppins font-medium shadow-2xs"
           />
 
           {user?.role === 'admin' && (
-            <Button
-              size="sm"
+            <button
               onClick={handleSolve}
               disabled={solving}
-              className="h-7 px-3 text-xs font-medium bg-[#7C3AED] hover:bg-[#6D28D9] text-white"
+              className="rounded-full bg-gradient-to-r from-primary to-indigo-600 hover:from-primary/95 text-white shadow-xs hover:shadow-md font-bold font-poppins px-4 py-1.5 text-xs flex items-center gap-1.5 cursor-pointer"
             >
-              {solving ? 'Allocating...' : 'Re-Allocate'}
-            </Button>
+              {solving ? <RotateCw className="w-3.5 h-3.5 animate-spin" /> : null}
+              <span>{solving ? 'Allocating...' : 'Re-Allocate'}</span>
+            </button>
           )}
         </div>
       </div>
 
-      {/* Clean Compact Table */}
-      <div className="rounded-lg border border-[#E5E7EB] bg-white overflow-x-auto shadow-2xs">
-        <table className="w-full text-left text-xs border-collapse min-w-[700px]">
+      {/* Clean Table */}
+      <div className="rounded-[24px] border border-border/70 bg-white overflow-x-auto shadow-[0_4px_25px_-5px_rgba(0,0,0,0.03)] p-2">
+        <table className="w-full text-left text-xs border-collapse min-w-[720px]">
           <thead>
-            <tr className="border-b border-[#E5E7EB] bg-[#FAF9F6] text-[#71717A] font-medium">
-              <th className="p-2.5 w-16">ID</th>
-              <th className="p-2.5">Title & Requester</th>
-              <th className="p-2.5">Role</th>
-              <th className="p-2.5">Attendance</th>
-              <th className="p-2.5">Confirmed Slot</th>
-              <th className="p-2.5">Status</th>
-              <th className="p-2.5">Decision Note</th>
+            <tr className="border-b border-border/60 bg-[#FAF9F6] text-ink-soft font-bold font-poppins">
+              <th className="p-3 w-16">ID</th>
+              <th className="p-3">Title & Requester</th>
+              <th className="p-3">Role</th>
+              <th className="p-3">Attendance</th>
+              <th className="p-3">Confirmed Slot</th>
+              <th className="p-3">Status</th>
+              <th className="p-3">Decision Note</th>
             </tr>
           </thead>
           <tbody>
@@ -189,43 +185,44 @@ export const SpectraBookingsView: React.FC = () => {
                 <tr
                   key={r.id}
                   onClick={() => setSelectedRequest({ request: r, decision: dec })}
-                  className="border-b border-[#E5E7EB] last:border-b-0 hover:bg-[#FAF9F6]/50 cursor-pointer transition"
+                  className="border-b border-border/60 last:border-b-0 hover:bg-[#FAF9F6]/50 cursor-pointer transition"
                 >
-                  <td className="p-2.5 font-mono font-medium text-[#111827]">{r.externalId}</td>
-                  <td className="p-2.5">
-                    <div className="font-semibold text-xs text-[#111827]">{r.title}</div>
-                    <div className="text-[11px] text-[#71717A]">{r.requester}</div>
+                  <td className="p-3 font-mono font-bold text-ink">{r.externalId}</td>
+                  <td className="p-3">
+                    <div className="font-bold font-poppins text-xs text-ink">{r.title}</div>
+                    <div className="text-[11px] text-ink-soft">{r.requester}</div>
                   </td>
-                  <td className="p-2.5 capitalize text-[#71717A] text-[11px]">
+                  <td className="p-3 capitalize text-ink-soft text-[11px]">
                     {r.role.replace('_', ' ')}
                   </td>
-                  <td className="p-2.5 font-medium text-[#111827]">{r.attendance} pax</td>
-                  <td className="p-2.5 font-medium">
+                  <td className="p-3 font-bold text-ink">{r.attendance} pax</td>
+                  <td className="p-3 font-medium">
                     {dec?.roomExternalId ? (
-                      <span className="text-[#111827] font-mono text-[11px]">
+                      <span className="text-ink font-mono text-[11px] font-bold flex items-center gap-1">
+                        <MapPin className="w-3.5 h-3.5 text-primary" />
                         {dec.roomExternalId} · {dec.day} P{dec.startPeriod}–P{dec.endPeriod}
                       </span>
                     ) : (
-                      <span className="text-[#9CA3AF]">—</span>
+                      <span className="text-ink-soft/50">—</span>
                     )}
                   </td>
-                  <td className="p-2.5">
+                  <td className="p-3">
                     {dec ? (
                       <span
-                        className={`inline-block px-2 py-0.5 rounded text-[10px] font-medium border ${
+                        className={`inline-block px-3 py-0.5 rounded-full text-[10px] font-bold font-poppins ${
                           isApproved
-                            ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
-                            : 'text-zinc-600 bg-zinc-50 border-zinc-200'
+                            ? 'text-[#2D5A27] bg-[#DDECD4]'
+                            : 'text-ink-soft bg-slate-100'
                         }`}
                       >
                         {dec.status.replace('_', ' ')}
                       </span>
                     ) : (
-                      <span className="text-[#9CA3AF]">Pending</span>
+                      <span className="text-ink-soft/50">Pending</span>
                     )}
                   </td>
-                  <td className="p-2.5 text-[11px] text-[#71717A] max-w-xs truncate">
-                    {dec?.reason || (r.isCancelled ? 'Withdrawn' : 'Queue processed')}
+                  <td className="p-3 text-[11px] text-ink-soft max-w-xs truncate">
+                    {dec?.reason || (r.isCancelled ? 'Withdrawn' : 'Processed in queue')}
                   </td>
                 </tr>
               );
@@ -236,60 +233,60 @@ export const SpectraBookingsView: React.FC = () => {
 
       {/* Booking Detail Sheet */}
       <Sheet open={!!selectedRequest} onOpenChange={() => setSelectedRequest(null)}>
-        <SheetContent className="w-full sm:max-w-md p-6 space-y-5 bg-white">
+        <SheetContent className="w-full sm:max-w-md p-6 space-y-6 bg-white overflow-y-auto font-sans">
           <SheetHeader className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="text-xs uppercase font-mono px-2 py-0.5 rounded bg-black/5 text-[#4B5563]">
+              <span className="text-xs uppercase font-mono px-2.5 py-0.5 rounded-full bg-black/5 text-ink-soft font-bold">
                 {selectedRequest?.request?.role}
               </span>
-              <span className="text-xs text-[#71717A]">
+              <span className="text-xs text-ink-soft">
                 {selectedRequest?.request?.externalId}
               </span>
             </div>
-            <SheetTitle className="font-heading text-lg font-semibold text-[#111827]">
+            <SheetTitle className="font-poppins text-xl font-bold text-ink">
               {selectedRequest?.request?.title}
             </SheetTitle>
           </SheetHeader>
 
           {selectedRequest && (
             <div className="space-y-4 text-xs">
-              <div className="p-3.5 rounded-lg border border-[#E5E7EB] bg-[#FAF9F6] space-y-2">
-                <div className="text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider">
+              <div className="p-4 rounded-2xl border border-border/70 bg-[#FAF9F6] space-y-2">
+                <div className="text-[11px] font-bold text-ink font-poppins uppercase tracking-wider">
                   Allocation Decision
                 </div>
                 <div className="space-y-1.5">
                   <div className="flex justify-between">
-                    <span className="text-[#71717A]">Decision Status:</span>
-                    <span className="font-semibold text-[#111827] capitalize">
+                    <span className="text-ink-soft">Decision Status:</span>
+                    <span className="font-bold text-ink capitalize">
                       {selectedRequest.decision?.status || 'Pending'}
                     </span>
                   </div>
                   {selectedRequest.decision?.roomExternalId && (
                     <div className="flex justify-between">
-                      <span className="text-[#71717A]">Allocated Room:</span>
-                      <span className="font-medium text-[#111827]">
+                      <span className="text-ink-soft">Allocated Venue:</span>
+                      <span className="font-bold text-ink">
                         {selectedRequest.decision.roomExternalId} ({selectedRequest.decision.day} P
                         {selectedRequest.decision.startPeriod}–P{selectedRequest.decision.endPeriod})
                       </span>
                     </div>
                   )}
                   {selectedRequest.decision?.reason && (
-                    <div className="text-[11px] text-[#4B5563] pt-1 border-t border-[#E5E7EB]">
+                    <div className="text-[11px] text-[#4B5563] pt-1.5 border-t border-border/60">
                       {selectedRequest.decision.reason}
                     </div>
                   )}
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-lg border border-[#E5E7EB] bg-white space-y-2">
-                <div className="text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider">
+              <div className="p-4 rounded-2xl border border-border/70 bg-white space-y-2">
+                <div className="text-[11px] font-bold text-ink font-poppins uppercase tracking-wider">
                   Submission Details
                 </div>
-                <div className="space-y-1 text-[#4B5563]">
+                <div className="space-y-1.5 text-[#4B5563]">
                   <div>Requester: {selectedRequest.request.requester}</div>
                   <div>Expected Attendance: {selectedRequest.request.attendance} attendees</div>
                   <div>Duration: {selectedRequest.request.durationPeriods} periods</div>
-                  <div>Requested Room: {selectedRequest.request.requestedRoom || 'Any suitable'}</div>
+                  <div>Requested Venue: {selectedRequest.request.requestedRoom || 'Any suitable'}</div>
                 </div>
               </div>
             </div>
