@@ -14,21 +14,21 @@ const CampusAuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const DEMO_FALLBACK_USERS: Record<string, User> = {
   'admin@cit.edu': {
-    id: 'user-admin-1',
+    id: 'usr-cit-admin-001',
     email: 'admin@cit.edu',
     name: 'Prof. M. K. Sharma (Dean Academics)',
     role: 'admin',
     department: 'Academic Affairs',
   },
   'coord.cse@cit.edu': {
-    id: 'user-coord-1',
+    id: 'usr-cit-coord-002',
     email: 'coord.cse@cit.edu',
     name: 'Dr. A. Verma (CSE Coordinator)',
     role: 'department_coordinator',
     department: 'CSE',
   },
   'faculty.f19@cit.edu': {
-    id: 'user-faculty-1',
+    id: 'usr-cit-faculty-003',
     email: 'faculty.f19@cit.edu',
     name: 'Dr. S. Rath (Faculty F19)',
     role: 'faculty',
@@ -36,7 +36,7 @@ const DEMO_FALLBACK_USERS: Record<string, User> = {
     facultyId: 'F19',
   },
   'dramatics@cit.edu': {
-    id: 'user-club-1',
+    id: 'usr-cit-club-004',
     email: 'dramatics@cit.edu',
     name: 'Dramatics Society',
     role: 'club',

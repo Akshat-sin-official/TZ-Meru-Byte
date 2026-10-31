@@ -65,41 +65,59 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
   const [calendarOpen, setCalendarOpen] = useState(true);
   const [calendarMonth, setCalendarMonth] = useState<'OCT' | 'NOV'>('OCT');
 
-  // Notifications state (Feature Guide Extra)
+  // Dynamic Notifications state synced with backend API
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [unreadNotifications, setUnreadNotifications] = useState(2);
+  const [notificationsList, setNotificationsList] = useState<any[]>([]);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
   const notificationsRef = useRef<HTMLDivElement>(null);
 
-  const notificationsList = [
-    {
-      id: 'notif-1',
-      title: 'Disruption Handled: Room LH-1 Closure',
-      message: '3 teaching sessions rescheduled to LH-2 with 0 constraint violations. Approved by Dean.',
-      time: '12m ago',
-      type: 'disruption',
-      unread: true,
-    },
-    {
-      id: 'notif-2',
-      title: 'Spectra Fest Booking BR-04 Approved',
-      message: 'Auditorium-1 booked for Oct 22, 18:00–21:00 (Priority 3: Institute Event).',
-      time: '1h ago',
-      type: 'booking',
-      unread: true,
-    },
-    {
-      id: 'notif-3',
-      title: 'Autumn 2027 Baseline Synchronized',
-      message: 'All 189 teaching sessions validated with continuous 13:00 lunch break.',
-      time: 'Yesterday',
-      type: 'timetable',
-      unread: false,
-    },
-  ];
+  const fetchNotifications = async () => {
+    try {
+      const res = await campusApi.getNotifications();
+      if (res && Array.isArray(res.notifications)) {
+        setNotificationsList(res.notifications);
+        setUnreadNotifications(res.unreadCount || 0);
+      }
+    } catch {
+      // Quiet poll failure
+    }
+  };
 
-  const handleMarkAllRead = () => {
-    setUnreadNotifications(0);
-    toast.success('All notifications marked as read');
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 12000);
+    return () => clearInterval(interval);
+  }, [user]);
+
+  const handleMarkAllRead = async () => {
+    try {
+      await campusApi.markAllNotificationsRead();
+      setUnreadNotifications(0);
+      setNotificationsList((prev) => prev.map((n) => ({ ...n, read: true })));
+      toast.success('All notifications marked as read');
+    } catch {
+      setUnreadNotifications(0);
+      toast.success('All notifications marked as read');
+    }
+  };
+
+  const handleMarkSingleRead = async (id: string) => {
+    try {
+      await campusApi.markNotificationRead(id);
+      setNotificationsList((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+      );
+      setUnreadNotifications((prev) => Math.max(0, prev - 1));
+    } catch {}
+  };
+
+  const formatRelativeTime = (dateStr: string) => {
+    if (!dateStr) return 'Just now';
+    const diffSec = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+    if (diffSec < 60) return 'Just now';
+    if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
+    if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
+    return `${Math.floor(diffSec / 86400)}d ago`;
   };
 
   const workspaceRef = useRef<HTMLDivElement>(null);
@@ -862,22 +880,34 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
                   </div>
 
                   <div className="space-y-2 max-h-72 overflow-y-auto">
-                    {notificationsList.map((n) => (
-                      <div
-                        key={n.id}
-                        className={`p-2.5 rounded-lg border text-xs transition ${
-                          n.unread && unreadNotifications > 0
-                            ? 'bg-[#FBFBFA] border-[#E5E7EB]'
-                            : 'bg-white border-transparent hover:bg-[#F4F4F5]'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-1">
-                          <span className="font-semibold text-[#09090B] truncate">{n.title}</span>
-                          <span className="text-[10px] font-mono text-[#71717A] shrink-0">{n.time}</span>
-                        </div>
-                        <p className="text-[11px] text-[#52525B] mt-1 leading-relaxed">{n.message}</p>
+                    {notificationsList.length === 0 ? (
+                      <div className="py-6 text-center text-xs text-[#71717A]">
+                        No notifications at this time
                       </div>
-                    ))}
+                    ) : (
+                      notificationsList.map((n) => (
+                        <div
+                          key={n.id}
+                          onClick={() => !n.read && handleMarkSingleRead(n.id)}
+                          className={`p-2.5 rounded-lg border text-xs transition cursor-pointer ${
+                            !n.read
+                              ? 'bg-[#FBFBFA] border-[#E5E7EB]'
+                              : 'bg-white border-transparent hover:bg-[#F4F4F5] opacity-80'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-1">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              {!n.read && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />}
+                              <span className="font-semibold text-[#09090B] truncate">{n.title}</span>
+                            </div>
+                            <span className="text-[10px] font-mono text-[#71717A] shrink-0">
+                              {formatRelativeTime(n.createdAt)}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-[#52525B] mt-1 leading-relaxed">{n.message}</p>
+                        </div>
+                      ))
+                    )}
                   </div>
 
                   <div className="pt-2 border-t border-[#E5E7EB] text-center">

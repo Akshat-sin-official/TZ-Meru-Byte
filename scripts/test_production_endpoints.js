@@ -21,6 +21,8 @@ async function testAll() {
     { name: 'Exports /exports/verify', path: '/api/exports/verify', method: 'POST' },
     { name: 'Optimizer Validation Move', path: '/api/schedules/validate-move', method: 'POST', body: { sessionId: 'S_CS101_L1', newDay: 'MON', newPeriod: 1, newRoomId: 'CR-101' } },
     { name: 'Assistant Chat', path: '/api/assistant/chat', method: 'POST', body: { message: 'Can I book LH-1 on Friday morning?', role: 'admin' } },
+    { name: 'Notifications /notifications', path: '/api/notifications' },
+    { name: 'Notifications Mark All Read', path: '/api/notifications/mark-all-read', method: 'POST' },
     { name: 'Reset Demo Data', path: '/api/datasets/reset-demo', method: 'POST' }
   ];
 

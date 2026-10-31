@@ -20,7 +20,7 @@ export const DEMO_ACCOUNTS: Record<string, {
   passwords: string[];
 }> = {
   'admin@cit.edu': {
-    id: 'user-admin-1',
+    id: 'usr-cit-admin-001',
     email: 'admin@cit.edu',
     name: 'Prof. M. K. Sharma (Dean Academics)',
     role: Role.admin,
@@ -28,7 +28,7 @@ export const DEMO_ACCOUNTS: Record<string, {
     passwords: ['CitAdmin2027!', 'admin123', 'password'],
   },
   'coord.cse@cit.edu': {
-    id: 'user-coord-1',
+    id: 'usr-cit-coord-002',
     email: 'coord.cse@cit.edu',
     name: 'Dr. A. Verma (CSE Coordinator)',
     role: Role.department_coordinator,
@@ -36,7 +36,7 @@ export const DEMO_ACCOUNTS: Record<string, {
     passwords: ['CitCoord2027!', 'coord123', 'password'],
   },
   'faculty.f19@cit.edu': {
-    id: 'user-faculty-1',
+    id: 'usr-cit-faculty-003',
     email: 'faculty.f19@cit.edu',
     name: 'Dr. S. Rath (Faculty F19)',
     role: Role.faculty,
@@ -45,7 +45,7 @@ export const DEMO_ACCOUNTS: Record<string, {
     passwords: ['CitFaculty2027!', 'faculty123', 'password'],
   },
   'dramatics@cit.edu': {
-    id: 'user-club-1',
+    id: 'usr-cit-club-004',
     email: 'dramatics@cit.edu',
     name: 'Dramatics Society',
     role: Role.club,

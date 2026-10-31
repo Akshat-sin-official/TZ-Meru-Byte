@@ -203,6 +203,20 @@ export const campusApi = {
     const res = await api.post('/whatsapp/test-send', data);
     return res.data;
   },
+
+  // Notifications
+  getNotifications: async () => {
+    const res = await api.get('/notifications');
+    return res.data;
+  },
+  markNotificationRead: async (id: string) => {
+    const res = await api.patch(`/notifications/${id}/read`);
+    return res.data;
+  },
+  markAllNotificationsRead: async () => {
+    const res = await api.post('/notifications/mark-all-read');
+    return res.data;
+  },
 };
 
 export { api };
