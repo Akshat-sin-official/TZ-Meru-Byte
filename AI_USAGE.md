@@ -46,3 +46,4 @@ In strict adherence to the problem statement rule (*"The LLM can read requests, 
 
 - **Google Antigravity / Claude 3.5 Sonnet / Gemini 2.5 Pro**: Used as an AI pair-programming assistant to assist with architectural planning, TypeScript type definitions, Tailwind CSS UI components, and writing test suites.
 - **Commit History**: All development steps, solver mathematical models, and UI refinements were verified against the official `validator.py` with 0 hard violations.
+

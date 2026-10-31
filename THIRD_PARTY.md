@@ -47,3 +47,4 @@ In accordance with Section 6 of the Hackathon Problem Statement, this document l
 ## 4. Database Infrastructure
 
 - **MySQL Database Server 8.0**: Relational database storage for `cit_campus_os`, managing dataset versions, schedules, assignments, booking requests, decisions, and immutable audit logs.
+

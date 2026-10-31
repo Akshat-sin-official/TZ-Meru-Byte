@@ -140,3 +140,4 @@ python "docs/PS/CrunchWeek_StarterPack (1)/CrunchWeek_StarterPack/validator.py" 
 
 - Real-time optimization is computationally capped at 60 seconds per solve invocation to maintain interactive web performance.
 - Spectra Week venue allocations require an active master timetable baseline before fest week overrides can be computed.
+
