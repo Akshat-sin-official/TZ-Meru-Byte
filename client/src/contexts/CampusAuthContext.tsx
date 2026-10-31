@@ -29,9 +29,6 @@ export const CampusAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           setToken(null);
           setUser(null);
         }
-      } else {
-        // Auto login as admin for judge convenience if no token
-        await loginDemo('admin');
       }
       setLoading(false);
     };

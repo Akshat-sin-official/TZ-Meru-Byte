@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { CampusAuthProvider } from '@/contexts/CampusAuthContext';
+import { CampusAuthProvider, useCampusAuth } from '@/contexts/CampusAuthContext';
+import { LoginPage } from '@/pages/auth/LoginPage';
 import { CampusNavbar } from '@/components/layout/CampusNavbar';
 import { TimetableDashboard } from '@/pages/campus/TimetableDashboard';
 import { ExamsView } from '@/pages/campus/ExamsView';
@@ -8,8 +9,10 @@ import { DisruptionsView } from '@/pages/campus/DisruptionsView';
 import { AICopilotDrawer } from '@/components/campus/AICopilotDrawer';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { RotateCw } from 'lucide-react';
 
 export const AppContent: React.FC = () => {
+  const { user, loading } = useCampusAuth();
   const [activeTab, setActiveTab] = useState<'timetable' | 'exams' | 'bookings' | 'disruptions'>('timetable');
   const [copilotOpen, setCopilotOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -17,6 +20,27 @@ export const AppContent: React.FC = () => {
   const handleRefreshData = () => {
     setRefreshKey((prev) => prev + 1);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#FAF9F6] flex flex-col items-center justify-center gap-3">
+        <RotateCw className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-xs font-semibold font-poppins text-ink-soft">
+          Connecting to CIT CampusOS...
+        </p>
+      </div>
+    );
+  }
+
+  // If not authenticated, render the dedicated high-end Login Screen
+  if (!user) {
+    return (
+      <>
+        <LoginPage onSuccess={handleRefreshData} />
+        <Sonner position="top-right" richColors />
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
