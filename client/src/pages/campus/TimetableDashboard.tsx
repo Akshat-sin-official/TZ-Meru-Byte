@@ -571,25 +571,19 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
 
       {/* Focused Day Banner (from calendar selection) */}
       {highlightDay && (
-        <div className="flex items-center justify-between px-3.5 py-2.5 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/90 rounded-xl text-xs text-amber-950 shadow-xs mb-3 animate-in fade-in slide-in-from-top-1 duration-200">
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-            </span>
-            <span className="font-semibold text-amber-950">
-              Filtered Day: {highlightDay === 'MON' ? 'Monday' : highlightDay === 'TUE' ? 'Tuesday' : highlightDay === 'WED' ? 'Wednesday' : highlightDay === 'THU' ? 'Thursday' : 'Friday'}
-              {selectedDate ? ` (October ${selectedDate}, 2027)` : ''}
-            </span>
-            <span className="text-[11px] text-amber-700/80 font-mono hidden sm:inline">
-              · Calendar Target Focused
+        <div className="flex items-center justify-between px-3 py-1.5 bg-[#FBFBFA] border border-[#E5E7EB] rounded-lg text-xs text-[#18181B] mb-3">
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#18181B]" />
+            <span className="font-medium text-[#18181B]">
+              Viewing {highlightDay === 'MON' ? 'Monday' : highlightDay === 'TUE' ? 'Tuesday' : highlightDay === 'WED' ? 'Wednesday' : highlightDay === 'THU' ? 'Thursday' : 'Friday'}
+              {selectedDate ? ` (Oct ${selectedDate})` : ''}
             </span>
           </div>
           <button
             onClick={() => onSelectDay?.(null)}
-            className="px-2.5 py-1 rounded-md bg-white border border-amber-200 text-amber-900 hover:text-amber-950 hover:bg-amber-100/60 text-[11px] font-semibold transition cursor-pointer shadow-2xs"
+            className="text-[11px] text-[#71717A] hover:text-[#18181B] underline cursor-pointer"
           >
-            Show All 5 Days
+            Show all days
           </button>
         </div>
       )}
@@ -656,11 +650,11 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
                 <div
                   key={day}
                   id={`day-row-${day}`}
-                  className={`grid grid-cols-[80px_repeat(5,1fr)_44px_repeat(4,1fr)] min-h-[82px] transition-all duration-200 ${
+                  className={`grid grid-cols-[80px_repeat(5,1fr)_44px_repeat(4,1fr)] min-h-[82px] transition-all duration-150 ${
                     idx !== days.length - 1 ? 'border-b border-[#EBEBEA]' : ''
                   } ${
                     isHighlighted
-                      ? 'bg-amber-50/30 ring-2 ring-inset ring-amber-400/90 shadow-sm'
+                      ? 'bg-[#FBFBFA] border-l-2 border-l-[#18181B]'
                       : ''
                   }`}
                 >
@@ -668,22 +662,17 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
                   <div
                     className={`p-2 border-r border-[#EBEBEA] flex flex-col justify-center items-center select-none transition-colors ${
                       isHighlighted
-                        ? 'bg-amber-100/80 border-r-amber-300'
+                        ? 'bg-[#F4F4F5] text-[#18181B]'
                         : 'bg-[#F7F6F3]/50'
                     }`}
                   >
                     <span
                       className={`text-xs ${
-                        isHighlighted ? 'text-amber-950 font-bold' : 'text-[#37352F] font-semibold'
+                        isHighlighted ? 'text-[#18181B] font-semibold' : 'text-[#37352F] font-semibold'
                       }`}
                     >
                       {day}
                     </span>
-                    {isHighlighted && (
-                      <span className="text-[8.5px] uppercase font-mono font-bold tracking-wider text-amber-800 bg-amber-200/80 px-1 rounded mt-0.5 shadow-2xs">
-                        Focus
-                      </span>
-                    )}
                     <span className="text-[10px] text-[#9B9A97] font-mono mt-0.5">
                       {getDayHours(day)}h
                     </span>
