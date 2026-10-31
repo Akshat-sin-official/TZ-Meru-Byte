@@ -50,7 +50,7 @@ export const SpectraBookingsView: React.FC = () => {
 
   const decisionsMap = useMemo(() => {
     const map = new Map<string, any>();
-    for (const d of decisions) decisionsMap.set(d.requestId, d);
+    for (const d of decisions) map.set(d.requestId, d);
     return map;
   }, [decisions]);
 
