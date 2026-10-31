@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { PrismaClient, Role } from '@prisma/client';
 import axios from 'axios';
 import { processPromptWithAI } from './assistant.js';
+import { authenticate, requireRole, AuthenticatedRequest } from '../middleware/auth.js';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -67,9 +68,9 @@ async function sendWhatsAppMessage(phone: string, text: string): Promise<boolean
   }
 }
 
-// GET /api/whatsapp/status
+// GET /api/whatsapp/status (Admin Only)
 // Check gateway health, instance connectivity, and QR code
-router.get('/status', async (req: Request, res: Response) => {
+router.get('/status', authenticate, requireRole([Role.admin]), async (req: AuthenticatedRequest, res: Response) => {
   try {
     let licenseActive = false;
     let connected = false;
@@ -137,9 +138,9 @@ router.get('/status', async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/whatsapp/connect
+// POST /api/whatsapp/connect (Admin Only)
 // Triggers pairing ceremony / refreshes QR code
-router.post('/connect', async (req: Request, res: Response) => {
+router.post('/connect', authenticate, requireRole([Role.admin]), async (req: AuthenticatedRequest, res: Response) => {
   try {
     let qrcode: string | null = null;
     let pairingUrl: string | null = null;
@@ -204,8 +205,8 @@ router.post('/connect', async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/whatsapp/contacts
-router.get('/contacts', async (req: Request, res: Response) => {
+// GET /api/whatsapp/contacts (Admin Only)
+router.get('/contacts', authenticate, requireRole([Role.admin]), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const contacts = await db.whatsAppContact.findMany({
       include: {
@@ -229,8 +230,8 @@ router.get('/contacts', async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/whatsapp/contacts
-router.post('/contacts', async (req: Request, res: Response) => {
+// POST /api/whatsapp/contacts (Admin Only)
+router.post('/contacts', authenticate, requireRole([Role.admin]), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { phone, name, role, userId } = req.body;
     if (!phone) {
@@ -264,8 +265,8 @@ router.post('/contacts', async (req: Request, res: Response) => {
   }
 });
 
-// DELETE /api/whatsapp/contacts/:id
-router.delete('/contacts/:id', async (req: Request, res: Response) => {
+// DELETE /api/whatsapp/contacts/:id (Admin Only)
+router.delete('/contacts/:id', authenticate, requireRole([Role.admin]), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = String(req.params.id);
     await (prisma as any).whatsAppContact.delete({ where: { id } });
@@ -275,8 +276,8 @@ router.delete('/contacts/:id', async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/whatsapp/test-send
-router.post('/test-send', async (req: Request, res: Response) => {
+// POST /api/whatsapp/test-send (Admin Only)
+router.post('/test-send', authenticate, requireRole([Role.admin]), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { phone, message } = req.body;
     if (!phone) return res.status(400).json({ error: 'Phone is required' });

@@ -1,10 +1,11 @@
 import { Router, Response } from 'express';
-import { PrismaClient, ScheduleStatus } from '@prisma/client';
+import { PrismaClient, Role, ScheduleStatus } from '@prisma/client';
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
+import { authenticate, requireRole, AuthenticatedRequest } from '../middleware/auth.js';
 
 const execFileAsync = promisify(execFile);
 const router = Router();
@@ -15,8 +16,8 @@ const VALIDATOR_PATH = path.resolve(__dirname, '../../../docs/PS/CrunchWeek_Star
 const EXPORTS_DIR = path.resolve(__dirname, '../../../exports');
 const OPTIMIZER_URL = process.env.OPTIMIZER_URL || 'http://127.0.0.1:8001';
 
-// GET schedule.json (generated from database)
-router.get('/schedule.json', async (req, res) => {
+// GET schedule.json (Admin Only per RBAC in ini.md)
+router.get('/schedule.json', authenticate, requireRole([Role.admin]), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const dataset = await prisma.datasetVersion.findFirst({ where: { isCurrent: true } });
     if (!dataset) return res.status(404).json({ error: 'No dataset loaded' });
@@ -76,8 +77,8 @@ router.get('/schedule.json', async (req, res) => {
   }
 });
 
-// GET schedule_after.json
-router.get('/schedule_after.json', async (req, res) => {
+// GET schedule_after.json (Admin Only per RBAC in ini.md)
+router.get('/schedule_after.json', authenticate, requireRole([Role.admin]), async (req: AuthenticatedRequest, res: Response) => {
   const filePath = path.join(EXPORTS_DIR, 'schedule_after.json');
   if (fs.existsSync(filePath)) {
     res.setHeader('Content-Type', 'application/json');
@@ -87,8 +88,8 @@ router.get('/schedule_after.json', async (req, res) => {
   return res.status(404).json({ error: 'schedule_after.json not generated yet' });
 });
 
-// GET exam_schedule.json
-router.get('/exam_schedule.json', async (req, res) => {
+// GET exam_schedule.json (Admin Only per RBAC in ini.md)
+router.get('/exam_schedule.json', authenticate, requireRole([Role.admin]), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const dataset = await prisma.datasetVersion.findFirst({ where: { isCurrent: true } });
     if (!dataset) return res.status(404).json({ error: 'No dataset loaded' });
@@ -119,8 +120,8 @@ router.get('/exam_schedule.json', async (req, res) => {
   }
 });
 
-// GET spectra_allocations.json
-router.get('/spectra_allocations.json', async (req, res) => {
+// GET spectra_allocations.json (Admin Only per RBAC in ini.md)
+router.get('/spectra_allocations.json', authenticate, requireRole([Role.admin]), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const dataset = await prisma.datasetVersion.findFirst({ where: { isCurrent: true } });
     if (!dataset) return res.status(404).json({ error: 'No dataset loaded' });
@@ -166,8 +167,8 @@ router.get('/spectra_allocations.json', async (req, res) => {
   }
 });
 
-// Run official validator (dispatches to internal optimizer validator service or local python)
-router.post('/verify', async (req, res) => {
+// Run official validator (Admin Only per RBAC in ini.md)
+router.post('/verify', authenticate, requireRole([Role.admin]), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const dataset = await prisma.datasetVersion.findFirst({ where: { isCurrent: true } });
     const schedPath = path.join(EXPORTS_DIR, 'schedule.json');

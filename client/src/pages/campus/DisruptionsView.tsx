@@ -155,17 +155,16 @@ export const DisruptionsView: React.FC = () => {
                 {solving ? <RotateCw className="w-3.5 h-3.5 animate-spin" /> : null}
                 <span>{solving ? 'Solving Repair...' : 'Simulate Sample Disruption'}</span>
               </button>
+              <a
+                href="/api/exports/schedule_after.json"
+                download="schedule_after.json"
+                className="rounded-lg border border-[#E5E7EB] bg-white hover:bg-slate-50 text-[#111926] shadow-2xs font-bold font-poppins px-3.5 py-1.5 text-xs inline-flex items-center gap-1.5 transition"
+              >
+                <Download className="w-3.5 h-3.5 text-muted-foreground" />
+                <span>schedule_after.json</span>
+              </a>
             </>
           )}
-
-          <a
-            href="/api/exports/schedule_after.json"
-            download="schedule_after.json"
-            className="rounded-lg border border-[#E5E7EB] bg-white hover:bg-slate-50 text-[#111926] shadow-2xs font-bold font-poppins px-3.5 py-1.5 text-xs inline-flex items-center gap-1.5 transition"
-          >
-            <Download className="w-3.5 h-3.5 text-muted-foreground" />
-            <span>schedule_after.json</span>
-          </a>
         </div>
       </div>
 

@@ -549,15 +549,17 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
               <span>Export PDF</span>
             </button>
 
-            <a
-              href="/api/exports/schedule.json"
-              download="schedule.json"
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-[#787774] hover:text-[#37352F] rounded-md border border-[#EBEBEA] hover:bg-[#F7F6F3] transition cursor-pointer"
-              title="Download Master JSON (validator.py Benchmark)"
-            >
-              <FileDown className="w-3.5 h-3.5" />
-              <span>JSON</span>
-            </a>
+            {user?.role === 'admin' && (
+              <a
+                href="/api/exports/schedule.json"
+                download="schedule.json"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-[#787774] hover:text-[#37352F] rounded-md border border-[#EBEBEA] hover:bg-[#F7F6F3] transition cursor-pointer"
+                title="Download Master JSON (validator.py Benchmark)"
+              >
+                <FileDown className="w-3.5 h-3.5" />
+                <span>JSON</span>
+              </a>
+            )}
           </div>
         </div>
 

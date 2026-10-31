@@ -47,11 +47,14 @@ export const AppContent: React.FC = () => {
 
   // RBAC route enforcement per ini.md
   React.useEffect(() => {
-    if (user?.role === 'club' && (activeTab === 'timetable' || activeTab === 'exams' || activeTab === 'disruptions')) {
+    if (user?.role === 'club' && (activeTab === 'timetable' || activeTab === 'exams' || activeTab === 'disruptions' || activeTab === 'whatsapp')) {
       setActiveTab('bookings');
     }
-    if (user?.role === 'faculty' && activeTab === 'disruptions') {
+    if (user?.role === 'faculty' && (activeTab === 'disruptions' || activeTab === 'whatsapp')) {
       setActiveTab('timetable');
+    }
+    if (user?.role === 'department_coordinator' && activeTab === 'whatsapp') {
+      setActiveTab('dashboard');
     }
   }, [user?.role, activeTab]);
 
@@ -112,17 +115,26 @@ export const AppContent: React.FC = () => {
         {activeTab === 'bookings' && <SpectraBookingsView />}
         {activeTab === 'disruptions' && <DisruptionsView />}
         {activeTab === 'whatsapp' && (
-          <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-4">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold font-poppins text-[#111926] tracking-tight">
-                WhatsApp Operations Center
-              </h1>
-              <p className="text-xs text-muted-foreground mt-0.5 font-poppins">
-                Evolution-Go v2 Gateway · Live QR Device Pairing · Campus Phone & Role Directory
+          user?.role === 'admin' ? (
+            <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-4">
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold font-poppins text-[#111926] tracking-tight">
+                  WhatsApp Operations Center
+                </h1>
+                <p className="text-xs text-muted-foreground mt-0.5 font-poppins">
+                  Evolution-Go v2 Gateway · Live QR Device Pairing · Campus Phone & Role Directory
+                </p>
+              </div>
+              <WhatsAppBotSection />
+            </div>
+          ) : (
+            <div className="bg-white border border-[#E5E7EB] rounded-xl p-8 text-center max-w-md mx-auto my-16 space-y-3 shadow-xs">
+              <h3 className="text-base font-semibold text-[#09090B]">Access Restricted</h3>
+              <p className="text-xs text-[#52525B]">
+                WhatsApp Bot Operations Center is restricted to Dean / Academic Affairs Administrators.
               </p>
             </div>
-            <WhatsAppBotSection />
-          </div>
+          )
         )}
       </div>
 
