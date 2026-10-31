@@ -3,11 +3,7 @@ import { PrismaClient, Role, ScheduleStatus } from '@prisma/client';
 import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { authenticate, requireRole, AuthenticatedRequest } from '../middleware/auth.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -16,7 +12,7 @@ const OPTIMIZER_URL = process.env.OPTIMIZER_URL || 'http://127.0.0.1:8001';
 // GET baseline vs repaired disruption diff (pre-computed fallback)
 router.get('/latest', async (req, res) => {
   try {
-    const exportsDir = path.resolve(__dirname, '../../../exports');
+    const exportsDir = path.resolve(process.cwd(), '../exports');
     const basePath = path.join(exportsDir, 'schedule.json');
     const afterPath = path.join(exportsDir, 'schedule_after.json');
 

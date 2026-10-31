@@ -76,7 +76,7 @@ router.post('/requests', authenticate, async (req: AuthenticatedRequest, res: Re
         attendance: Number(attendance) || 50,
         durationPeriods: Number(duration_periods) || 2,
         windows: windows || [{ day: 'FRI', from_period: 10, to_period: 12 }],
-        room_types: room_types || ['seminar_hall', 'auditorium'],
+        roomTypes: room_types || ['seminar_hall', 'auditorium'],
         needs: needs || [],
         requestedRoom: requested_room || null,
         mandatoryForGroups: mandatory_for_groups || [],

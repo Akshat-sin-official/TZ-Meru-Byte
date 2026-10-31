@@ -179,7 +179,7 @@ router.post('/validate-move', authenticate, async (req: AuthenticatedRequest, re
 // Approve Proposal and Activate
 router.post('/proposals/:id/approve', authenticate, requireRole([Role.admin]), async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const proposalId = req.params.id;
+    const proposalId = String(req.params.id);
     const proposal = await prisma.scheduleVersion.findUnique({
       where: { id: proposalId },
     });
