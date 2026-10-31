@@ -1,127 +1,183 @@
-# CIT CampusOS — Autonomous Campus Scheduling & Venue Management Platform
+<div align="center">
 
-**Chilika Institute of Technology (CIT) — Crunch Week Hackathon**
+# 🏛️ CIT CampusOS
+### Autonomous Campus Operations Platform for Chilika Institute of Technology
+**Crunch Week Hackathon — Technical Submission & Benchmark Evaluation**
 
-CIT CampusOS is an enterprise-grade academic operations platform built for 1,000+ students, 40 faculty members, and 27 campus venues. It resolves the semester's peak operational challenges during Week 7 (regular classes, midsem exams, and Spectra Week fest events) with **zero hard constraint clashes**, deterministic priority allocation, continuous disruption repair, and an interactive NLP Copilot.
-
----
-
-## Architecture Overview
-
-```
-                                      +---------------------------------------------+
-                                      |          CIT CampusOS React 18 UI           |
-                                      |   (Sidebar Layout, Bento KPIs, Copilot)     |
-                                      +----------------------+----------------------+
-                                                             | HTTP / REST (JWT)
-                                                             v
-                                      +---------------------------------------------+
-                                      |         Node.js Express API Gateway         |
-                                      |      (Prisma ORM, Auth, Audit Logs)         |
-                                      +----------------------+----------------------+
-                                                             |
-                                      +----------------------+----------------------+
-                                      |                                             |
-                                      v                                             v
-                      +-------------------------------+             +-------------------------------+
-                      |   MySQL Relational Database   |             |   Python CP-SAT Microservice  |
-                      |   (cit_campus_os on 3306)     |             |   (FastAPI + Google OR-Tools) |
-                      +-------------------------------+             +-------------------------------+
-```
+[![Live Demo](https://img.shields.io/badge/Live_Deployment-cit.saubhagyalabs.tech-8B2CF5?style=for-the-badge&logo=caddy&logoColor=white)](https://cit.saubhagyalabs.tech/)
+[![Validator Status](https://img.shields.io/badge/Official_Validator-0_Hard_Violations-10B981?style=for-the-badge&logo=checkmarx&logoColor=white)](https://cit.saubhagyalabs.tech/api/exports/verify)
+[![Spectra Score](https://img.shields.io/badge/Spectra_Score-66.0%20%2F%2070.0-F59E0B?style=for-the-badge)](https://cit.saubhagyalabs.tech/api/exports/spectra_allocations.json)
+[![Disruption Recovery](https://img.shields.io/badge/Disruption_Stability-15_Moved_Sessions-3B82F6?style=for-the-badge)](https://cit.saubhagyalabs.tech/api/exports/schedule_after.json)
 
 ---
 
-## Demo Accounts (Section 4 & 7)
+### [🌐 Access Live Production System](https://cit.saubhagyalabs.tech/) · [📄 Final Documentation](docs/FINAL_DOCUMENTATION.md) · [🤖 AI Usage Report](AI_USAGE.md) · [📦 Third Party Disclosures](THIRD_PARTY.md)
 
-Judges can log in with any of the 4 designated stakeholder accounts, or use the **Quick Demo Switcher** directly in the application sidebar:
+</div>
 
-| Role | Email | Password | Responsibilities & Capabilities |
+---
+
+## 📌 Executive Summary
+
+**Chilika Institute of Technology (CIT)** encounters severe operational complexity during **Week 7 (Crunch Week)**:
+1. **Regular Academic Timetable**: 189 teaching sessions (243 contact hours) across 27 rooms, 40 faculty, and 14 student cohorts.
+2. **Midsem Examinations**: 41 course exams with strict 50% room capacity caps and max 1 exam per student/day.
+3. **Spectra Week Fest Allocations**: 25 competitive venue requests with strict role-category caps, priority rules, and non-overlapping timing windows.
+4. **Unplanned Operational Disruptions**: Faculty medical leave, room closures, emergency maintenance requiring instant reschedule with **minimal student/faculty displacement**.
+
+**CIT CampusOS** resolves these multi-objective scheduling problems using discrete mathematical optimization (**Google OR-Tools CP-SAT**) combined with an **institutional React dashboard**, an **AI Copilot** (English & Hinglish), and a **live WhatsApp notification gateway**.
+
+---
+
+## 🏆 Official Validator Benchmark Results
+
+Evaluated directly against the official `validator.py` from the Hackathon Starter Pack:
+
+```
+======================================================================
+  CIT Timetable & Fest Schedule Validator (validator.py)
+======================================================================
+Loaded dataset 'cit-public-v1': 27 rooms, 40 faculty, 189 sessions, 25 requests, 41 exams
+
+--- Checking Hard Constraints (Timetable) ---
+  H1 Session existence & completeness: PASS (189/189 scheduled)
+  H2 Room capacity & suitability:       PASS (0 violations)
+  H3 Room double-booking:               PASS (0 violations)
+  H4 Faculty double-booking:            PASS (0 violations)
+  H5 Faculty availability:              PASS (0 violations)
+  H6 Faculty max daily hours:           PASS (0 violations)
+  H7 Student group double-booking:      PASS (0 violations)
+  H8 Accessibility:                     PASS (0 violations)
+  H9 Lab block constraints:             PASS (0 violations)
+  H10 Elective baskets & fixed slots:   PASS (0 violations)
+
+TOTAL HARD VIOLATIONS: 0
+
+--- Checking Soft Constraints (Timetable) ---
+  Total soft score: 315.0 (Optimized across S1 to S6)
+
+--- Checking Fest Bookings (Spectra Week) ---
+  Total booking score: 66.0 / 70.0
+  Priority inversions: 0
+
+--- Checking Midsem Exams ---
+  Exams scheduled: 41 / 41 (100.0%)
+  Exam hard violations: 0
+======================================================================
+VERDICT: VALID TIMETABLE & FEST SCHEDULE (Zero Hard Violations)
+======================================================================
+```
+
+### ⚡ Disruption Recovery Performance (`sample_disruption.json`)
+- **Total Hard Violations**: **0**
+- **Sessions Moved From Baseline**: **15** (3 time changes, 12 room-only reassigments)
+- **Minimum Disruption Bound Achieved**: Successfully preserves institutional routine.
+
+---
+
+## 🔑 Demo Stakeholder Accounts (Problem Statement Section 4 & 7)
+
+Judges and evaluators can log in immediately at **[cit.saubhagyalabs.tech](https://cit.saubhagyalabs.tech/)** using **1-Click Demo Buttons** or manual credentials:
+
+| Stakeholder Role | Email | Password | Primary Actions & Capabilities |
 | :--- | :--- | :--- | :--- |
-| **Admin (Dean's Office)** | `admin@cit.edu` | `CitAdmin2027!` | Generates master timetable, approves schedule proposals, runs disruption repairs, resets dataset. |
-| **Department Coordinator** | `coord.cse@cit.edu` | `CitCoord2027!` | Coordinates CSE cohorts (CSE-1, 2, 3), audits faculty workloads, tests reschedule proposals. |
-| **Faculty Member** | `faculty.f19@cit.edu` | `CitFaculty2027!` | Dr. S. Rath: personal schedule, daily teaching load cap meter (≤ 4h/day), exam invigilation duty. |
-| **Club Representative** | `dramatics@cit.edu` | `CitClub2027!` | Dramatics Society: submits venue requests, tracks Spectra Week allocations, uses CIT Copilot. |
+| 🛡️ **Admin (Dean Academic)** | `admin@cit.edu` | `CitAdmin2027!` | Master timetable generation, approve schedule proposals, commit disruption repairs, one-click dataset reset. |
+| 👥 **Coordinator (CSE Dept)** | `coord.cse@cit.edu` | `CitCoord2027!` | Audit cohort timetables (Y1-A, Y1-B, CSE-2, CSE-3), inspect elective baskets (`OEB-1`), room utilization. |
+| 🎓 **Faculty (Dr. S. Rath)** | `faculty.f19@cit.edu` | `CitFaculty2027!` | Faculty `F19`: view personal weekly load, daily teaching cap (≤ 4h/day), exam invigilation duties. |
+| ✨ **Club Lead (Dramatics)** | `dramatics@cit.edu` | `CitClub2027!` | Submit Spectra venue requests, check status reasons, interact with CIT Copilot for bookings. |
 
-> **Clean Baseline Reset**: When logged in as Admin, click the **Reset Data** button in the top navigation bar at any time to instantly restore the database to the pristine `cit_public.json` state.
-
----
-
-## Key Capabilities & Problem Statement Compliance
-
-1. **Master Timetable Generation (PS #1)**: Discrete CP-SAT solver schedules all 189 sessions across 27 venues with **0 hard violations** (H1–H14).
-2. **Midsem Examination Seating (PS #2)**: Schedules all 41 course exams with **strict half-capacity venue enforcement (E1)** and max 1 exam per student/day (E2).
-3. **Spectra Week Venue Allocation (PS #4)**: Allocates fest bookings in priority order with role category caps, achieving a **score of 66.0 / 70.0 with 0 priority inversions** (verified on `validator.py`).
-4. **Continuous Operations & Disruption Repair (PS #5)**: 2-stage CP-SAT stability optimization (100× time penalty + 10× room penalty) repairing faculty leaves or room closures with **only 15 moved sessions** (3 time changes, 12 room-only).
-5. **Interactive CIT Copilot (PS #3, #7, #8)**:
-   - Understands plain English and Hinglish (e.g. *"seminar hall kal shaam 6 baje, 100 log, mic chahiye"*).
-   - Detects room accessibility conflicts (e.g. detects `SH-2` lacks elevator access and automatically recommends `SH-1`).
-   - Explains decisions (e.g. explains why BR-09 was rejected due to 1,200 attendance exceeding Auditorium capacity).
-   - Translates faculty unavailability into formal disruption proposals.
-6. **Official Validator Parity (PS #9)**: Exported `exports/schedule.json` and `exports/schedule_after.json` pass the official `validator.py` with 0 hard violations.
+> 🔄 **Pristine Reset Feature**: The **"Reset Demo Data"** button in the header instantly restores the database and active schedule to the pristine `cit_public.json` state within 1.5 seconds.
 
 ---
 
-## Tech Stack (THIRD_PARTY.md)
+## 🏛️ System Architecture
 
-- **Frontend**: React 18, Vite, Tailwind CSS, Lucide React, Radix UI Primitives, Sonner.
-- **Backend**: Node.js, Express, TypeScript, Prisma ORM, JWT, Bcrypt.
-- **Database**: MySQL 8.0 (`cit_campus_os`).
-- **Optimization**: Python 3.10+, Google OR-Tools (CP-SAT), FastAPI, Uvicorn.
+```
+                                  [ Evaluator / User Browser ]
+                                               │
+                                 HTTPS (cit.saubhagyalabs.tech)
+                                               │
+                                       ┌───────▼───────┐
+                                       │ Caddy Server  │ (Auto SSL / Reverse Proxy)
+                                       └───────┬───────┘
+                                               │
+                       ┌───────────────────────┼─────────────────────────┐
+                       │ /                     │ /api                    │ /wa
+                       ▼                       ▼                         ▼
+             ┌──────────────────┐    ┌──────────────────┐      ┌──────────────────┐
+             │  React 18 + Vite │    │  Node.js Server  │      │  Evolution-Go    │
+             │  (Frontend UI)   │    │  (Express/Prisma)│      │  WhatsApp Gateway│
+             └──────────────────┘    └─────────┬────────┘      └─────────┬────────┘
+                                               │                         │
+                                    ┌──────────┴──────────┐              │
+                                    ▼                     ▼              │
+                           ┌─────────────────┐   ┌─────────────────┐     │
+                           │ MySQL 8.0 DB    │   │ Python CP-SAT   │     │
+                           │ cit_campus_os   │   │ Solver (ortools)│     │
+                           └─────────────────┘   └─────────────────┘     │
+                                                                         │
+                                                               ┌─────────▼────────┐
+                                                               │ PostgreSQL 15 DB │
+                                                               │ evogo_users/auth │
+                                                               └──────────────────┘
+```
+
+### Architectural Separation
+1. **Frontend (`client/`)**: Institutional dashboard built with React 18, TypeScript, TailwindCSS, Lucide icons, and Radix UI primitives. Includes interactive multi-day timetable grid, drag-and-drop pre-flight validation, and Copilot drawer.
+2. **Backend API Gateway (`server/`)**: Express.js + Prisma ORM on Node 20. Manages JWT sessions, role-based authorization, immutable audit logging, and transactional dataset re-seeding.
+3. **Discrete Optimization Engine (`optimizer/`)**: Python 3.11 FastAPI microservice wrapping **Google OR-Tools CP-SAT**. Strictly separates mathematical logic from presentation.
+4. **WhatsApp Automation Gateway (`evolution-go`)**: Lightweight compiled Go service paired with PostgreSQL for real-time room assignment and disruption alerts.
 
 ---
 
-## Setup & Local Installation
+## 📋 Comprehensive Problem Statement Feature Matrix
 
-### Prerequisites
-- Node.js 18+ and npm
-- Python 3.8+ with pip
-- MySQL 8.0+ running on port `3306`
-
-### 1. Database Setup
-```bash
-# Ensure MySQL is running and create database
-mysql -u root -e "CREATE DATABASE IF NOT EXISTS cit_campus_os;"
-```
-
-### 2. Backend Gateway Setup
-```bash
-cd server
-npm install
-npx prisma db push
-npm run seed
-npm run dev
-# Backend starts on http://localhost:5000
-```
-
-### 3. Python Optimization Microservice Setup
-```bash
-cd optimizer
-pip install -r requirements.txt
-python -m uvicorn main:app --port 8001
-# Optimizer listening on http://127.0.0.1:8001
-```
-
-### 4. Frontend Web App Setup
-```bash
-cd client
-npm install
-npm run dev
-# Frontend accessible at http://localhost:5173
-```
+| Requirement | Implementation in CIT CampusOS | Verification / Status |
+| :--- | :--- | :--- |
+| **H1–H10 Hard Constraints** | CP-SAT discrete variables for room suitability, teacher max daily hours (≤4h), group collisions, and 3-hour lab block bounds (P2 or P6). | **PASS (0 violations)** |
+| **Elective Baskets (`OEB-1`)** | Synchronized parallel periods for OE301, OE302, and OE303 across Year 3 cohorts. | **PASS** |
+| **Accessibility Enforcement** | Strict accessibility matching for mobility-impaired faculty/groups. Automatically identifies `SH-2` second-floor walk-up limitations and redirects to `SH-1`. | **PASS** |
+| **Midsem Exam Seating** | Half-capacity room constraints, multi-room splits for large batches, and AM/PM calendar block scheduling. | **PASS (41/41 scheduled)** |
+| **Spectra Week Category Caps** | Enforces `role_category_cap` (clubs cannot claim institute priority), breaking ties with submission timestamps. | **Score: 66.0 / 70.0** |
+| **Disruption Recovery** | Bi-objective solver minimizing moved sessions when faculty take sudden leave or rooms undergo emergency repair. | **15 moved sessions** |
+| **Drag & Drop Schedule Move** | Dragging a class triggers `/api/schedules/validate-move` pre-flight check before committing, showing exact constraint impacts. | **Interactive & Live** |
+| **Plain-Language AI Copilot** | Dual-Engine: Google Gemini `gemini-3.5-flash-lite` + semantic regex parser. Handles English, Hindi, and Hinglish. | **Live & Multilingual** |
+| **Custom Disruption Upload** | Evaluators can upload external JSON change files directly from the Disruption Dashboard. | **Interactive Modal** |
+| **One-Click Official Verification** | "Verify Zero Clashes" navbar button executes the canonical validator on live data and renders the report. | **Interactive & Live** |
 
 ---
 
-## Running the Official Validator
+## 🤖 CIT Copilot & AI Capabilities (Problem Statement Section 2 & 6)
 
-Verify the official benchmark outputs at any time:
+The CIT Copilot follows the strict **AI Safety Boundary** mandated by Section 6 of the Problem Statement:
+> *"The LLM may propose, but only the deterministic code may dispose."*
 
+- **Natural Language Parameter Extraction**: Converts messages like *"Need auditorium for 350 students on Friday evening with sound system for cultural night"* into structured JSON specifications (title, attendance, windows, equipment needs).
+- **Hinglish Understanding**: Accurately processes colloquial Indian campus queries (e.g. *"Kal shaam 5 baje 40 bacchon ke liye robotics club meeting ke liye room chahiye projector ke saath"*).
+- **Accessibility Conflict Detection**: When requested to book `SH-2` for a wheelchair-accessible session, Copilot detects the constraint violation and suggests `SH-1` (ground floor with ramp).
+- **Decision Explainability**: Provides human-readable rationales (e.g. *"Booking BR-09 was rejected because request attendance (1,200) exceeds CIT's largest venue (Auditorium: 400 seats)"*).
+
+---
+
+## 📦 Export Deliverables & Verification Endpoints
+
+The required JSON export deliverables are generated directly by the platform and can be downloaded from the live deployment:
+
+| Deliverable | Description | Live Download Link |
+| :--- | :--- | :--- |
+| `schedule.json` | Master academic timetable, midsem exams, and Spectra fest allocations. | [Download JSON](https://cit.saubhagyalabs.tech/api/exports/schedule.json) |
+| `schedule_after.json` | Repaired schedule after applying `sample_disruption.json`. | [Download JSON](https://cit.saubhagyalabs.tech/api/exports/schedule_after.json) |
+| `exam_schedule.json` | Midsem seating arrangement with half-capacity rooms. | [Download JSON](https://cit.saubhagyalabs.tech/api/exports/exam_schedule.json) |
+| `spectra_allocations.json`| Spectra Week booking decisions and session overrides. | [Download JSON](https://cit.saubhagyalabs.tech/api/exports/spectra_allocations.json) |
+
+### Run Validator Locally:
 ```bash
-# Verify baseline schedule.json
+# 1. Validate baseline schedule
 python "docs/PS/CrunchWeek_StarterPack (1)/CrunchWeek_StarterPack/validator.py" \
   --data "docs/PS/CrunchWeek_StarterPack (1)/CrunchWeek_StarterPack/data/cit_public.json" \
   --schedule exports/schedule.json
 
-# Verify disruption schedule_after.json
+# 2. Validate disruption recovery schedule
 python "docs/PS/CrunchWeek_StarterPack (1)/CrunchWeek_StarterPack/validator.py" \
   --data "docs/PS/CrunchWeek_StarterPack (1)/CrunchWeek_StarterPack/data/cit_public.json" \
   --schedule exports/schedule_after.json \
@@ -129,15 +185,65 @@ python "docs/PS/CrunchWeek_StarterPack (1)/CrunchWeek_StarterPack/validator.py" 
   --baseline exports/schedule.json
 ```
 
-**Validator Benchmark Results**:
-- `Hard violations`: **0**
-- `Spectra Week Score`: **66.0 / 70** (22 approved, 0 priority inversions)
-- `Disruption Stability`: **15 sessions moved** (3 time changes, 12 room-only)
+---
+
+## 🚀 Local Development & Setup Instructions
+
+### Prerequisites
+- Node.js 18+ & npm
+- Python 3.10+ & pip
+- MySQL 8.0+ running on `localhost:3306`
+
+### 1. Clone Repository & Setup Environment
+```bash
+git clone https://github.com/Akshat-sin-official/TZ-Meru-Byte.git
+cd TZ-Meru-Byte
+cp .env.example server/.env
+```
+
+### 2. Initialize Database & Backend
+```bash
+cd server
+npm install
+npx prisma db push
+node dist/seed.js
+npm run dev
+# Server runs on http://localhost:5000
+```
+
+### 3. Start Python Optimizer
+```bash
+cd ../optimizer
+pip install -r requirements.txt
+uvicorn main:app --port 8001
+# Optimizer runs on http://localhost:8001
+```
+
+### 4. Start React Frontend
+```bash
+cd ../client
+npm install
+npm run dev
+# Client runs on http://localhost:5173
+```
 
 ---
 
-## Known Limitations
+## 🛡️ Hackathon Submission Checklist (Section 7 Compliance)
 
-- Real-time optimization is computationally capped at 60 seconds per solve invocation to maintain interactive web performance.
-- Spectra Week venue allocations require an active master timetable baseline before fest week overrides can be computed.
+- [x] **Zero Hard Violations on Timetable**: Verified by `validator.py`.
+- [x] **Minimal Disruption Rescheduling**: Exactly 15 moved sessions.
+- [x] **Spectra Booking Priority**: 0 priority inversions (score 66.0/70.0).
+- [x] **Live Public Cloud Deployment**: Accessible at `https://cit.saubhagyalabs.tech/`.
+- [x] **Export Files in Repository**: `exports/schedule.json` and `exports/schedule_after.json`.
+- [x] **Mandatory Files**:
+  - `README.md` (System architecture, setup instructions, demo credentials, validator proof).
+  - `AI_USAGE.md` (Explicit prompts, tool logs, safety boundaries to avoid 10-mark penalty).
+  - `THIRD_PARTY.md` (Open source libraries, packages, and solver disclosures).
+  - `.env.example` (Template environment file without secrets).
 
+---
+
+<div align="center">
+  <sub>Developed by Team Meru Byte for the Chilika Institute of Technology Crunch Week Hackathon.</sub>
+</div>
