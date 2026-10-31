@@ -64,8 +64,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
       await login(email, password);
       toast.success('Signed in successfully');
       onSuccess();
-    } catch {
-      toast.error('Invalid credentials. Please verify your details.');
+    } catch (err: any) {
+      if (!err?.response) {
+        toast.error('Cannot connect to API server at http://localhost:5000. Please ensure run_server.bat is running.');
+      } else if (err.response?.status === 401) {
+        toast.error('Invalid credentials. Please verify your email and password.');
+      } else {
+        toast.error(err.response?.data?.error || 'Sign-in failed. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -77,8 +83,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
       await loginDemo(role);
       toast.success(`Signed in as ${role.replace('_', ' ')}`);
       onSuccess();
-    } catch {
-      toast.error('Demo sign-in failed');
+    } catch (err: any) {
+      if (!err?.response) {
+        toast.error('Cannot connect to API server at http://localhost:5000. Please ensure run_server.bat is running.');
+      } else {
+        toast.error('Demo sign-in failed. Please verify database connection.');
+      }
     } finally {
       setActiveRole(null);
     }
