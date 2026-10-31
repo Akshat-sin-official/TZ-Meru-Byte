@@ -177,7 +177,7 @@ router.post('/solve', authenticate, requireRole([Role.admin]), async (req: Authe
 
     const result = solveRes.data;
 
-    // Persist decisions
+    // Persist decisions using batch processing
     await prisma.bookingDecision.deleteMany({ where: { scheduleVersionId: activeSchedule.id } });
     await prisma.sessionOverride.deleteMany({ where: { scheduleVersionId: activeSchedule.id } });
 
@@ -187,42 +187,45 @@ router.post('/solve', authenticate, requireRole([Role.admin]), async (req: Authe
       rejected: BookingDecisionStatus.rejected,
     };
 
-    for (const d of result.bookings) {
-      const reqRecord = await prisma.bookingRequest.findUnique({
-        where: {
-          datasetVersionId_externalId: {
-            datasetVersionId: dataset.id,
-            externalId: d.request_id,
-          },
-        },
-      });
+    // Batch fetch all booking requests in one query
+    const allRequests = await prisma.bookingRequest.findMany({
+      where: { datasetVersionId: dataset.id },
+    });
+    const reqMap = new Map(allRequests.map((r) => [r.externalId, r]));
 
+    const decisionsData = [];
+    for (const d of result.bookings || []) {
+      const reqRecord = reqMap.get(d.request_id);
       if (reqRecord) {
-        await prisma.bookingDecision.create({
-          data: {
-            scheduleVersionId: activeSchedule.id,
-            requestId: reqRecord.id,
-            status: decStatusMap[d.status] || BookingDecisionStatus.rejected,
-            day: d.day || null,
-            startPeriod: d.start_period || null,
-            endPeriod: d.end_period || null,
-            roomExternalId: d.room_id || null,
-            reason: d.reason || '',
-          },
+        decisionsData.push({
+          scheduleVersionId: activeSchedule.id,
+          requestId: reqRecord.id,
+          status: decStatusMap[d.status] || BookingDecisionStatus.rejected,
+          day: d.day || null,
+          startPeriod: d.start_period || null,
+          endPeriod: d.end_period || null,
+          roomExternalId: d.room_id || null,
+          reason: d.reason || '',
         });
       }
     }
 
-    for (const o of result.session_overrides || []) {
-      await prisma.sessionOverride.create({
-        data: {
+    if (decisionsData.length > 0) {
+      await prisma.bookingDecision.createMany({
+        data: decisionsData,
+      });
+    }
+
+    if (result.session_overrides && result.session_overrides.length > 0) {
+      await prisma.sessionOverride.createMany({
+        data: result.session_overrides.map((o: any) => ({
           scheduleVersionId: activeSchedule.id,
           sessionExternalId: o.session_id,
           day: o.day,
           startPeriod: o.start_period,
           roomExternalId: o.room_id,
           displacedByReqId: o.displaced_by,
-        },
+        })),
       });
     }
 

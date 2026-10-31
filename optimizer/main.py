@@ -72,6 +72,19 @@ class ValidateMoveRequest(BaseModel):
     target_room_id: str
 
 
+class CandidateMove(BaseModel):
+    target_day: str
+    target_start_period: int
+    target_room_id: str
+
+
+class BatchValidateMoveRequest(BaseModel):
+    dataset: Dict[str, Any]
+    current_schedule: Dict[str, Any]
+    session_id: str
+    candidates: List[CandidateMove]
+
+
 @app.get("/internal/health")
 def health_check():
     return {"status": "healthy", "service": "CIT CampusOS Optimizer"}
@@ -165,6 +178,62 @@ def validate_move_endpoint(req: ValidateMoveRequest):
             "violations": relevant_violations,
             "total_hard_violations": report["hard_violation_count"],
             "soft_total": report["soft_total"]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/internal/batch-validate-moves")
+def batch_validate_moves_endpoint(req: BatchValidateMoveRequest):
+    """
+    Batch pre-flight validation endpoint for evaluating multiple candidate moves for a session.
+    Returns results for all candidates in a single round-trip.
+    """
+    try:
+        base_sessions = [dict(s) for s in req.current_schedule.get("sessions", [])]
+        results = []
+        
+        for cand in req.candidates:
+            sessions_copy = [dict(s) for s in base_sessions]
+            found = False
+            for s in sessions_copy:
+                if s["session_id"] == req.session_id:
+                    s["day"] = cand.target_day
+                    s["start_period"] = cand.target_start_period
+                    s["room_id"] = cand.target_room_id
+                    found = True
+                    break
+            if not found:
+                sessions_copy.append({
+                    "session_id": req.session_id,
+                    "day": cand.target_day,
+                    "start_period": cand.target_start_period,
+                    "room_id": cand.target_room_id
+                })
+            
+            sched_copy = dict(req.current_schedule)
+            sched_copy["sessions"] = sessions_copy
+            report = validate_schedule(req.dataset, sched_copy)
+            
+            relevant_violations = [
+                v for v in report.get("hard_violations", [])
+                if req.session_id in v.get("detail", "") or cand.target_room_id in v.get("detail", "")
+            ]
+            
+            results.append({
+                "target_day": cand.target_day,
+                "target_start_period": cand.target_start_period,
+                "target_room_id": cand.target_room_id,
+                "valid": len(relevant_violations) == 0,
+                "violations": relevant_violations,
+                "total_hard_violations": report["hard_violation_count"],
+                "soft_total": report["soft_total"]
+            })
+            
+        return {
+            "session_id": req.session_id,
+            "evaluated_count": len(results),
+            "results": results
         }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

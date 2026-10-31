@@ -52,15 +52,15 @@ router.post('/generate', authenticate, requireRole([Role.admin]), async (req: Au
 
     if (activeSchedule) {
       await prisma.examAllocation.deleteMany({ where: { scheduleVersionId: activeSchedule.id } });
-      for (const a of result.allocations) {
-        await prisma.examAllocation.create({
-          data: {
+      if (result.allocations && result.allocations.length > 0) {
+        await prisma.examAllocation.createMany({
+          data: result.allocations.map((a: any) => ({
             scheduleVersionId: activeSchedule.id,
             examExternalId: a.exam_id,
             day: a.day,
             session: a.session,
             rooms: a.rooms,
-          },
+          })),
         });
       }
     }

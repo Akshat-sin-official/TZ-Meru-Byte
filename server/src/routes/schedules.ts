@@ -96,18 +96,18 @@ router.post('/generate', authenticate, requireRole([Role.admin]), async (req: Au
       },
     });
 
-    // Save assignments
-    for (const a of result.assignments) {
-      await prisma.scheduleAssignment.create({
-        data: {
-          scheduleVersionId: proposal.id,
-          sessionExternalId: a.session_id,
-          day: a.day,
-          startPeriod: a.start_period,
-          roomExternalId: a.room_id,
-        },
-      });
-    }
+    // Batch insert assignments (Performance Batching)
+    const assignmentsToInsert = result.assignments.map((a: any) => ({
+      scheduleVersionId: proposal.id,
+      sessionExternalId: a.session_id,
+      day: a.day,
+      startPeriod: a.start_period,
+      roomExternalId: a.room_id,
+    }));
+
+    await prisma.scheduleAssignment.createMany({
+      data: assignmentsToInsert,
+    });
 
     // Audit log
     await prisma.auditLog.create({
@@ -168,6 +168,46 @@ router.post('/validate-move', authenticate, async (req: AuthenticatedRequest, re
       target_day,
       target_start_period,
       target_room_id,
+    });
+
+    return res.json(valRes.data);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Batch Pre-flight Drag & Drop Validation (Feature Guide #10)
+router.post('/batch-validate-moves', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { session_id, candidates } = req.body;
+    if (!session_id || !Array.isArray(candidates) || candidates.length === 0) {
+      return res.status(400).json({ error: 'Missing session_id or non-empty candidates array' });
+    }
+
+    const dataset = await prisma.datasetVersion.findFirst({ where: { isCurrent: true } });
+    const activeSchedule = await prisma.scheduleVersion.findFirst({
+      where: { datasetVersionId: dataset?.id, status: ScheduleStatus.active },
+      include: { assignments: true },
+    });
+
+    if (!dataset || !activeSchedule) {
+      return res.status(404).json({ error: 'No active schedule available for validation' });
+    }
+
+    const currentSchedulePayload = {
+      sessions: activeSchedule.assignments.map((a) => ({
+        session_id: a.sessionExternalId,
+        day: a.day,
+        start_period: a.startPeriod,
+        room_id: a.roomExternalId,
+      })),
+    };
+
+    const valRes = await axios.post(`${OPTIMIZER_URL}/internal/batch-validate-moves`, {
+      dataset: dataset.rawJson,
+      current_schedule: currentSchedulePayload,
+      session_id,
+      candidates,
     });
 
     return res.json(valRes.data);

@@ -66,6 +66,13 @@ export const campusApi = {
     const res = await api.post('/schedules/validate-move', params);
     return res.data;
   },
+  batchValidateMoves: async (params: {
+    session_id: string;
+    candidates: Array<{ target_day: string; target_start_period: number; target_room_id: string }>;
+  }) => {
+    const res = await api.post('/schedules/batch-validate-moves', params);
+    return res.data;
+  },
   approveProposal: async (id: string) => {
     const res = await api.post(`/schedules/proposals/${id}/approve`);
     return res.data;
