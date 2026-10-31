@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useCampusAuth } from '@/contexts/CampusAuthContext';
 import {
   LayoutDashboard,
+  Calendar,
   CalendarDays,
   FileSpreadsheet,
   PartyPopper,
@@ -21,6 +22,8 @@ import {
   CheckCheck,
   Sparkles,
 } from 'lucide-react';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { campusApi } from '@/services/api';
 import { toast } from 'sonner';
 
@@ -265,53 +268,63 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
         }`}
       >
         {/* Workspace Header */}
-        <div className="px-3.5 py-3 border-b border-[#E5E7EB] flex items-center justify-between relative" ref={workspaceRef}>
+        <div
+          className={`border-b border-[#E5E7EB] relative ${
+            sidebarCollapsed ? 'h-14 flex items-center justify-center px-2' : 'px-3.5 py-3 flex items-center justify-between'
+          }`}
+          ref={workspaceRef}
+        >
           {!sidebarCollapsed ? (
-            <div
-              onClick={() => setWorkspaceMenuOpen(!workspaceMenuOpen)}
-              className="flex items-center gap-2.5 p-1 rounded-md hover:bg-[#F4F4F5] transition cursor-pointer group min-w-0"
-              title="Workspace Menu"
-            >
-              <div className="w-9 h-9 rounded-lg bg-white border border-[#E5E7EB] flex items-center justify-center p-0.5 shrink-0 shadow-2xs overflow-hidden">
-                <img src="/logo.jpeg" alt="CIT CampusOS" className="w-full h-full object-cover rounded-md" />
+            <>
+              <div
+                onClick={() => setWorkspaceMenuOpen(!workspaceMenuOpen)}
+                className="flex items-center gap-2.5 p-1 rounded-md hover:bg-[#F4F4F5] transition cursor-pointer group min-w-0"
+                title="Workspace Menu"
+              >
+                <div className="w-9 h-9 rounded-lg bg-white border border-[#E5E7EB] flex items-center justify-center p-0.5 shrink-0 shadow-2xs overflow-hidden">
+                  <img src="/logo.jpeg" alt="CIT CampusOS" className="w-full h-full object-cover rounded-md" />
+                </div>
+                <div className="flex flex-col min-w-0 text-left justify-center">
+                  <span className="text-[13.5px] font-semibold tracking-tight text-[#09090B] leading-tight truncate">
+                    CIT CampusOS
+                  </span>
+                  <span className="text-[11px] font-medium text-[#52525B] leading-tight mt-0.5">
+                    Autumn 2027
+                  </span>
+                </div>
+                <ChevronDown
+                  className={`h-3.5 w-3.5 text-[#71717A] group-hover:text-[#18181B] transition shrink-0 ml-1 ${
+                    workspaceMenuOpen ? 'rotate-180' : ''
+                  }`}
+                />
               </div>
-              <div className="flex flex-col min-w-0 text-left justify-center">
-                <span className="text-[13.5px] font-semibold tracking-tight text-[#09090B] leading-tight truncate">
-                  CIT CampusOS
-                </span>
-                <span className="text-[11px] font-medium text-[#52525B] leading-tight mt-0.5">
-                  Autumn 2027
-                </span>
-              </div>
-              <ChevronDown
-                className={`h-3.5 w-3.5 text-[#71717A] group-hover:text-[#18181B] transition shrink-0 ml-1 ${
-                  workspaceMenuOpen ? 'rotate-180' : ''
-                }`}
-              />
-            </div>
+
+              <button
+                onClick={() => setSidebarCollapsed(true)}
+                className="p-1.5 rounded-md hover:bg-[#F4F4F5] text-[#71717A] hover:text-[#09090B] transition cursor-pointer"
+                title="Collapse Sidebar"
+              >
+                <PanelLeftClose className="h-4 w-4" />
+              </button>
+            </>
           ) : (
-            <div
-              onClick={() => setSidebarCollapsed(false)}
-              className="mx-auto w-10 h-10 rounded-xl bg-white border border-[#E5E7EB] flex items-center justify-center p-0.5 cursor-pointer shadow-2xs overflow-hidden"
-              title="Expand Sidebar"
-            >
-              <img src="/logo.jpeg" alt="CIT CampusOS" className="w-full h-full object-cover rounded-lg" />
-            </div>
+            <Tooltip delayDuration={100}>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setSidebarCollapsed(false)}
+                  className="w-10 h-10 rounded-xl bg-white border border-[#E5E7EB] flex items-center justify-center p-0.5 cursor-pointer shadow-2xs hover:border-[#09090B] hover:shadow-xs transition-all group overflow-hidden"
+                >
+                  <img src="/logo.jpeg" alt="CIT CampusOS" className="w-full h-full object-cover rounded-lg group-hover:scale-105 transition-transform" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={12} className="bg-[#09090B] text-white border-0 py-1.5 px-3 shadow-lg">
+                <div className="text-xs font-semibold">CIT CampusOS</div>
+                <div className="text-[10.5px] text-[#A1A1AA]">Autumn 2027 · Click to expand</div>
+              </TooltipContent>
+            </Tooltip>
           )}
 
-          <button
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="p-1.5 rounded-md hover:bg-[#F4F4F5] text-[#71717A] hover:text-[#09090B] transition cursor-pointer"
-            title={sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
-          >
-            {sidebarCollapsed ? (
-              <PanelLeft className="h-4 w-4" />
-            ) : (
-              <PanelLeftClose className="h-4 w-4" />
-            )}
-          </button>
-
-          {/* Minimal Workspace Popover Menu */}
+          {/* Minimal Workspace Popover Menu (Expanded mode only) */}
           {workspaceMenuOpen && !sidebarCollapsed && (
             <div className="absolute left-3.5 top-14 w-[245px] bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-50 p-2 space-y-1.5">
               <div className="px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-wider text-[#71717A]">
@@ -365,7 +378,7 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
         </div>
 
         {/* Scrollable Nav Section */}
-        <div className="p-3 flex-1 overflow-y-auto space-y-4 scrollbar-none">
+        <div className={`flex-1 overflow-y-auto space-y-3.5 scrollbar-none ${sidebarCollapsed ? 'p-2' : 'p-3 space-y-4'}`}>
           {/* Quick Search */}
           {!sidebarCollapsed ? (
             <button
@@ -381,13 +394,20 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
               </kbd>
             </button>
           ) : (
-            <button
-              onClick={openCopilot}
-              className="w-full flex items-center justify-center py-2 text-[#52525B] hover:text-[#09090B] rounded-md hover:bg-[#F4F4F5] transition cursor-pointer"
-              title="Search (⌘K)"
-            >
-              <Search className="h-4 w-4" />
-            </button>
+            <Tooltip delayDuration={100}>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={openCopilot}
+                  className="w-10 h-10 mx-auto rounded-lg flex items-center justify-center text-[#52525B] hover:text-[#09090B] hover:bg-[#F4F4F5] border border-transparent hover:border-[#E5E7EB] hover:shadow-2xs transition-all cursor-pointer"
+                >
+                  <Search className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={12} className="flex items-center gap-2 bg-[#09090B] text-white border-0 py-1.5 px-3 shadow-lg">
+                <span className="text-xs font-medium">Quick find</span>
+                <kbd className="text-[10px] font-mono bg-[#27272A] text-[#A1A1AA] px-1.5 py-0.2 rounded">⌘K</kbd>
+              </TooltipContent>
+            </Tooltip>
           )}
 
           {/* Nav: Schedules */}
@@ -399,44 +419,91 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
             )}
             <nav className="space-y-1">
               {/* Overview */}
-              <button
-                onClick={() => setActiveTab('dashboard')}
-                className={`w-full flex items-center justify-between px-3 py-2 text-[13.5px] rounded-lg transition cursor-pointer ${
-                  activeTab === 'dashboard'
-                    ? 'bg-white font-semibold text-[#09090B] border border-[#E5E7EB] shadow-2xs'
-                    : 'text-[#3F3F46] hover:text-[#09090B] hover:bg-[#F4F4F5] border border-transparent font-medium'
-                }`}
-                title="Overview Dashboard"
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <LayoutDashboard className={`h-4 w-4 shrink-0 ${activeTab === 'dashboard' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
-                  {!sidebarCollapsed && <span className="whitespace-nowrap">Overview</span>}
-                </div>
-              </button>
-
-              {/* Weekly Timetable (Restricted: Club Reps do not have timetable access per RBAC) */}
-              {user?.role !== 'club' && (
-                <div
-                  className={`rounded-lg transition-all ${
-                    activeTab === 'timetable'
-                      ? 'bg-white border border-[#E5E7EB] shadow-2xs overflow-hidden'
-                      : ''
+              {sidebarCollapsed ? (
+                <Tooltip delayDuration={80}>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => setActiveTab('dashboard')}
+                      className={`w-10 h-10 mx-auto rounded-lg flex items-center justify-center transition-all cursor-pointer relative ${
+                        activeTab === 'dashboard'
+                          ? 'bg-white text-[#09090B] border border-[#E5E7EB] shadow-2xs font-semibold'
+                          : 'text-[#52525B] hover:text-[#09090B] hover:bg-[#F4F4F5] border border-transparent'
+                      }`}
+                    >
+                      {activeTab === 'dashboard' && (
+                        <span className="absolute -left-1.5 top-2.5 bottom-2.5 w-1 rounded-r bg-[#09090B]" />
+                      )}
+                      <LayoutDashboard className={`h-4 w-4 shrink-0 ${activeTab === 'dashboard' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" sideOffset={12} className="bg-[#09090B] text-white border-0 py-1.5 px-3 shadow-lg">
+                    <span className="text-xs font-medium">Overview Dashboard</span>
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <button
+                  onClick={() => setActiveTab('dashboard')}
+                  className={`w-full flex items-center justify-between px-3 py-2 text-[13.5px] rounded-lg transition cursor-pointer ${
+                    activeTab === 'dashboard'
+                      ? 'bg-white font-semibold text-[#09090B] border border-[#E5E7EB] shadow-2xs'
+                      : 'text-[#3F3F46] hover:text-[#09090B] hover:bg-[#F4F4F5] border border-transparent font-medium'
                   }`}
+                  title="Overview Dashboard"
                 >
-                  <button
-                    onClick={() => {
-                      setActiveTab('timetable');
-                    }}
-                    className={`w-full flex items-center justify-between px-3 py-2 text-[13.5px] transition cursor-pointer ${
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <LayoutDashboard className={`h-4 w-4 shrink-0 ${activeTab === 'dashboard' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
+                    <span className="whitespace-nowrap">Overview</span>
+                  </div>
+                </button>
+              )}
+
+              {/* Weekly Timetable */}
+              {user?.role !== 'club' && (
+                sidebarCollapsed ? (
+                  <Tooltip delayDuration={80}>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => setActiveTab('timetable')}
+                        className={`w-10 h-10 mx-auto rounded-lg flex items-center justify-center transition-all cursor-pointer relative ${
+                          activeTab === 'timetable'
+                            ? 'bg-white text-[#09090B] border border-[#E5E7EB] shadow-2xs font-semibold'
+                            : 'text-[#52525B] hover:text-[#09090B] hover:bg-[#F4F4F5] border border-transparent'
+                        }`}
+                      >
+                        {activeTab === 'timetable' && (
+                          <span className="absolute -left-1.5 top-2.5 bottom-2.5 w-1 rounded-r bg-[#09090B]" />
+                        )}
+                        <CalendarDays className={`h-4 w-4 shrink-0 ${activeTab === 'timetable' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" sideOffset={12} className="flex items-center gap-2 bg-[#09090B] text-white border-0 py-1.5 px-3 shadow-lg">
+                      <span className="text-xs font-medium">
+                        {user?.role === 'faculty' ? 'My Teaching Timetable' : user?.role === 'department_coordinator' ? 'Dept Timetable' : 'Weekly Timetable'}
+                      </span>
+                      <span className="text-[10px] font-mono bg-[#27272A] text-[#A1A1AA] px-1.5 py-0.2 rounded font-medium">
+                        {user?.role === 'faculty' ? (user.facultyId || 'F19') : '189'}
+                      </span>
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <div
+                    className={`rounded-lg transition-all ${
                       activeTab === 'timetable'
-                        ? 'font-semibold text-[#09090B]'
-                        : 'text-[#3F3F46] hover:text-[#09090B] hover:bg-[#F4F4F5] font-medium'
+                        ? 'bg-white border border-[#E5E7EB] shadow-2xs overflow-hidden'
+                        : ''
                     }`}
-                    title={user?.role === 'faculty' ? 'My Teaching Timetable' : user?.role === 'department_coordinator' ? 'Department Timetable' : 'Weekly Timetable'}
                   >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <CalendarDays className={`h-4 w-4 shrink-0 ${activeTab === 'timetable' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
-                      {!sidebarCollapsed && (
+                    <button
+                      onClick={() => setActiveTab('timetable')}
+                      className={`w-full flex items-center justify-between px-3 py-2 text-[13.5px] transition cursor-pointer ${
+                        activeTab === 'timetable'
+                          ? 'font-semibold text-[#09090B]'
+                          : 'text-[#3F3F46] hover:text-[#09090B] hover:bg-[#F4F4F5] font-medium'
+                      }`}
+                      title={user?.role === 'faculty' ? 'My Teaching Timetable' : user?.role === 'department_coordinator' ? 'Department Timetable' : 'Weekly Timetable'}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <CalendarDays className={`h-4 w-4 shrink-0 ${activeTab === 'timetable' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
                         <span className="whitespace-nowrap">
                           {user?.role === 'faculty'
                             ? 'My Timetable'
@@ -444,9 +511,7 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
                             ? 'Dept Timetable'
                             : 'Weekly Timetable'}
                         </span>
-                      )}
-                    </div>
-                    {!sidebarCollapsed && (
+                      </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <span className="text-[11px] font-mono font-medium text-[#52525B] bg-[#F4F4F5] px-1.5 py-0.5 rounded">
                           {user?.role === 'faculty' ? (user.facultyId || 'F19') : '189'}
@@ -465,128 +530,224 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
                           </span>
                         )}
                       </div>
-                    )}
-                  </button>
+                    </button>
 
-                  {/* Sub-cohort list (Scoped by role) */}
-                  {!sidebarCollapsed && cohortMenuOpen && visibleCohorts.length > 0 && (
-                    <div className="ml-5 pl-2.5 pr-2 pb-2 pt-1 space-y-1 border-l border-[#E5E7EB] text-xs">
-                      {visibleCohorts.map((cohort) => {
-                        const isSelected = selectedCohort === cohort.id;
-                        return (
-                          <button
-                            key={cohort.id}
-                            onClick={() => onSelectCohort?.(cohort.id)}
-                            className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition text-left cursor-pointer ${
-                              isSelected
-                                ? 'bg-white font-semibold text-[#09090B] border border-[#E5E7EB] shadow-2xs'
-                                : 'text-[#52525B] hover:text-[#09090B] hover:bg-[#F4F4F5] font-medium'
-                            }`}
-                          >
-                            <span className="truncate whitespace-nowrap">{cohort.label}</span>
-                            <span className="text-[10.5px] font-mono text-[#71717A] shrink-0 ml-1">{cohort.hours}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
+                    {/* Sub-cohort list (Scoped by role) */}
+                    {cohortMenuOpen && visibleCohorts.length > 0 && (
+                      <div className="ml-5 pl-2.5 pr-2 pb-2 pt-1 space-y-1 border-l border-[#E5E7EB] text-xs">
+                        {visibleCohorts.map((cohort) => {
+                          const isSelected = selectedCohort === cohort.id;
+                          return (
+                            <button
+                              key={cohort.id}
+                              onClick={() => onSelectCohort?.(cohort.id)}
+                              className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition text-left cursor-pointer ${
+                                isSelected
+                                  ? 'bg-white font-semibold text-[#09090B] border border-[#E5E7EB] shadow-2xs'
+                                  : 'text-[#52525B] hover:text-[#09090B] hover:bg-[#F4F4F5] font-medium'
+                              }`}
+                            >
+                              <span className="truncate whitespace-nowrap">{cohort.label}</span>
+                              <span className="text-[10.5px] font-mono text-[#71717A] shrink-0 ml-1">{cohort.hours}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )
               )}
 
-              {/* Exams (Restricted to Admin, Coordinator, Faculty per RBAC Matrix) */}
+              {/* Exams */}
               {user?.role !== 'club' && (
-                <button
-                  onClick={() => setActiveTab('exams')}
-                  className={`w-full flex items-center justify-between px-3 py-2 text-[13.5px] rounded-lg transition cursor-pointer ${
-                    activeTab === 'exams'
-                      ? 'bg-white font-semibold text-[#09090B] border border-[#E5E7EB] shadow-2xs'
-                      : 'text-[#3F3F46] hover:text-[#09090B] hover:bg-[#F4F4F5] border border-transparent font-medium'
-                  }`}
-                  title="Exam Schedule"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <FileSpreadsheet className={`h-4 w-4 shrink-0 ${activeTab === 'exams' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
-                    {!sidebarCollapsed && <span className="whitespace-nowrap">Exam Timetable</span>}
-                  </div>
-                  {!sidebarCollapsed && (
+                sidebarCollapsed ? (
+                  <Tooltip delayDuration={80}>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => setActiveTab('exams')}
+                        className={`w-10 h-10 mx-auto rounded-lg flex items-center justify-center transition-all cursor-pointer relative ${
+                          activeTab === 'exams'
+                            ? 'bg-white text-[#09090B] border border-[#E5E7EB] shadow-2xs font-semibold'
+                            : 'text-[#52525B] hover:text-[#09090B] hover:bg-[#F4F4F5] border border-transparent'
+                        }`}
+                      >
+                        {activeTab === 'exams' && (
+                          <span className="absolute -left-1.5 top-2.5 bottom-2.5 w-1 rounded-r bg-[#09090B]" />
+                        )}
+                        <FileSpreadsheet className={`h-4 w-4 shrink-0 ${activeTab === 'exams' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" sideOffset={12} className="flex items-center gap-2 bg-[#09090B] text-white border-0 py-1.5 px-3 shadow-lg">
+                      <span className="text-xs font-medium">Exam Timetable</span>
+                      <span className="text-[10px] font-mono bg-[#27272A] text-[#A1A1AA] px-1.5 py-0.2 rounded font-medium">
+                        Midsem
+                      </span>
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <button
+                    onClick={() => setActiveTab('exams')}
+                    className={`w-full flex items-center justify-between px-3 py-2 text-[13.5px] rounded-lg transition cursor-pointer ${
+                      activeTab === 'exams'
+                        ? 'bg-white font-semibold text-[#09090B] border border-[#E5E7EB] shadow-2xs'
+                        : 'text-[#3F3F46] hover:text-[#09090B] hover:bg-[#F4F4F5] border border-transparent font-medium'
+                    }`}
+                    title="Exam Schedule"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <FileSpreadsheet className={`h-4 w-4 shrink-0 ${activeTab === 'exams' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
+                      <span className="whitespace-nowrap">Exam Timetable</span>
+                    </div>
                     <span className="text-[11px] font-mono font-medium text-[#52525B] bg-[#F4F4F5] px-1.5 py-0.5 rounded shrink-0">
                       Midsem
                     </span>
-                  )}
-                </button>
+                  </button>
+                )
               )}
 
               {/* Spectra Fest */}
-              <button
-                onClick={() => setActiveTab('bookings')}
-                className={`w-full flex items-center justify-between px-3 py-2 text-[13.5px] rounded-lg transition cursor-pointer ${
-                  activeTab === 'bookings'
-                    ? 'bg-white font-semibold text-[#09090B] border border-[#E5E7EB] shadow-2xs'
-                    : 'text-[#3F3F46] hover:text-[#09090B] hover:bg-[#F4F4F5] border border-transparent font-medium'
-                }`}
-                title="Fest Bookings"
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <PartyPopper className={`h-4 w-4 shrink-0 ${activeTab === 'bookings' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
-                  {!sidebarCollapsed && <span className="whitespace-nowrap">Spectra Bookings</span>}
-                </div>
-                {!sidebarCollapsed && (
+              {sidebarCollapsed ? (
+                <Tooltip delayDuration={80}>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => setActiveTab('bookings')}
+                      className={`w-10 h-10 mx-auto rounded-lg flex items-center justify-center transition-all cursor-pointer relative ${
+                        activeTab === 'bookings'
+                          ? 'bg-white text-[#09090B] border border-[#E5E7EB] shadow-2xs font-semibold'
+                          : 'text-[#52525B] hover:text-[#09090B] hover:bg-[#F4F4F5] border border-transparent'
+                      }`}
+                    >
+                      {activeTab === 'bookings' && (
+                        <span className="absolute -left-1.5 top-2.5 bottom-2.5 w-1 rounded-r bg-[#09090B]" />
+                      )}
+                      <PartyPopper className={`h-4 w-4 shrink-0 ${activeTab === 'bookings' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" sideOffset={12} className="flex items-center gap-2 bg-[#09090B] text-white border-0 py-1.5 px-3 shadow-lg">
+                    <span className="text-xs font-medium">Spectra Bookings</span>
+                    <span className="text-[10px] font-mono bg-[#27272A] text-[#A1A1AA] px-1.5 py-0.2 rounded font-medium">
+                      Oct 22-24
+                    </span>
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <button
+                  onClick={() => setActiveTab('bookings')}
+                  className={`w-full flex items-center justify-between px-3 py-2 text-[13.5px] rounded-lg transition cursor-pointer ${
+                    activeTab === 'bookings'
+                      ? 'bg-white font-semibold text-[#09090B] border border-[#E5E7EB] shadow-2xs'
+                      : 'text-[#3F3F46] hover:text-[#09090B] hover:bg-[#F4F4F5] border border-transparent font-medium'
+                  }`}
+                  title="Fest Bookings"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <PartyPopper className={`h-4 w-4 shrink-0 ${activeTab === 'bookings' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
+                    <span className="whitespace-nowrap">Spectra Bookings</span>
+                  </div>
                   <span className="text-[11px] font-mono font-medium text-[#52525B] bg-[#F4F4F5] px-1.5 py-0.5 rounded shrink-0">
                     Oct 22-24
                   </span>
-                )}
-              </button>
-
-              {/* Disruption Recovery */}
-              {(user?.role === 'admin' || user?.role === 'department_coordinator') && (
-                <button
-                  onClick={() => setActiveTab('disruptions')}
-                  className={`w-full flex items-center justify-between px-3 py-2 text-[13.5px] rounded-lg transition cursor-pointer ${
-                    activeTab === 'disruptions'
-                      ? 'bg-white font-semibold text-[#09090B] border border-[#E5E7EB] shadow-2xs'
-                      : 'text-[#3F3F46] hover:text-[#09090B] hover:bg-[#F4F4F5] border border-transparent font-medium'
-                  }`}
-                  title="Disruptions & Recovery"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <AlertTriangle className={`h-4 w-4 shrink-0 ${activeTab === 'disruptions' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
-                    {!sidebarCollapsed && <span className="whitespace-nowrap">Disruptions</span>}
-                  </div>
-                  {!sidebarCollapsed && (
-                    <span className="text-[11px] font-mono font-medium text-[#52525B] bg-[#F4F4F5] px-1.5 py-0.5 rounded shrink-0">
-                      0 Clashes
-                    </span>
-                  )}
                 </button>
               )}
 
-              {/* WhatsApp Bot Channel (Admin Only per RBAC Matrix) */}
+              {/* Disruption Recovery */}
+              {(user?.role === 'admin' || user?.role === 'department_coordinator') && (
+                sidebarCollapsed ? (
+                  <Tooltip delayDuration={80}>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => setActiveTab('disruptions')}
+                        className={`w-10 h-10 mx-auto rounded-lg flex items-center justify-center transition-all cursor-pointer relative ${
+                          activeTab === 'disruptions'
+                            ? 'bg-white text-[#09090B] border border-[#E5E7EB] shadow-2xs font-semibold'
+                            : 'text-[#52525B] hover:text-[#09090B] hover:bg-[#F4F4F5] border border-transparent'
+                        }`}
+                      >
+                        {activeTab === 'disruptions' && (
+                          <span className="absolute -left-1.5 top-2.5 bottom-2.5 w-1 rounded-r bg-[#09090B]" />
+                        )}
+                        <AlertTriangle className={`h-4 w-4 shrink-0 ${activeTab === 'disruptions' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" sideOffset={12} className="flex items-center gap-2 bg-[#09090B] text-white border-0 py-1.5 px-3 shadow-lg">
+                      <span className="text-xs font-medium">Disruptions & Recovery</span>
+                      <span className="text-[10px] font-mono bg-[#27272A] text-[#A1A1AA] px-1.5 py-0.2 rounded font-medium">
+                        0 Clashes
+                      </span>
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <button
+                    onClick={() => setActiveTab('disruptions')}
+                    className={`w-full flex items-center justify-between px-3 py-2 text-[13.5px] rounded-lg transition cursor-pointer ${
+                      activeTab === 'disruptions'
+                        ? 'bg-white font-semibold text-[#09090B] border border-[#E5E7EB] shadow-2xs'
+                        : 'text-[#3F3F46] hover:text-[#09090B] hover:bg-[#F4F4F5] border border-transparent font-medium'
+                    }`}
+                    title="Disruptions & Recovery"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <AlertTriangle className={`h-4 w-4 shrink-0 ${activeTab === 'disruptions' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
+                      <span className="whitespace-nowrap">Disruptions</span>
+                    </div>
+                    <span className="text-[11px] font-mono font-medium text-[#52525B] bg-[#F4F4F5] px-1.5 py-0.5 rounded shrink-0">
+                      0 Clashes
+                    </span>
+                  </button>
+                )
+              )}
+
+              {/* WhatsApp Bot Channel */}
               {user?.role === 'admin' && (
-                <button
-                  onClick={() => setActiveTab('whatsapp')}
-                  className={`w-full flex items-center justify-between px-3 py-2 text-[13.5px] rounded-lg transition cursor-pointer ${
-                    activeTab === 'whatsapp'
-                      ? 'bg-white font-semibold text-[#09090B] border border-[#E5E7EB] shadow-2xs'
-                      : 'text-[#3F3F46] hover:text-[#09090B] hover:bg-[#F4F4F5] border border-transparent font-medium'
-                  }`}
-                  title="WhatsApp Bot Operations Center"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <MessageSquare className={`h-4 w-4 shrink-0 ${activeTab === 'whatsapp' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
-                    {!sidebarCollapsed && <span className="whitespace-nowrap">WhatsApp Gateway</span>}
-                  </div>
-                  {!sidebarCollapsed && (
+                sidebarCollapsed ? (
+                  <Tooltip delayDuration={80}>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => setActiveTab('whatsapp')}
+                        className={`w-10 h-10 mx-auto rounded-lg flex items-center justify-center transition-all cursor-pointer relative ${
+                          activeTab === 'whatsapp'
+                            ? 'bg-white text-[#09090B] border border-[#E5E7EB] shadow-2xs font-semibold'
+                            : 'text-[#52525B] hover:text-[#09090B] hover:bg-[#F4F4F5] border border-transparent'
+                        }`}
+                      >
+                        {activeTab === 'whatsapp' && (
+                          <span className="absolute -left-1.5 top-2.5 bottom-2.5 w-1 rounded-r bg-[#09090B]" />
+                        )}
+                        <MessageSquare className={`h-4 w-4 shrink-0 ${activeTab === 'whatsapp' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" sideOffset={12} className="flex items-center gap-2 bg-[#09090B] text-white border-0 py-1.5 px-3 shadow-lg">
+                      <span className="text-xs font-medium">WhatsApp Gateway</span>
+                      <span className="text-[10px] font-mono bg-[#27272A] text-[#A1A1AA] px-1.5 py-0.2 rounded font-medium">
+                        Admin
+                      </span>
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <button
+                    onClick={() => setActiveTab('whatsapp')}
+                    className={`w-full flex items-center justify-between px-3 py-2 text-[13.5px] rounded-lg transition cursor-pointer ${
+                      activeTab === 'whatsapp'
+                        ? 'bg-white font-semibold text-[#09090B] border border-[#E5E7EB] shadow-2xs'
+                        : 'text-[#3F3F46] hover:text-[#09090B] hover:bg-[#F4F4F5] border border-transparent font-medium'
+                    }`}
+                    title="WhatsApp Bot Operations Center"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <MessageSquare className={`h-4 w-4 shrink-0 ${activeTab === 'whatsapp' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
+                      <span className="whitespace-nowrap">WhatsApp Gateway</span>
+                    </div>
                     <span className="text-[11px] font-mono font-medium text-[#52525B] bg-[#F4F4F5] px-1.5 py-0.5 rounded shrink-0">
                       Admin
                     </span>
-                  )}
-                </button>
+                  </button>
+                )
               )}
             </nav>
           </div>
 
           {/* Interactive Mini Calendar */}
-          {!sidebarCollapsed && (
+          {!sidebarCollapsed ? (
             <div className="pt-2 border-t border-[#E5E7EB]">
               <div className="bg-white border border-[#E5E7EB] rounded-lg p-3 shadow-2xs">
                 {/* Calendar Header */}
@@ -704,11 +865,148 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
                 )}
               </div>
             </div>
+          ) : (
+            /* Collapsed Calendar Popover Trigger */
+            <div className="pt-2 border-t border-[#E5E7EB] flex flex-col items-center">
+              <Popover>
+                <Tooltip delayDuration={100}>
+                  <TooltipTrigger asChild>
+                    <PopoverTrigger asChild>
+                      <button
+                        className={`w-10 h-10 mx-auto rounded-lg flex items-center justify-center transition-all cursor-pointer relative ${
+                          selectedDay
+                            ? 'bg-[#09090B] text-white shadow-2xs font-semibold'
+                            : 'text-[#52525B] hover:text-[#09090B] hover:bg-[#F4F4F5] border border-transparent'
+                        }`}
+                      >
+                        <Calendar className="h-4 w-4" />
+                        {selectedDay && (
+                          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white" />
+                        )}
+                      </button>
+                    </PopoverTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" sideOffset={12} className="flex items-center gap-1.5 bg-[#09090B] text-white border-0 py-1.5 px-3 shadow-lg">
+                    <span className="text-xs font-medium">
+                      {selectedDay ? `Active: ${selectedDay}` : 'Academic Calendar & Filter'}
+                    </span>
+                    {selectedDate && (
+                      <span className="text-[10px] font-mono bg-[#27272A] text-[#A1A1AA] px-1.5 py-0.2 rounded font-medium">
+                        Oct {selectedDate}
+                      </span>
+                    )}
+                  </TooltipContent>
+                </Tooltip>
+                <PopoverContent side="right" align="start" sideOffset={14} className="w-[285px] p-3 bg-white border border-[#E5E7EB] rounded-xl shadow-xl">
+                  {/* Calendar Header in Popover */}
+                  <div className="flex items-center justify-between mb-2.5 px-0.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-[#09090B]">
+                        {calendarMonth === 'OCT' ? 'October 2027' : 'November 2027'}
+                      </span>
+                      <span className="text-[10px] font-mono font-medium text-[#52525B] bg-[#F4F4F5] px-1 py-0.2 rounded">
+                        {calendarMonth === 'OCT' ? 'Wk 42' : 'Wk 45'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 text-[#52525B]">
+                      <button
+                        onClick={() => setCalendarMonth('OCT')}
+                        className={`p-1 rounded hover:bg-[#F4F4F5] transition cursor-pointer ${
+                          calendarMonth === 'OCT' ? 'text-[#09090B] font-semibold' : 'text-[#71717A]'
+                        }`}
+                      >
+                        <ChevronLeft className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => setCalendarMonth('NOV')}
+                        className={`p-1 rounded hover:bg-[#F4F4F5] transition cursor-pointer ${
+                          calendarMonth === 'NOV' ? 'text-[#09090B] font-semibold' : 'text-[#71717A]'
+                        }`}
+                      >
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold text-[#71717A] mb-1.5">
+                    <span>M</span>
+                    <span>T</span>
+                    <span>W</span>
+                    <span>T</span>
+                    <span>F</span>
+                    <span>S</span>
+                    <span>S</span>
+                  </div>
+
+                  {calendarMonth === 'OCT' ? (
+                    <div className="grid grid-cols-7 gap-1 text-center text-xs">
+                      <span className="text-[#A1A1AA] py-1">27</span>
+                      <span className="text-[#A1A1AA] py-1">28</span>
+                      <span className="text-[#A1A1AA] py-1">29</span>
+                      <span className="text-[#A1A1AA] py-1">30</span>
+
+                      {[...Array(31)].map((_, i) => {
+                        const date = i + 1;
+                        const isSelected = selectedDate === date;
+                        const isMidsem = date >= 14 && date <= 20;
+                        const isSpectra = date >= 22 && date <= 24;
+
+                        return (
+                          <button
+                            key={date}
+                            onClick={() => handleDateClick(date)}
+                            className={`py-1 rounded transition cursor-pointer select-none relative font-medium ${
+                              isSelected
+                                ? 'bg-[#09090B] text-white font-semibold shadow-2xs'
+                                : 'text-[#18181B] hover:bg-[#F4F4F5]'
+                            }`}
+                          >
+                            <span>{date}</span>
+                            {(isMidsem || isSpectra) && !isSelected && (
+                              <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-0.5 rounded-full bg-[#52525B]" />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-7 gap-1 text-center text-xs">
+                      {[...Array(30)].map((_, i) => {
+                        const date = i + 1;
+                        return (
+                          <button
+                            key={date}
+                            onClick={() => handleDateClick(date)}
+                            className="py-1 rounded transition cursor-pointer select-none text-[#18181B] hover:bg-[#F4F4F5] font-medium"
+                          >
+                            {date}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {selectedDay && (
+                    <div className="mt-2.5 pt-2 border-t border-[#F4F4F5] flex items-center justify-between text-[11px]">
+                      <span className="text-[#52525B]">
+                        Filtered: <strong className="text-[#09090B]">{selectedDay}</strong>
+                      </span>
+                      <button
+                        onClick={() => onSelectDay?.(null)}
+                        className="text-[#52525B] hover:text-[#09090B] font-medium underline cursor-pointer"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  )}
+                </PopoverContent>
+              </Popover>
+            </div>
           )}
         </div>
 
         {/* Footer: Segmented Role Switcher & Profile */}
-        <div className="p-3 border-t border-[#E5E7EB] space-y-2.5 bg-[#FBFBFA] shrink-0">
+        <div className={`border-t border-[#E5E7EB] bg-[#FBFBFA] shrink-0 ${sidebarCollapsed ? 'p-2 flex flex-col items-center gap-2' : 'p-3 space-y-2.5'}`}>
           {!sidebarCollapsed ? (
             <>
               {/* Minimal Segmented Role Control */}
@@ -780,21 +1078,109 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
               </div>
             </>
           ) : (
-            <div className="flex flex-col items-center gap-2">
-              <div
-                className="w-7 h-7 rounded-full bg-white border border-[#E5E7EB] flex items-center justify-center text-xs font-semibold text-[#09090B] shadow-2xs cursor-pointer"
-                title={`${user?.name} (${getRoleLabel(user?.role)})`}
-              >
-                {getInitials(user?.name)}
-              </div>
-              <button
-                onClick={logout}
-                title="Sign Out"
-                className="text-[#71717A] hover:text-red-700 p-1 rounded-md hover:bg-[#F4F4F5] transition cursor-pointer"
-              >
-                <LogOut className="h-4 w-4" />
-              </button>
-            </div>
+            /* Collapsed Footer: Avatar with Role Popover & Expand Button */
+            <>
+              <Popover>
+                <Tooltip delayDuration={100}>
+                  <TooltipTrigger asChild>
+                    <PopoverTrigger asChild>
+                      <button
+                        className="w-9 h-9 rounded-full bg-white border border-[#E5E7EB] flex items-center justify-center text-xs font-semibold text-[#09090B] shadow-2xs hover:border-[#09090B] transition-all cursor-pointer relative group"
+                      >
+                        {getInitials(user?.name)}
+                        <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
+                      </button>
+                    </PopoverTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" sideOffset={12} className="bg-[#09090B] text-white border-0 py-1.5 px-3 shadow-lg">
+                    <div className="text-xs font-medium">{user?.name || 'Account'}</div>
+                    <div className="text-[10px] text-[#A1A1AA]">{getRoleLabel(user?.role)} · Click for quick role switch</div>
+                  </TooltipContent>
+                </Tooltip>
+
+                <PopoverContent side="right" align="end" sideOffset={14} className="w-64 p-3 bg-white border border-[#E5E7EB] rounded-xl shadow-xl space-y-3">
+                  <div className="flex items-center gap-2.5 pb-2 border-b border-[#E5E7EB]">
+                    <div className="w-8 h-8 rounded-full bg-[#F4F4F5] border border-[#E5E7EB] flex items-center justify-center text-xs font-semibold text-[#09090B] shadow-2xs">
+                      {getInitials(user?.name)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold text-[#09090B] truncate">{user?.name}</p>
+                      <p className="text-[10px] text-[#71717A] truncate">{getRoleLabel(user?.role)}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-[#71717A] px-1">Switch Role Demo</span>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <button
+                        onClick={() => loginDemo('admin')}
+                        className={`px-2 py-1.5 rounded-md text-xs font-medium transition cursor-pointer text-center ${
+                          user?.role === 'admin'
+                            ? 'bg-[#09090B] text-white font-semibold shadow-2xs'
+                            : 'bg-[#F4F4F5] text-[#52525B] hover:text-[#09090B] hover:bg-[#E5E7EB]'
+                        }`}
+                      >
+                        Admin
+                      </button>
+                      <button
+                        onClick={() => loginDemo('department_coordinator')}
+                        className={`px-2 py-1.5 rounded-md text-xs font-medium transition cursor-pointer text-center ${
+                          user?.role === 'department_coordinator'
+                            ? 'bg-[#09090B] text-white font-semibold shadow-2xs'
+                            : 'bg-[#F4F4F5] text-[#52525B] hover:text-[#09090B] hover:bg-[#E5E7EB]'
+                        }`}
+                      >
+                        Coordinator
+                      </button>
+                      <button
+                        onClick={() => loginDemo('faculty')}
+                        className={`px-2 py-1.5 rounded-md text-xs font-medium transition cursor-pointer text-center ${
+                          user?.role === 'faculty'
+                            ? 'bg-[#09090B] text-white font-semibold shadow-2xs'
+                            : 'bg-[#F4F4F5] text-[#52525B] hover:text-[#09090B] hover:bg-[#E5E7EB]'
+                        }`}
+                      >
+                        Faculty
+                      </button>
+                      <button
+                        onClick={() => loginDemo('club')}
+                        className={`px-2 py-1.5 rounded-md text-xs font-medium transition cursor-pointer text-center ${
+                          user?.role === 'club'
+                            ? 'bg-[#09090B] text-white font-semibold shadow-2xs'
+                            : 'bg-[#F4F4F5] text-[#52525B] hover:text-[#09090B] hover:bg-[#E5E7EB]'
+                        }`}
+                      >
+                        Club Rep
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-[#E5E7EB]">
+                    <button
+                      onClick={logout}
+                      className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition cursor-pointer font-medium"
+                    >
+                      <LogOut className="h-3.5 w-3.5" />
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+
+              <Tooltip delayDuration={100}>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => setSidebarCollapsed(false)}
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-[#71717A] hover:text-[#09090B] hover:bg-[#F4F4F5] transition cursor-pointer"
+                  >
+                    <PanelLeft className="h-4 w-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right" sideOffset={12} className="bg-[#09090B] text-white border-0 py-1.5 px-2.5 shadow-lg">
+                  <span className="text-xs font-medium">Expand Sidebar</span>
+                </TooltipContent>
+              </Tooltip>
+            </>
           )}
         </div>
       </aside>
