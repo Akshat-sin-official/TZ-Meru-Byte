@@ -21,13 +21,13 @@ try:
     from optimizer.exam_solver import solve_exams
     from optimizer.booking_engine import solve_bookings
     from optimizer.disruption_solver import solve_disruption_repair, apply_disruption_payload
-    from optimizer.canonical_validator import validate_schedule
+    from optimizer.canonical_validator import validate_schedule, resolve_room_conflict, ROOM_PRIORITY_ORDER
 except ImportError:
     from timetable_solver import solve_timetable
     from exam_solver import solve_exams
     from booking_engine import solve_bookings
     from disruption_solver import solve_disruption_repair, apply_disruption_payload
-    from canonical_validator import validate_schedule
+    from canonical_validator import validate_schedule, resolve_room_conflict, ROOM_PRIORITY_ORDER
 
 app = FastAPI(title="CIT CampusOS Optimization Service", version="1.0.0")
 
@@ -173,3 +173,27 @@ def validate_move_endpoint(req: ValidateMoveRequest):
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8001)
 
+
+
+class ResolveRoomConflictRequest(BaseModel):
+    request_a: Dict[str, Any]
+    request_b: Dict[str, Any]
+    dataset: Optional[Dict[str, Any]] = None
+
+
+@app.post("/internal/resolve-room-conflict")
+def resolve_room_conflict_endpoint(req: ResolveRoomConflictRequest):
+    """
+    When two requests want the same room at the same time, this order decides who gets it:
+    1. Exams
+    2. Regular classes
+    3. Institute events (Spectra main events, convocation)
+    4. Guest lectures
+    5. Department events
+    6. Club events
+    Ties broken by earlier submitted_at.
+    """
+    try:
+        return resolve_room_conflict(req.dataset or {}, req.request_a, req.request_b)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

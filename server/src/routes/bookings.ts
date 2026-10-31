@@ -2,10 +2,23 @@ import { Router, Response } from 'express';
 import { PrismaClient, Role, ScheduleStatus, BookingDecisionStatus } from '@prisma/client';
 import axios from 'axios';
 import { authenticate, requireRole, AuthenticatedRequest } from '../middleware/auth.js';
+import {
+  resolveRoomConflict,
+  getEffectiveCategory,
+  ROOM_PRIORITY_ORDER,
+  CATEGORY_META,
+} from '../utils/priority.js';
 
 const router = Router();
 const prisma = new PrismaClient();
 const OPTIMIZER_URL = process.env.OPTIMIZER_URL || 'http://127.0.0.1:8001';
+
+const PRIORITY_HIERARCHY_PAYLOAD = ROOM_PRIORITY_ORDER.map((k) => ({
+  rank: CATEGORY_META[k].rank,
+  key: k,
+  label: CATEGORY_META[k].label,
+  description: CATEGORY_META[k].description,
+}));
 
 router.get('/', async (req, res) => {
   try {
@@ -34,8 +47,40 @@ router.get('/', async (req, res) => {
       decisions: activeSchedule?.bookingDecisions || [],
       sessionOverrides: activeSchedule?.sessionOverrides || [],
       rooms,
-      priorityOrder: (dataset.rawJson as any)?.priority_order,
+      priorityOrder: (dataset.rawJson as any)?.priority_order || ROOM_PRIORITY_ORDER,
       roleCategoryCap: (dataset.rawJson as any)?.role_category_cap,
+      priorityHierarchy: PRIORITY_HIERARCHY_PAYLOAD,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * Room Conflict Arbiter Endpoint:
+ * When two requests want the same room at the same time, this order decides who gets it:
+ * 1. Exams
+ * 2. Regular classes
+ * 3. Institute events (Spectra main events, convocation)
+ * 4. Guest lectures
+ * 5. Department events
+ * 6. Club events
+ *
+ * Ties are broken by earlier submitted_at timestamp.
+ */
+router.post('/conflict-check', async (req, res) => {
+  try {
+    const { request_a, request_b } = req.body;
+    if (!request_a || !request_b) {
+      return res.status(400).json({
+        error: 'Both request_a and request_b are required to evaluate room conflict.',
+      });
+    }
+
+    const resolution = resolveRoomConflict(request_a, request_b);
+    return res.json({
+      success: true,
+      resolution,
     });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
@@ -54,6 +99,8 @@ router.post('/requests', authenticate, async (req: AuthenticatedRequest, res: Re
       requested_room,
       mandatory_for_groups,
       raw_text,
+      requested_category,
+      requestedCategory,
     } = req.body;
 
     const dataset = await prisma.datasetVersion.findFirst({ where: { isCurrent: true } });
@@ -63,15 +110,22 @@ router.post('/requests', authenticate, async (req: AuthenticatedRequest, res: Re
     const count = await prisma.bookingRequest.count({ where: { datasetVersionId: dataset.id } });
     const externalId = `BR-EXT-${count + 1}`;
 
+    const userRole = req.user?.role || Role.club;
+    const reqCat = requested_category || requestedCategory || (userRole === 'admin' ? 'institute_event' : 'club_event');
+    const effCat = getEffectiveCategory({
+      role: userRole,
+      requestedCategory: reqCat,
+    });
+
     const newReq = await prisma.bookingRequest.create({
       data: {
         datasetVersionId: dataset.id,
         externalId,
         submittedAt: new Date(),
         requester: req.user?.name || 'Authorized Requester',
-        role: req.user?.role || Role.club,
-        requestedCategory: 'club_event',
-        effectiveCategory: 'club_event',
+        role: userRole,
+        requestedCategory: reqCat,
+        effectiveCategory: effCat,
         title: title || 'Campus Booking',
         attendance: Number(attendance) || 50,
         durationPeriods: Number(duration_periods) || 2,
@@ -84,7 +138,15 @@ router.post('/requests', authenticate, async (req: AuthenticatedRequest, res: Re
       },
     });
 
-    return res.json({ success: true, bookingRequest: newReq });
+    return res.json({
+      success: true,
+      bookingRequest: newReq,
+      priorityDetails: {
+        rank: CATEGORY_META[effCat]?.rank || 6,
+        category: effCat,
+        label: CATEGORY_META[effCat]?.label || 'Club events',
+      },
+    });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
@@ -171,4 +233,3 @@ router.post('/solve', authenticate, requireRole([Role.admin]), async (req: Authe
 });
 
 export default router;
-

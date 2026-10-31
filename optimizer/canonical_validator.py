@@ -17,22 +17,172 @@ def block(start: int, dur: int):
     return list(range(start, start + dur))
 
 
+# Canonical 6-level room conflict resolution hierarchy:
+# When two requests want the same room at the same time, this order decides who gets it:
+# 1. Exams
+# 2. Regular classes
+# 3. Institute events (Spectra main events, convocation)
+# 4. Guest lectures
+# 5. Department events
+# 6. Club events
+ROOM_PRIORITY_ORDER = [
+    "exam",              # 1. Exams
+    "regular_session",   # 2. Regular classes
+    "institute_event",   # 3. Institute events (Spectra main events, convocation)
+    "guest_lecture",     # 4. Guest lectures
+    "department_event",  # 5. Department events
+    "club_event",        # 6. Club events
+]
+
+CATEGORY_NORMALIZATION = {
+    "exam": "exam",
+    "exams": "exam",
+    "examination": "exam",
+    "midsem": "exam",
+    "endsem": "exam",
+    "regular_session": "regular_session",
+    "regular_class": "regular_session",
+    "regular_classes": "regular_session",
+    "class": "regular_session",
+    "classes": "regular_session",
+    "lecture": "regular_session",
+    "session": "regular_session",
+    "institute_event": "institute_event",
+    "institute_events": "institute_event",
+    "convocation": "institute_event",
+    "spectra_main": "institute_event",
+    "guest_lecture": "guest_lecture",
+    "guest_lectures": "guest_lecture",
+    "department_event": "department_event",
+    "department_events": "department_event",
+    "dept_event": "department_event",
+    "club_event": "club_event",
+    "club_events": "club_event",
+    "club": "club_event",
+}
+
+CATEGORY_DISPLAY_NAMES = {
+    "exam": "Exams",
+    "regular_session": "Regular classes",
+    "institute_event": "Institute events",
+    "guest_lecture": "Guest lectures",
+    "department_event": "Department events",
+    "club_event": "Club events",
+}
+
+
+def normalize_category(cat: str) -> str:
+    """Normalizes category string or alias to canonical hierarchy key."""
+    if not cat:
+        return "club_event"
+    key = str(cat).strip().lower().replace(" ", "_")
+    return CATEGORY_NORMALIZATION.get(key, key)
+
+
 def effective_category(data: dict, req: dict) -> str:
-    order = data["priority_order"]
-    cap = data.get("role_category_cap", {}).get(req.get("role", "club"), "club_event")
-    requested = req.get("requested_category", "club_event")
+    order = (data.get("priority_order") if data else None) or ROOM_PRIORITY_ORDER
+    
+    # Explicit exam or course session identifiers
+    if req.get("exam_id") or req.get("examExternalId"):
+        return "exam"
+    if req.get("session_id") or req.get("sessionExternalId"):
+        return "regular_session"
+
+    raw_req = req.get("requested_category", req.get("category", "club_event"))
+    requested = normalize_category(raw_req)
+    role = str(req.get("role", "")).lower()
+
+    # Academic entities (Exams & Regular classes) are not event-capped
+    if requested == "exam" and (role in ("admin", "system", "exam_cell") or not role):
+        return "exam"
+    if requested == "regular_session" and (role in ("admin", "faculty", "academic_cell", "coordinator", "department_coordinator") or not role):
+        return "regular_session"
+
+    role_caps = data.get("role_category_cap", {}) if data else {
+        "admin": "institute_event",
+        "faculty": "guest_lecture",
+        "department_coordinator": "department_event",
+        "coordinator": "department_event",
+        "club": "club_event"
+    }
+    cap = role_caps.get(role, "club_event")
+    cap_normalized = normalize_category(cap)
+
     a = order.index(requested) if requested in order else len(order) - 1
-    cap_idx = order.index(cap) if cap in order else len(order) - 1
+    cap_idx = order.index(cap_normalized) if cap_normalized in order else len(order) - 1
     return order[max(a, cap_idx)]
 
 
 def outranks(data: dict, r1: dict, r2: dict) -> bool:
-    """True if request r1 has priority over r2."""
-    order = data["priority_order"]
-    c1, c2 = order.index(effective_category(data, r1)), order.index(effective_category(data, r2))
+    """True if request r1 has priority over r2 based on the 6-level hierarchy."""
+    order = (data.get("priority_order") if data else None) or ROOM_PRIORITY_ORDER
+    c1 = order.index(effective_category(data, r1)) if effective_category(data, r1) in order else len(order)
+    c2 = order.index(effective_category(data, r2)) if effective_category(data, r2) in order else len(order)
     if c1 != c2:
         return c1 < c2
     return r1.get("submitted_at", "") < r2.get("submitted_at", "")
+
+
+def resolve_room_conflict(data: dict, r1: dict, r2: dict) -> dict:
+    """
+    When two requests want the same room at the same time, this order decides who gets it:
+    1. Exams
+    2. Regular classes
+    3. Institute events (Spectra main events, convocation)
+    4. Guest lectures
+    5. Department events
+    6. Club events
+
+    Ties are broken by earlier submitted_at timestamp.
+    """
+    order = (data.get("priority_order") if data else None) or ROOM_PRIORITY_ORDER
+    cat1 = effective_category(data or {}, r1)
+    cat2 = effective_category(data or {}, r2)
+    rank1 = order.index(cat1) + 1 if cat1 in order else len(order)
+    rank2 = order.index(cat2) + 1 if cat2 in order else len(order)
+
+    id1 = r1.get("id") or r1.get("external_id") or r1.get("session_id") or "Request 1"
+    id2 = r2.get("id") or r2.get("external_id") or r2.get("session_id") or "Request 2"
+    sub1 = r1.get("submitted_at", "")
+    sub2 = r2.get("submitted_at", "")
+
+    label1 = CATEGORY_DISPLAY_NAMES.get(cat1, cat1.replace("_", " ").title())
+    label2 = CATEGORY_DISPLAY_NAMES.get(cat2, cat2.replace("_", " ").title())
+
+    if rank1 < rank2:
+        winner, loser = r1, r2
+        reason = f"{label1} (Rank {rank1}) takes precedence over {label2} (Rank {rank2})."
+    elif rank2 < rank1:
+        winner, loser = r2, r1
+        reason = f"{label2} (Rank {rank2}) takes precedence over {label1} (Rank {rank1})."
+    else:
+        # Same priority level -> earlier submitted_at wins
+        if sub1 and sub2 and sub1 != sub2:
+            if sub1 < sub2:
+                winner, loser = r1, r2
+                reason = f"Both are {label1} (Rank {rank1}). Winner resolved by earlier submission: {id1} ({sub1}) beat {id2} ({sub2})."
+            else:
+                winner, loser = r2, r1
+                reason = f"Both are {label2} (Rank {rank2}). Winner resolved by earlier submission: {id2} ({sub2}) beat {id1} ({sub1})."
+        else:
+            winner, loser = r1, r2
+            reason = f"Both are {label1} (Rank {rank1}) with equal or unrecorded submission time. First listed request gets the room."
+
+    return {
+        "winner_id": winner.get("id") or winner.get("external_id") or winner.get("session_id") or "winner",
+        "loser_id": loser.get("id") or loser.get("external_id") or loser.get("session_id") or "loser",
+        "winner": winner,
+        "loser": loser,
+        "winner_rank": rank1 if winner == r1 else rank2,
+        "loser_rank": rank2 if winner == r1 else rank1,
+        "winner_category": cat1 if winner == r1 else cat2,
+        "loser_category": cat2 if winner == r1 else cat1,
+        "reason": reason,
+        "hierarchy": [
+            {"rank": i + 1, "category": k, "label": CATEGORY_DISPLAY_NAMES.get(k, k)}
+            for i, k in enumerate(order)
+        ]
+    }
 
 
 class ValidationContext:

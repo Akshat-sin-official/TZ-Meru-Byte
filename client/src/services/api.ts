@@ -94,6 +94,10 @@ export const campusApi = {
     const res = await api.post('/bookings/requests', data);
     return res.data;
   },
+  checkRoomConflict: async (requestA: any, requestB: any) => {
+    const res = await api.post('/bookings/conflict-check', { request_a: requestA, request_b: requestB });
+    return res.data;
+  },
 
   // Disruptions
   getLatestDisruption: async () => {
