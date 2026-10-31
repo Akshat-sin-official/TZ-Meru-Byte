@@ -19,6 +19,7 @@ import {
   MessageSquare,
   Bell,
   CheckCheck,
+  Sparkles,
 } from 'lucide-react';
 import { campusApi } from '@/services/api';
 import { toast } from 'sonner';
