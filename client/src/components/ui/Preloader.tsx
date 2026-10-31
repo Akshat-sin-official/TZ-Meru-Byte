@@ -41,9 +41,9 @@ const Preloader: React.FC<PreloaderProps> = ({ isLoading }) => {
                 {/* Logo Container */}
                 <div className="relative mb-10 z-10">
                     <img
-                        src="/logo.png"
-                        alt="MarTechAdda"
-                        className="w-56 h-auto object-contain relative animate-[fade-in-up_0.8s_ease-out_forwards]"
+                        src="/logo.jpeg"
+                        alt="CIT CampusOS"
+                        className="w-[336px] h-auto object-contain rounded-3xl relative animate-[fade-in-up_0.8s_ease-out_forwards]"
                     />
                 </div>
 

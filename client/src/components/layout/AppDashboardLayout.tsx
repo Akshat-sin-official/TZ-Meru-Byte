@@ -254,8 +254,8 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
               className="flex items-center gap-2.5 p-1 rounded-md hover:bg-[#F4F4F5] transition cursor-pointer group min-w-0"
               title="Workspace Menu"
             >
-              <div className="w-6 h-6 rounded bg-white border border-[#E5E7EB] flex items-center justify-center text-xs font-semibold text-[#18181B] shrink-0 shadow-2xs">
-                🏛
+              <div className="w-9 h-9 rounded-lg bg-white border border-[#E5E7EB] flex items-center justify-center p-0.5 shrink-0 shadow-2xs overflow-hidden">
+                <img src="/logo.jpeg" alt="CIT CampusOS" className="w-full h-full object-cover rounded-md" />
               </div>
               <div className="flex flex-col min-w-0 text-left justify-center">
                 <span className="text-[13.5px] font-semibold tracking-tight text-[#09090B] leading-tight truncate">
@@ -274,9 +274,10 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
           ) : (
             <div
               onClick={() => setSidebarCollapsed(false)}
-              className="mx-auto w-7 h-7 rounded bg-white border border-[#E5E7EB] flex items-center justify-center text-xs font-semibold text-[#18181B] cursor-pointer shadow-2xs"
+              className="mx-auto w-10 h-10 rounded-xl bg-white border border-[#E5E7EB] flex items-center justify-center p-0.5 cursor-pointer shadow-2xs overflow-hidden"
+              title="Expand Sidebar"
             >
-              🏛
+              <img src="/logo.jpeg" alt="CIT CampusOS" className="w-full h-full object-cover rounded-lg" />
             </div>
           )}
 

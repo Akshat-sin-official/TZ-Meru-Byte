@@ -178,12 +178,15 @@ model ScheduleVersion {
   approvedById       String?
   createdAt          DateTime       @default(now())
   activatedAt        DateTime?
+  versionHash        String?
+  baseVersionHash    String?
 
   datasetVersion     DatasetVersion @relation(fields: [datasetVersionId], references: [id], onDelete: Cascade)
   assignments        ScheduleAssignment[]
   bookingDecisions   BookingDecision[]
   sessionOverrides   SessionOverride[]
   examAllocations    ExamAllocation[]
+  timetableHead      TimetableHead?
 
   @@index([datasetVersionId, status])
 }
@@ -336,3 +339,15 @@ model WhatsAppContact {
   user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 }
 
+
+
+model TimetableHead {
+  id          Int      @id @default(1)
+  versionId   String?  @unique
+  versionHash String   @default("")
+  updatedAt   DateTime @updatedAt
+
+  version     ScheduleVersion? @relation(fields: [versionId], references: [id], onDelete: SetNull)
+
+  @@map("timetable_head")
+}
