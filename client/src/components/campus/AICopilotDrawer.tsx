@@ -223,13 +223,16 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
               </div>
             </div>
 
-            <button
-              onClick={handleClearChat}
-              title="Clear Conversation"
-              className="text-muted-foreground hover:text-[#111926] p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-3 pr-7">
+              <button
+                onClick={handleClearChat}
+                title="Clear Conversation"
+                className="text-muted-foreground hover:text-destructive p-2 rounded-lg hover:bg-red-50 border border-transparent hover:border-red-100 transition cursor-pointer flex items-center gap-1.5 text-xs font-poppins"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span className="hidden sm:inline text-[11px] font-medium">Clear</span>
+              </button>
+            </div>
           </div>
         </SheetHeader>
 
