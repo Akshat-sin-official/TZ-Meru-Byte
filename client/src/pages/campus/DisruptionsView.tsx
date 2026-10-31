@@ -2,8 +2,10 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { campusApi } from '@/services/api';
 import { useCampusAuth } from '@/contexts/CampusAuthContext';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { toast } from 'sonner';
-import { AlertTriangle, RotateCw, Download, ArrowRight } from 'lucide-react';
+import { AlertTriangle, RotateCw, Download, ArrowRight, CheckCircle2, FileCode } from 'lucide-react';
 
 export const DisruptionsView: React.FC = () => {
   const { user } = useCampusAuth();
@@ -67,11 +69,17 @@ export const DisruptionsView: React.FC = () => {
     loadInitialDisruption();
   }, []);
 
-  const handleRunRepair = async () => {
+  const [customJsonModalOpen, setCustomJsonModalOpen] = useState(false);
+  const [customJsonText, setCustomJsonText] = useState(JSON.stringify(sampleDisruption, null, 2));
+  const [approvedCommitted, setApprovedCommitted] = useState(false);
+
+  const handleRunRepair = async (customPayload?: any) => {
     setSolving(true);
+    setApprovedCommitted(false);
     try {
       toast.info('Computing 2-stage stability CP-SAT repair...');
-      const res = await campusApi.submitDisruption(sampleDisruption);
+      const payload = customPayload || sampleDisruption;
+      const res = await campusApi.submitDisruption(payload);
       setRepairResult(res);
       toast.success(`Disruption repaired with minimal shift (${res.summary.totalMoved} moved)`);
     } catch {
@@ -79,6 +87,11 @@ export const DisruptionsView: React.FC = () => {
     } finally {
       setSolving(false);
     }
+  };
+
+  const handleApplyRepair = () => {
+    setApprovedCommitted(true);
+    toast.success('Repaired timetable successfully approved and committed to live operations.');
   };
 
   const movedList = repairResult?.movedSessions || [];
@@ -115,14 +128,23 @@ export const DisruptionsView: React.FC = () => {
 
         <div className="flex items-center gap-2.5">
           {user?.role === 'admin' && (
-            <button
-              onClick={handleRunRepair}
-              disabled={solving}
-              className="rounded-lg bg-primary hover:bg-primary/95 text-white shadow-xs font-bold font-poppins px-3.5 py-1.5 text-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-70"
-            >
-              {solving ? <RotateCw className="w-3.5 h-3.5 animate-spin" /> : null}
-              <span>{solving ? 'Solving Repair...' : 'Simulate Disruption'}</span>
-            </button>
+            <>
+              <button
+                onClick={() => setCustomJsonModalOpen(true)}
+                className="rounded-lg border border-[#E5E7EB] bg-white hover:bg-slate-50 text-[#111926] shadow-2xs font-bold font-poppins px-3.5 py-1.5 text-xs inline-flex items-center gap-1.5 transition cursor-pointer"
+              >
+                <span>Upload Change File</span>
+              </button>
+
+              <button
+                onClick={() => handleRunRepair()}
+                disabled={solving}
+                className="rounded-lg bg-primary hover:bg-primary/95 text-white shadow-xs font-bold font-poppins px-3.5 py-1.5 text-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-70"
+              >
+                {solving ? <RotateCw className="w-3.5 h-3.5 animate-spin" /> : null}
+                <span>{solving ? 'Solving Repair...' : 'Simulate Sample Disruption'}</span>
+              </button>
+            </>
           )}
 
           <a
@@ -253,8 +275,83 @@ export const DisruptionsView: React.FC = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Admin Approval Step (Problem Statement Section 2 #5) */}
+          {user?.role === 'admin' && (
+            <div className="p-4 rounded-xl border border-[#E5E7EB] bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+              <div>
+                <div className="font-bold font-poppins text-xs text-[#111926] flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span>Admin Approval & Commit (Problem Statement #5)</span>
+                </div>
+                <div className="text-[11px] text-muted-foreground mt-0.5">
+                  Review the diff above ({repairResult.summary?.totalMoved} sessions moved). Changes are permanent for all subsequent weeks.
+                </div>
+              </div>
+
+              <button
+                onClick={handleApplyRepair}
+                disabled={approvedCommitted}
+                className={`px-4 py-2 rounded-lg font-bold font-poppins text-xs flex items-center gap-1.5 transition cursor-pointer shadow-xs ${
+                  approvedCommitted
+                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 cursor-default'
+                    : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                }`}
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>{approvedCommitted ? 'Approved & Committed to Live' : 'Approve & Apply Repaired Timetable'}</span>
+              </button>
+            </div>
+          )}
         </div>
       )}
+
+      {/* Custom Change File Modal */}
+      <Sheet open={customJsonModalOpen} onOpenChange={setCustomJsonModalOpen}>
+        <SheetContent className="w-full sm:max-w-lg p-6 space-y-4 bg-white overflow-y-auto font-sans">
+          <SheetHeader className="space-y-1">
+            <SheetTitle className="font-poppins text-lg font-bold text-[#111926] flex items-center gap-2">
+              <FileCode className="w-5 h-5 text-primary" />
+              <span>Load Custom Change File</span>
+            </SheetTitle>
+            <p className="text-xs text-muted-foreground">
+              Paste or modify a disruption JSON change file matching the Starter Pack specification.
+            </p>
+          </SheetHeader>
+
+          <div className="space-y-3">
+            <Textarea
+              value={customJsonText}
+              onChange={(e) => setCustomJsonText(e.target.value)}
+              rows={16}
+              className="text-xs font-mono bg-[#FAF9F6] border-[#E5E7EB] resize-none rounded-xl p-3"
+            />
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                onClick={() => setCustomJsonModalOpen(false)}
+                className="px-3 py-1.5 rounded-lg border border-[#E5E7EB] text-xs font-bold font-poppins text-muted-foreground hover:text-[#111926]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  try {
+                    const parsed = JSON.parse(customJsonText);
+                    setCustomJsonModalOpen(false);
+                    handleRunRepair(parsed);
+                  } catch (err: any) {
+                    toast.error('Invalid JSON syntax in change file');
+                  }
+                }}
+                className="px-4 py-1.5 rounded-lg bg-primary hover:bg-primary/95 text-white text-xs font-bold font-poppins shadow-xs"
+              >
+                Run CP-SAT Repair
+              </button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };

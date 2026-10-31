@@ -68,5 +68,43 @@ router.post('/reset-demo', authenticate, requireRole([Role.admin]), async (req: 
   }
 });
 
+// Admin Load / Upload Custom Dataset JSON (PS Section 2 #9)
+router.post('/upload', authenticate, requireRole([Role.admin]), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { dataset } = req.body;
+    if (!dataset || !dataset.rooms || !dataset.sessions || !dataset.faculty) {
+      return res.status(400).json({ error: 'Invalid dataset format. Missing rooms, sessions, or faculty array.' });
+    }
+
+    const datasetId = dataset.id || `cit-custom-${Date.now()}`;
+    console.log(`Admin uploading custom dataset: ${datasetId}...`);
+
+    // Create DatasetVersion
+    const newVersion = await prisma.datasetVersion.create({
+      data: {
+        datasetId,
+        contentHash: 'custom-' + Date.now(),
+        rawJson: dataset,
+        isCurrent: true,
+      },
+    });
+
+    // Mark previous versions as not current
+    await prisma.datasetVersion.updateMany({
+      where: { id: { not: newVersion.id } },
+      data: { isCurrent: false },
+    });
+
+    return res.json({
+      success: true,
+      message: `Custom dataset '${datasetId}' successfully loaded into CIT CampusOS. Ready for timetable generation.`,
+      datasetVersionId: newVersion.id,
+    });
+  } catch (err: any) {
+    console.error('Dataset upload error:', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;
 

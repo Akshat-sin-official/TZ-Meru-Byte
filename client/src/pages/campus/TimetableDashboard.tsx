@@ -40,7 +40,28 @@ export const TimetableDashboard: React.FC = () => {
   const [targetPeriod, setTargetPeriod] = useState(1);
   const [targetRoom, setTargetRoom] = useState('LH-1');
   const [validatingMove, setValidatingMove] = useState(false);
+  const [applyingMove, setApplyingMove] = useState(false);
   const [moveValidationResult, setMoveValidationResult] = useState<any | null>(null);
+
+  const handleApplyMove = async () => {
+    if (!selectedSessionDetail || !moveValidationResult?.valid) return;
+    setApplyingMove(true);
+    try {
+      const res = await campusApi.applyMove({
+        session_id: selectedSessionDetail.session.externalId,
+        target_day: targetDay,
+        target_start_period: Number(targetPeriod),
+        target_room_id: targetRoom,
+      });
+      toast.success(res.message || 'Session move successfully applied to active timetable');
+      setSelectedSessionDetail(null);
+      await fetchTimetable();
+    } catch (err: any) {
+      toast.error('Failed to commit move: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setApplyingMove(false);
+    }
+  };
 
   const fetchTimetable = async () => {
     setLoading(true);
@@ -709,6 +730,21 @@ export const TimetableDashboard: React.FC = () => {
                           ? 'This slot satisfies room availability, faculty load, student group non-overlap, and suitability.'
                           : moveValidationResult.reason || 'Violates hard constraint rules.'}
                       </p>
+
+                      {moveValidationResult.valid && (user?.role === 'admin' || user?.role === 'department_coordinator') && (
+                        <button
+                          onClick={handleApplyMove}
+                          disabled={applyingMove}
+                          className="w-full mt-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold font-poppins py-2 text-xs flex items-center justify-center gap-1.5 transition cursor-pointer shadow-xs disabled:opacity-70"
+                        >
+                          {applyingMove ? (
+                            <RotateCw className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                          )}
+                          <span>{applyingMove ? 'Applying Move...' : 'Apply Rescheduled Slot (Active Commit)'}</span>
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>

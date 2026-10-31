@@ -219,5 +219,60 @@ router.post('/proposals/:id/approve', authenticate, requireRole([Role.admin]), a
   }
 });
 
+// POST /apply-move: Apply a validated manual move to the active timetable
+router.post('/apply-move', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { session_id, target_day, target_start_period, target_room_id } = req.body;
+    if (!session_id || !target_day || !target_start_period || !target_room_id) {
+      return res.status(400).json({ error: 'Missing required parameters: session_id, target_day, target_start_period, target_room_id' });
+    }
+
+    const dataset = await prisma.datasetVersion.findFirst({ where: { isCurrent: true } });
+    const activeSchedule = await prisma.scheduleVersion.findFirst({
+      where: { datasetVersionId: dataset?.id, status: ScheduleStatus.active },
+    });
+
+    if (!activeSchedule) return res.status(404).json({ error: 'No active schedule' });
+
+    const assignment = await prisma.scheduleAssignment.findFirst({
+      where: {
+        scheduleVersionId: activeSchedule.id,
+        sessionExternalId: session_id,
+      },
+    });
+
+    if (!assignment) {
+      return res.status(404).json({ error: `Session ${session_id} not found in active schedule` });
+    }
+
+    const updated = await prisma.scheduleAssignment.update({
+      where: { id: assignment.id },
+      data: {
+        day: target_day,
+        startPeriod: Number(target_start_period),
+        roomExternalId: target_room_id,
+      },
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        userId: req.user?.id,
+        action: 'MANUAL_MOVE_APPLIED',
+        entityType: 'SCHEDULE_ASSIGNMENT',
+        entityId: assignment.id,
+        details: { session_id, old: { day: assignment.day, start: assignment.startPeriod, room: assignment.roomExternalId }, new: { day: target_day, start: target_start_period, room: target_room_id } },
+      },
+    });
+
+    return res.json({
+      success: true,
+      message: `Session ${session_id} successfully rescheduled to ${target_day} Period ${target_start_period} in ${target_room_id}.`,
+      assignment: updated,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;
 

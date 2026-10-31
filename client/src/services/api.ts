@@ -106,12 +106,27 @@ export const campusApi = {
   },
 
   // AI Assistant
+  chatWithAssistant: async (message: string, role?: string) => {
+    const res = await api.post('/assistant/chat', { message, role });
+    return res.data;
+  },
   parseBookingPrompt: async (message: string) => {
     const res = await api.post('/assistant/parse-booking', { message });
     return res.data;
   },
   explainDecision: async (params: any) => {
     const res = await api.post('/assistant/explain-decision', params);
+    return res.data;
+  },
+
+  // Manual Moves (PS #10)
+  applyMove: async (params: {
+    session_id: string;
+    target_day: string;
+    target_start_period: number;
+    target_room_id: string;
+  }) => {
+    const res = await api.post('/schedules/apply-move', params);
     return res.data;
   },
 
