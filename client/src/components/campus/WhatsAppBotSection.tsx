@@ -499,3 +499,4 @@ export const WhatsAppBotSection: React.FC = () => {
     </div>
   );
 };
+
