@@ -135,6 +135,32 @@ export const campusApi = {
     const res = await api.post('/exports/verify');
     return res.data;
   },
+
+  // WhatsApp Gateway
+  getWhatsAppStatus: async () => {
+    const res = await api.get('/whatsapp/status');
+    return res.data;
+  },
+  connectWhatsApp: async () => {
+    const res = await api.post('/whatsapp/connect');
+    return res.data;
+  },
+  getWhatsAppContacts: async () => {
+    const res = await api.get('/whatsapp/contacts');
+    return res.data;
+  },
+  addWhatsAppContact: async (data: { phone: string; name?: string; role?: string; userId?: string }) => {
+    const res = await api.post('/whatsapp/contacts', data);
+    return res.data;
+  },
+  deleteWhatsAppContact: async (id: string) => {
+    const res = await api.delete(`/whatsapp/contacts/${id}`);
+    return res.data;
+  },
+  testSendWhatsApp: async (data: { phone: string; message?: string }) => {
+    const res = await api.post('/whatsapp/test-send', data);
+    return res.data;
+  },
 };
 
 export default api;

@@ -126,7 +126,7 @@ export function parsePlainLanguageBooking(text: string, userRole: string = 'club
 }
 
 // Dual-Engine Natural Language Processor: Google Gemini with deterministic fallback
-async function processPromptWithAI(message: string, role: string): Promise<any> {
+export async function processPromptWithAI(message: string, role: string): Promise<any> {
   const activeKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
 
   if (activeKey) {

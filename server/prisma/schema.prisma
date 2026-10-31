@@ -49,6 +49,7 @@ model User {
 
   auditLogs    AuditLog[]
   notifications Notification[]
+  whatsAppContacts WhatsAppContact[]
 }
 
 model DatasetVersion {
@@ -321,5 +322,17 @@ model Notification {
   createdAt DateTime @default(now())
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model WhatsAppContact {
+  id        String   @id @default(uuid())
+  userId    String?
+  phone     String   @unique
+  name      String?
+  role      Role     @default(club)
+  optedIn   Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 }
 

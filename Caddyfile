@@ -10,11 +10,10 @@ cit.saubhagyalabs.tech, saubhagyalabs.tech, www.saubhagyalabs.tech {
         reverse_proxy 172.17.0.1:8080
     }
 
-    # 3. WhatsApp Manager Web UI (on /wa-ui/*)
-    handle_path /wa-ui* {
-        root * /var/www/whatsapp
-        file_server
-        try_files {path} /index.html
+    # 3. WhatsApp Manager Web UI — proxy directly to Evolution-Go's built-in UI server
+    handle /wa-ui/* {
+        uri strip_prefix /wa-ui
+        reverse_proxy 172.17.0.1:8080
     }
 
     # 4. CIT CampusOS Main Frontend
