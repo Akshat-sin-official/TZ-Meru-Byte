@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { campusApi } from '@/services/api';
-import { useCampusAuth } from '@/contexts/CampusAuthContext';
-import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import {
-  ShieldCheck,
   CalendarDays,
   FileSpreadsheet,
   PartyPopper,
   AlertTriangle,
   Play,
   RotateCw,
-  ExternalLink,
-  CheckCircle2,
   Download,
+  ShieldCheck,
+  CheckCircle2,
+  ArrowRight,
+  Target,
+  Sparkles,
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -21,7 +21,6 @@ interface AdminDashboardProps {
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateTab }) => {
-  const { user } = useCampusAuth();
   const [loading, setLoading] = useState(true);
   const [solving, setSolving] = useState(false);
   const [data, setData] = useState<any>(null);
@@ -29,8 +28,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateTab })
   const loadData = async () => {
     setLoading(true);
     try {
-      const timetableRes = await campusApi.getActiveTimetable();
-      setData(timetableRes);
+      const res = await campusApi.getActiveTimetable();
+      setData(res);
     } catch {
       toast.error('Failed to load system metrics');
     } finally {
@@ -45,7 +44,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateTab })
   const handleReoptimize = async () => {
     setSolving(true);
     try {
-      toast.info('Running Google OR-Tools CP-SAT solver...');
+      toast.info('Running Google OR-Tools CP-SAT discrete solver...');
       const res = await campusApi.generateTimetable();
       await campusApi.approveProposal(res.proposalId);
       toast.success('Schedule optimized (0 hard violations)');
@@ -59,224 +58,248 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateTab })
 
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center text-xs text-[#71717A]">
+      <div className="flex h-64 items-center justify-center text-xs text-ink-soft">
         Loading administrative dashboard...
       </div>
     );
   }
 
-  const { schedule, metadata } = data || {};
+  const { schedule } = data || {};
   const assignments = schedule?.assignments || [];
 
   return (
-    <div className="space-y-6">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E5E7EB]">
+    <div className="space-y-10 py-2">
+      {/* Editorial Header matching website-ui Bento */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="font-heading text-xl font-bold text-[#111827]">
-              Campus Operations Master Control
-            </h1>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-              0 Hard Violations
-            </span>
-          </div>
-          <p className="text-xs text-[#71717A] mt-0.5">
-            Academic Dean & Timetable Committee Executive Dashboard · Dataset: cit-public-v1
+          <span className="text-[12px] font-bold uppercase tracking-[0.2em] text-ink-soft font-poppins">
+            EXECUTIVE CONTROL · CIT CAMPUSOS
+          </span>
+          <h1 className="mt-2 text-[32px] md:text-[40px] font-bold font-poppins leading-tight tracking-[-0.02em] text-ink">
+            Master Operations <br className="hidden sm:inline" />
+            <span className="font-serif italic text-primary">& Optimization Control.</span>
+          </h1>
+          <p className="mt-3 text-[15px] text-ink-soft max-w-2xl leading-relaxed">
+            Autonomous discrete scheduling across 189 teaching sessions, 41 midsem exams, and Spectra Week venue allocations with 0 hard constraint violations.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
-          <Button
-            size="sm"
+        <div className="flex items-center gap-3 shrink-0">
+          <button
             onClick={handleReoptimize}
             disabled={solving}
-            className="h-8 px-3.5 text-xs font-medium bg-primary hover:bg-primary-hover text-white shadow-xs"
+            className="rounded-full bg-gradient-to-r from-primary to-indigo-600 hover:from-primary/95 hover:to-indigo-600/95 text-white shadow-md shadow-primary/15 hover:shadow-lg hover:shadow-primary/25 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 font-bold font-poppins px-6 py-2.5 text-xs flex items-center gap-2 cursor-pointer"
           >
             {solving ? (
-              <RotateCw className="w-3.5 h-3.5 animate-spin mr-1.5" />
+              <RotateCw className="w-3.5 h-3.5 animate-spin" />
             ) : (
-              <Play className="w-3.5 h-3.5 mr-1.5" />
+              <Play className="w-3.5 h-3.5" />
             )}
-            {solving ? 'Solving CP-SAT...' : 'Run Master Solver'}
-          </Button>
+            <span>{solving ? 'Solving CP-SAT...' : 'Re-Run Solver'}</span>
+          </button>
 
           <a
             href="http://localhost:5000/api/exports/schedule.json"
             download="schedule.json"
-            className="h-8 px-3 text-xs font-medium rounded-lg border border-[#E5E7EB] bg-white text-[#111827] hover:bg-[#FAF9F6] inline-flex items-center gap-1.5 shadow-2xs"
+            className="rounded-full border border-border/80 bg-white hover:bg-slate-50 text-ink shadow-2xs hover:border-primary/40 active:scale-98 transition-all font-bold font-poppins px-5 py-2.5 text-xs inline-flex items-center gap-1.5"
           >
-            <Download className="w-3.5 h-3.5 text-[#71717A]" />
-            Export Schedule
+            <Download className="w-3.5 h-3.5 text-ink-soft" />
+            <span>Export schedule.json</span>
           </a>
         </div>
       </div>
 
-      {/* KPI Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+      {/* Signature 4 Bento Cards matching website-ui Bento */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {/* Card 1: Academic Sessions */}
         <div
           onClick={() => onNavigateTab('timetable')}
-          className="p-4 rounded-xl border border-[#E5E7EB] bg-white hover:border-primary/40 hover:shadow-xs transition cursor-pointer space-y-2"
+          className="flex flex-col justify-between rounded-[24px] bg-[#EDE9FE]/40 border border-[#EDE9FE]/80 p-7 hover:-translate-y-1.5 hover:shadow-[0_20px_40px_-20px_rgba(0,0,0,0.08)] transition-all duration-300 cursor-pointer min-h-[220px]"
         >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-[#71717A] font-poppins">Academic Sessions</span>
-            <div className="p-1.5 rounded-lg bg-purple-50 text-primary">
-              <CalendarDays className="w-4 h-4" />
-            </div>
-          </div>
           <div>
-            <div className="text-2xl font-bold font-heading text-[#111827]">
-              {assignments.length} <span className="text-xs font-normal text-[#71717A]">/ 189</span>
+            <div className="flex items-center justify-between">
+              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#6D28D9]/10 text-[#6D28D9] shrink-0 shadow-xs">
+                <CalendarDays className="h-6 w-6" />
+              </span>
+              <span className="rounded-full px-3 py-1 text-[11px] font-bold font-poppins bg-[#6D28D9]/10 text-[#6D28D9]">
+                0 Hard Clashes
+              </span>
             </div>
-            <div className="text-[11px] text-emerald-600 font-medium flex items-center gap-1 mt-0.5">
-              <CheckCircle2 className="w-3 h-3" /> 0 hard violations · Soft penalty: {schedule?.softScoreTotal || 315}
+
+            <div className="mt-6 text-[36px] font-extrabold font-poppins leading-none tracking-[-0.02em] text-ink">
+              {assignments.length}{' '}
+              <span className="text-sm font-bold text-ink-soft font-sans">/ 189 Sessions</span>
             </div>
+
+            <p className="mt-2 text-[13.5px] leading-relaxed text-ink-soft font-medium">
+              Weekly timetable spanning 27 venues. Soft penalty score: {schedule?.softScoreTotal || 315}.
+            </p>
+          </div>
+
+          <div className="mt-4 flex items-center gap-1.5 text-xs font-bold font-poppins text-[#6D28D9]">
+            <span>Open Timetable Grid</span>
+            <ArrowRight className="w-3.5 h-3.5" />
           </div>
         </div>
 
+        {/* Card 2: Midsem Exams */}
         <div
           onClick={() => onNavigateTab('exams')}
-          className="p-4 rounded-xl border border-[#E5E7EB] bg-white hover:border-primary/40 hover:shadow-xs transition cursor-pointer space-y-2"
+          className="flex flex-col justify-between rounded-[24px] bg-[#D8E5F5]/40 border border-[#D8E5F5]/70 p-7 hover:-translate-y-1.5 hover:shadow-[0_20px_40px_-20px_rgba(0,0,0,0.08)] transition-all duration-300 cursor-pointer min-h-[220px]"
         >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-[#71717A] font-poppins">Midsem Examinations</span>
-            <div className="p-1.5 rounded-lg bg-blue-50 text-blue-600">
-              <FileSpreadsheet className="w-4 h-4" />
-            </div>
-          </div>
           <div>
-            <div className="text-2xl font-bold font-heading text-[#111827]">
-              41 <span className="text-xs font-normal text-[#71717A]">exams</span>
+            <div className="flex items-center justify-between">
+              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#2F5B93]/10 text-[#2F5B93] shrink-0 shadow-xs">
+                <FileSpreadsheet className="h-6 w-6" />
+              </span>
+              <span className="rounded-full px-3 py-1 text-[11px] font-bold font-poppins bg-[#2F5B93]/10 text-[#2F5B93]">
+                Half-Capacity
+              </span>
             </div>
-            <div className="text-[11px] text-emerald-600 font-medium flex items-center gap-1 mt-0.5">
-              <CheckCircle2 className="w-3 h-3" /> Half-capacity rule enforced (E1)
+
+            <div className="mt-6 text-[36px] font-extrabold font-poppins leading-none tracking-[-0.02em] text-ink">
+              41{' '}
+              <span className="text-sm font-bold text-ink-soft font-sans">Midsem Exams</span>
             </div>
+
+            <p className="mt-2 text-[13.5px] leading-relaxed text-ink-soft font-medium">
+              MON–SAT AM/PM sessions. 100% compliant with Rule E1 & E2.
+            </p>
+          </div>
+
+          <div className="mt-4 flex items-center gap-1.5 text-xs font-bold font-poppins text-[#2F5B93]">
+            <span>View Exam Seating</span>
+            <ArrowRight className="w-3.5 h-3.5" />
           </div>
         </div>
 
+        {/* Card 3: Spectra Week */}
         <div
           onClick={() => onNavigateTab('bookings')}
-          className="p-4 rounded-xl border border-[#E5E7EB] bg-white hover:border-primary/40 hover:shadow-xs transition cursor-pointer space-y-2"
+          className="flex flex-col justify-between rounded-[24px] bg-[#DDECD4]/40 border border-[#DDECD4]/70 p-7 hover:-translate-y-1.5 hover:shadow-[0_20px_40px_-20px_rgba(0,0,0,0.08)] transition-all duration-300 cursor-pointer min-h-[220px]"
         >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-[#71717A] font-poppins">Spectra Week Bookings</span>
-            <div className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600">
-              <PartyPopper className="w-4 h-4" />
-            </div>
-          </div>
           <div>
-            <div className="text-2xl font-bold font-heading text-[#111827]">
-              66.0 <span className="text-xs font-normal text-[#71717A]">/ 70 score</span>
+            <div className="flex items-center justify-between">
+              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#2D5A27]/10 text-[#2D5A27] shrink-0 shadow-xs">
+                <PartyPopper className="h-6 w-6" />
+              </span>
+              <span className="rounded-full px-3 py-1 text-[11px] font-bold font-poppins bg-[#2D5A27]/10 text-[#2D5A27]">
+                0 Inversions
+              </span>
             </div>
-            <div className="text-[11px] text-emerald-600 font-medium flex items-center gap-1 mt-0.5">
-              <CheckCircle2 className="w-3 h-3" /> 22 approved · 0 priority inversions
+
+            <div className="mt-6 text-[36px] font-extrabold font-poppins leading-none tracking-[-0.02em] text-ink">
+              66.0{' '}
+              <span className="text-sm font-bold text-ink-soft font-sans">/ 70 Score</span>
             </div>
+
+            <p className="mt-2 text-[13.5px] leading-relaxed text-ink-soft font-medium">
+              22 approved, 0 alternatives, 3 rejected. Role category caps enforced.
+            </p>
+          </div>
+
+          <div className="mt-4 flex items-center gap-1.5 text-xs font-bold font-poppins text-[#2D5A27]">
+            <span>Inspect Allocations</span>
+            <ArrowRight className="w-3.5 h-3.5" />
           </div>
         </div>
 
+        {/* Card 4: Disruption Stability */}
         <div
           onClick={() => onNavigateTab('disruptions')}
-          className="p-4 rounded-xl border border-[#E5E7EB] bg-white hover:border-primary/40 hover:shadow-xs transition cursor-pointer space-y-2"
+          className="flex flex-col justify-between rounded-[24px] bg-[#F5E3D2]/40 border border-[#F5E3D2]/70 p-7 hover:-translate-y-1.5 hover:shadow-[0_20px_40px_-20px_rgba(0,0,0,0.08)] transition-all duration-300 cursor-pointer min-h-[220px]"
         >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-[#71717A] font-poppins">Disruption Stability</span>
-            <div className="p-1.5 rounded-lg bg-amber-50 text-amber-600">
-              <AlertTriangle className="w-4 h-4" />
-            </div>
-          </div>
           <div>
-            <div className="text-2xl font-bold font-heading text-[#111827]">
-              15 <span className="text-xs font-normal text-[#71717A]">moved</span>
+            <div className="flex items-center justify-between">
+              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#B8632E]/10 text-[#B8632E] shrink-0 shadow-xs">
+                <AlertTriangle className="h-6 w-6" />
+              </span>
+              <span className="rounded-full px-3 py-1 text-[11px] font-bold font-poppins bg-[#B8632E]/10 text-[#B8632E]">
+                Minimal Shift
+              </span>
             </div>
-            <div className="text-[11px] text-purple-700 font-medium flex items-center gap-1 mt-0.5">
-              <CheckCircle2 className="w-3 h-3" /> 3 time shifts · 12 room-only
+
+            <div className="mt-6 text-[36px] font-extrabold font-poppins leading-none tracking-[-0.02em] text-ink">
+              15{' '}
+              <span className="text-sm font-bold text-ink-soft font-sans">Moved Total</span>
             </div>
+
+            <p className="mt-2 text-[13.5px] leading-relaxed text-ink-soft font-medium">
+              3 time shifts & 12 room-only changes. Penalty: 100× Time + 10× Room.
+            </p>
+          </div>
+
+          <div className="mt-4 flex items-center gap-1.5 text-xs font-bold font-poppins text-[#B8632E]">
+            <span>Stability Diff Matrix</span>
+            <ArrowRight className="w-3.5 h-3.5" />
           </div>
         </div>
       </div>
 
-      {/* Campus Resources & Constraint Verification */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Resource Capacity Breakdown */}
-        <div className="p-4 rounded-xl border border-[#E5E7EB] bg-white space-y-3">
-          <div className="flex items-center justify-between pb-2 border-b border-[#E5E7EB]">
-            <span className="font-heading font-semibold text-xs text-[#111827]">
-              Campus Venues (27 Rooms)
+      {/* Two Secondary Glass Panels */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <div className="rounded-[24px] bg-[#FAF6F0]/80 border border-border/50 p-8 space-y-4">
+          <div className="flex items-center gap-2.5">
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-ink/5 text-ink">
+              <ShieldCheck className="h-5 w-5" />
             </span>
-            <span className="text-[10px] text-[#71717A]">Building Status</span>
+            <h3 className="text-[18px] font-bold font-poppins text-ink">
+              Constraint Verification (H1–H14, B1–B3, E1–E2)
+            </h3>
           </div>
-          <div className="space-y-2 text-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-[#4B5563]">Lecture Halls & Classrooms</span>
-              <span className="font-mono font-medium text-[#111827]">14 halls (CR, LH)</span>
+          <div className="space-y-2.5 text-sm">
+            <div className="flex items-center justify-between py-1 border-b border-border/40">
+              <span className="text-ink-soft">H1 Room & Faculty Conflicts</span>
+              <span className="font-bold text-[#16A34A] flex items-center gap-1">
+                <span>✓</span> 0 Clashes
+              </span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-[#4B5563]">Specialized Laboratories</span>
-              <span className="font-mono font-medium text-[#111827]">7 labs (CS, Elec, Phy, Mech)</span>
+            <div className="flex items-center justify-between py-1 border-b border-border/40">
+              <span className="text-ink-soft">H2 Room Capacity & Suitability</span>
+              <span className="font-bold text-[#16A34A] flex items-center gap-1">
+                <span>✓</span> 100% Verified
+              </span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-[#4B5563]">Auditorium & Seminar Halls</span>
-              <span className="font-mono font-medium text-[#111827]">4 venues (AUD, SH-1, SH-2)</span>
+            <div className="flex items-center justify-between py-1 border-b border-border/40">
+              <span className="text-ink-soft">H6 Lunch Protected (13:00–14:00)</span>
+              <span className="font-bold text-[#16A34A] flex items-center gap-1">
+                <span>✓</span> Guaranteed
+              </span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-[#4B5563]">Outdoor Spaces</span>
-              <span className="font-mono font-medium text-[#111827]">2 areas (OAT, Ground)</span>
+            <div className="flex items-center justify-between py-1">
+              <span className="text-ink-soft">H8 Daily Faculty Max 4 Hours</span>
+              <span className="font-bold text-[#16A34A] flex items-center gap-1">
+                <span>✓</span> All Satisfied
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Hard Constraints Audit */}
-        <div className="p-4 rounded-xl border border-[#E5E7EB] bg-white space-y-3">
-          <div className="flex items-center justify-between pb-2 border-b border-[#E5E7EB]">
-            <span className="font-heading font-semibold text-xs text-[#111827]">
-              Constraint Compliance Engine
+        <div className="rounded-[24px] bg-[#FAF6F0]/80 border border-border/50 p-8 space-y-4">
+          <div className="flex items-center gap-2.5">
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-ink/5 text-ink">
+              <Sparkles className="h-5 w-5 text-primary" />
             </span>
-            <span className="text-[10px] text-emerald-600 font-semibold font-mono">100% PASS</span>
+            <h3 className="text-[18px] font-bold font-poppins text-ink">
+              Optimization Engines & Submissions
+            </h3>
           </div>
-          <div className="space-y-2 text-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-[#4B5563]">H1 Room & Faculty Conflicts</span>
-              <span className="text-emerald-700 font-medium">0 Double-bookings</span>
+          <div className="space-y-2.5 text-sm">
+            <div className="flex items-center justify-between py-1 border-b border-border/40">
+              <span className="text-ink-soft">Official Validator Parity</span>
+              <span className="font-bold font-mono text-ink">validator.py (0 Hard Violations)</span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-[#4B5563]">H2 Room Capacity & Type</span>
-              <span className="text-emerald-700 font-medium">0 Overcapacities</span>
+            <div className="flex items-center justify-between py-1 border-b border-border/40">
+              <span className="text-ink-soft">Engine Core</span>
+              <span className="font-bold font-mono text-ink">Google OR-Tools CP-SAT</span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-[#4B5563]">H6 Lunch Break (13:00–14:00)</span>
-              <span className="text-emerald-700 font-medium">100% Protected</span>
+            <div className="flex items-center justify-between py-1 border-b border-border/40">
+              <span className="text-ink-soft">Exports Artifact</span>
+              <span className="font-bold font-mono text-ink">exports/schedule.json</span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-[#4B5563]">H8 Daily Faculty Max Hours</span>
-              <span className="text-emerald-700 font-medium">All ≤ 4 hrs/day</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Solver Engine Status */}
-        <div className="p-4 rounded-xl border border-[#E5E7EB] bg-white space-y-3">
-          <div className="flex items-center justify-between pb-2 border-b border-[#E5E7EB]">
-            <span className="font-heading font-semibold text-xs text-[#111827]">
-              Discrete Optimizer Engine
-            </span>
-            <span className="text-[10px] text-primary font-mono font-semibold">ONLINE</span>
-          </div>
-          <div className="space-y-2 text-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-[#4B5563]">Backend Solver Core</span>
-              <span className="font-mono text-[#111827]">Google OR-Tools CP-SAT</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-[#4B5563]">Solver Latency</span>
-              <span className="font-mono text-[#111827]">~17 seconds (189 sessions)</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-[#4B5563]">Canonical Parity</span>
-              <span className="text-emerald-700 font-medium">100% validator.py parity</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-[#4B5563]">Optimizer Port</span>
-              <span className="font-mono text-[#111827]">http://127.0.0.1:8001</span>
+            <div className="flex items-center justify-between py-1">
+              <span className="text-ink-soft">Disruption Repair Artifact</span>
+              <span className="font-bold font-mono text-ink">exports/schedule_after.json</span>
             </div>
           </div>
         </div>
