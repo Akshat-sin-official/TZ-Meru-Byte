@@ -17,6 +17,8 @@ import {
   ChevronLeft,
   Check,
   MessageSquare,
+  Bell,
+  CheckCheck,
 } from 'lucide-react';
 import { campusApi } from '@/services/api';
 import { toast } from 'sonner';
@@ -58,9 +60,46 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
 
   // Dynamic Collapsible Sections
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false);
-  const [cohortMenuOpen, setCohortMenuOpen] = useState(true);
+  const [cohortMenuOpen, setCohortMenuOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(true);
   const [calendarMonth, setCalendarMonth] = useState<'OCT' | 'NOV'>('OCT');
+
+  // Notifications state (Feature Guide Extra)
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(2);
+  const notificationsRef = useRef<HTMLDivElement>(null);
+
+  const notificationsList = [
+    {
+      id: 'notif-1',
+      title: 'Disruption Handled: Room LH-1 Closure',
+      message: '3 teaching sessions rescheduled to LH-2 with 0 constraint violations. Approved by Dean.',
+      time: '12m ago',
+      type: 'disruption',
+      unread: true,
+    },
+    {
+      id: 'notif-2',
+      title: 'Spectra Fest Booking BR-04 Approved',
+      message: 'Auditorium-1 booked for Oct 22, 18:00–21:00 (Priority 3: Institute Event).',
+      time: '1h ago',
+      type: 'booking',
+      unread: true,
+    },
+    {
+      id: 'notif-3',
+      title: 'Autumn 2027 Baseline Synchronized',
+      message: 'All 189 teaching sessions validated with continuous 13:00 lunch break.',
+      time: 'Yesterday',
+      type: 'timetable',
+      unread: false,
+    },
+  ];
+
+  const handleMarkAllRead = () => {
+    setUnreadNotifications(0);
+    toast.success('All notifications marked as read');
+  };
 
   const workspaceRef = useRef<HTMLDivElement>(null);
 
@@ -68,6 +107,9 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
     const handleClickOutside = (event: MouseEvent) => {
       if (workspaceRef.current && !workspaceRef.current.contains(event.target as Node)) {
         setWorkspaceMenuOpen(false);
+      }
+      if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
+        setNotificationsOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -351,7 +393,6 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
                 <button
                   onClick={() => {
                     setActiveTab('timetable');
-                    setCohortMenuOpen(true);
                   }}
                   className={`w-full flex items-center justify-between px-3 py-2 text-[13.5px] transition cursor-pointer ${
                     activeTab === 'timetable'
@@ -756,11 +797,73 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
               </button>
             )}
 
+            {/* Notification Bell with Badge */}
+            <div className="relative" ref={notificationsRef}>
+              <button
+                onClick={() => setNotificationsOpen(!notificationsOpen)}
+                className="relative p-2 rounded-md hover:bg-[#F4F4F5] text-[#52525B] hover:text-[#09090B] transition cursor-pointer"
+                title="Notifications & Schedule Changes"
+              >
+                <Bell className="w-4 h-4" />
+                {unreadNotifications > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white" />
+                )}
+              </button>
+
+              {notificationsOpen && (
+                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white border border-[#E5E7EB] rounded-xl shadow-lg z-50 p-3 space-y-2.5 animate-in fade-in slide-in-from-top-1">
+                  <div className="flex items-center justify-between pb-2 border-b border-[#E5E7EB]">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-semibold text-xs text-[#09090B]">Notifications & Change Diff</span>
+                      {unreadNotifications > 0 && (
+                        <span className="text-[10px] bg-red-50 text-red-600 font-mono px-1.5 py-0.2 rounded font-semibold">
+                          {unreadNotifications} new
+                        </span>
+                      )}
+                    </div>
+                    {unreadNotifications > 0 && (
+                      <button
+                        onClick={handleMarkAllRead}
+                        className="text-[11px] text-[#71717A] hover:text-[#09090B] font-medium cursor-pointer"
+                      >
+                        Mark all as read
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="space-y-2 max-h-72 overflow-y-auto">
+                    {notificationsList.map((n) => (
+                      <div
+                        key={n.id}
+                        className={`p-2.5 rounded-lg border text-xs transition ${
+                          n.unread && unreadNotifications > 0
+                            ? 'bg-[#FBFBFA] border-[#E5E7EB]'
+                            : 'bg-white border-transparent hover:bg-[#F4F4F5]'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="font-semibold text-[#09090B] truncate">{n.title}</span>
+                          <span className="text-[10px] font-mono text-[#71717A] shrink-0">{n.time}</span>
+                        </div>
+                        <p className="text-[11px] text-[#52525B] mt-1 leading-relaxed">{n.message}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="pt-2 border-t border-[#E5E7EB] text-center">
+                    <span className="text-[10px] text-[#A1A1AA] font-mono">
+                      Real-time changes synchronized with CIT Campus Audit Log
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <button
               onClick={openCopilot}
               className="rounded-md bg-[#09090B] hover:bg-[#27272A] text-white shadow-2xs font-medium px-3.5 py-1.5 text-xs flex items-center gap-1.5 cursor-pointer transition"
             >
-              <Bot className="w-3.5 h-3.5" />
+              <Sparkles className="w-3.5 h-3.5 text-white" />
               <span>Ask Copilot</span>
             </button>
           </div>

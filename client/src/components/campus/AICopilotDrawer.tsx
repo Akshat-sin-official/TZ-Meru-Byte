@@ -55,15 +55,50 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
   const [submittingBooking, setSubmittingBooking] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: 'msg-welcome',
-      sender: 'assistant',
-      text: `Hello ${user?.name ? user.name.split(' ')[0] : 'there'}! I am CIT Copilot.\n\nI can help you with:\n1. **Natural Language Venue Booking** in English or Hinglish (Spectra Week).\n2. **Decision Explainability** (e.g. why a booking was rejected or why classes are at 8 AM).\n3. **Faculty Schedule Adjustments** & constraint checking.`,
-      type: 'information',
-      timestamp: 'Just now',
-    },
-  ]);
+  const storageKey = `cit_copilot_history_${user?.id || user?.role || 'default'}`;
+
+  const defaultWelcomeMessage: ChatMessage = {
+    id: 'msg-welcome',
+    sender: 'assistant',
+    text: `Hello ${user?.name ? user.name.split(' ')[0] : 'there'}! I am CIT Copilot.\n\nI can help you with:\n1. **Natural Language Venue Booking** in English or Hinglish (Spectra Week).\n2. **Decision Explainability** (e.g. why a booking was rejected or why classes are at 8 AM).\n3. **Faculty Schedule Adjustments** & constraint checking.`,
+    type: 'information',
+    timestamp: 'Just now',
+  };
+
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return [defaultWelcomeMessage];
+  });
+
+  // Sync with user profile switch
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(`cit_copilot_history_${user?.id || user?.role || 'default'}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setMessages(parsed);
+          return;
+        }
+      }
+    } catch {}
+    setMessages([defaultWelcomeMessage]);
+  }, [user?.id, user?.role]);
+
+  // Save to localStorage whenever messages update
+  useEffect(() => {
+    try {
+      if (messages.length > 0) {
+        localStorage.setItem(storageKey, JSON.stringify(messages));
+      }
+    } catch {}
+  }, [messages, storageKey]);
 
   const quickPrompts = [
     {
@@ -188,15 +223,18 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
   };
 
   const handleClearChat = () => {
-    setMessages([
-      {
-        id: 'msg-welcome',
-        sender: 'assistant',
-        text: `Chat cleared. Ask me about venue bookings, schedule explanations, or faculty unavailability.`,
-        type: 'information',
-        timestamp: 'Just now',
-      },
-    ]);
+    const clearedMsg: ChatMessage = {
+      id: `msg-cleared-${Date.now()}`,
+      sender: 'assistant',
+      text: `Chat cleared. Ask me about venue bookings, schedule explanations, or faculty unavailability.`,
+      type: 'information',
+      timestamp: 'Just now',
+    };
+    setMessages([clearedMsg]);
+    try {
+      localStorage.removeItem(storageKey);
+    } catch {}
+    toast.success('Chat history cleared');
   };
 
   return (
@@ -205,19 +243,15 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
         {/* Fixed Header */}
         <SheetHeader className="p-4 sm:p-5 border-b border-[#E5E7EB] bg-white shrink-0">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-indigo-600 flex items-center justify-center text-white shadow-xs">
-                <Bot className="w-5 h-5" />
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-[#09090B] border border-[#27272A] flex items-center justify-center text-white shadow-2xs">
+                <Sparkles className="w-4 h-4 text-white" />
               </div>
               <div>
-                <SheetTitle className="font-poppins text-base font-bold text-[#111926] flex items-center gap-2">
+                <SheetTitle className="font-poppins text-base font-bold text-[#09090B]">
                   CIT Copilot
-                  <span className="flex items-center gap-1 text-[10px] font-bold font-poppins px-2 py-0.5 rounded-full bg-purple-50 text-primary border border-purple-200">
-                    <Sparkles className="w-3 h-3 text-amber-500" />
-                    Autonomous Assistant
-                  </span>
                 </SheetTitle>
-                <p className="text-[11px] text-muted-foreground font-poppins">
+                <p className="text-[11px] text-[#71717A] font-poppins">
                   English & Hinglish venue booking, schedule changes, and explainability
                 </p>
               </div>

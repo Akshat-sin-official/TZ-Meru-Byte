@@ -12,7 +12,10 @@ import {
   ShieldCheck,
   ArrowRight,
   AlertCircle,
-  FileDown
+  FileDown,
+  Printer,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -46,6 +49,35 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
   const [quickFilter, setQuickFilter] = useState<'all' | 'labs' | 'lectures' | 'tutorials'>(
     externalQuickFilter || 'all'
   );
+
+  // Collapsed Days state
+  const [collapsedDays, setCollapsedDays] = useState<Record<string, boolean>>({});
+
+  const toggleDayCollapse = (day: string) => {
+    setCollapsedDays((prev) => {
+      const current = prev[day] !== undefined ? prev[day] : (highlightDay ? highlightDay !== day : false);
+      return { ...prev, [day]: !current };
+    });
+  };
+
+  const isDayCollapsed = (day: string) => {
+    if (collapsedDays[day] !== undefined) return collapsedDays[day];
+    if (highlightDay) return highlightDay !== day;
+    return false;
+  };
+
+  const areAllCollapsed = useMemo(() => {
+    return ['MON', 'TUE', 'WED', 'THU', 'FRI'].every((d) => isDayCollapsed(d));
+  }, [collapsedDays, highlightDay]);
+
+  const toggleAllDays = () => {
+    const nextVal = !areAllCollapsed;
+    const nextState: Record<string, boolean> = {};
+    ['MON', 'TUE', 'WED', 'THU', 'FRI'].forEach((d) => {
+      nextState[d] = nextVal;
+    });
+    setCollapsedDays(nextState);
+  };
 
   useEffect(() => {
     if (externalCohort) {
@@ -111,6 +143,16 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
     } finally {
       setSolving(false);
     }
+  };
+
+  const handleExportPDF = () => {
+    const origTitle = document.title;
+    document.title = `CIT_Timetable_${selectedFilter || 'Master'}_Autumn2027`;
+    toast.info('Opening publication-grade PDF print preview...');
+    setTimeout(() => {
+      window.print();
+      document.title = origTitle;
+    }, 200);
   };
 
   const handleValidateMove = async () => {
@@ -366,9 +408,33 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
   };
 
   return (
-    <div className="space-y-4 font-sans text-[#37352F] antialiased">
+    <div className="space-y-4 font-sans text-[#37352F] antialiased print-container">
+      {/* Official Institutional Letterhead for PDF / Print */}
+      <div className="hidden print:block mb-5 border-b-2 border-black pb-3 text-black">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold tracking-tight uppercase font-poppins">Chilika Institute of Technology</h1>
+            <p className="text-xs font-semibold text-gray-700">Office of the Dean (Academic Affairs) · Teaching Timetable Autumn 2027</p>
+          </div>
+          <div className="text-right text-[11px] font-mono">
+            <div className="font-semibold">Week 7 · Autumn Semester</div>
+            <div className="font-bold text-black border border-black px-1.5 py-0.5 rounded mt-0.5 inline-block">
+              0 Hard Violations (CP-SAT Certified)
+            </div>
+          </div>
+        </div>
+        <div className="mt-2.5 pt-2 border-t border-gray-300 flex items-center justify-between text-xs">
+          <div>
+            <span className="font-bold">Schedule Perspective:</span> {entityStats.entityLabel} ({entityStats.entitySub})
+          </div>
+          <div>
+            <span className="font-bold">Workload Summary:</span> {entityStats.totalHours} Teaching Hours · {entityStats.venueCount} Assigned Rooms
+          </div>
+        </div>
+      </div>
+
       {/* 1. Concise Controls & Metrics Bar (No duplicate breadcrumbs or headers) */}
-      <div className="bg-white border border-[#EBEBEA] rounded-xl p-4 sm:p-5 shadow-xs space-y-4">
+      <div className="bg-white border border-[#EBEBEA] rounded-xl p-4 sm:p-5 shadow-xs space-y-4 no-print">
         {/* Top Action Row */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
@@ -404,14 +470,23 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
               <span>Refresh</span>
             </button>
 
+            <button
+              onClick={handleExportPDF}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#09090B] text-white hover:bg-black rounded-md text-xs font-medium transition shadow-2xs cursor-pointer"
+              title="Download publication-ready printable PDF"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span>Export PDF</span>
+            </button>
+
             <a
               href="/api/exports/schedule.json"
               download="schedule.json"
               className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-[#787774] hover:text-[#37352F] rounded-md border border-[#EBEBEA] hover:bg-[#F7F6F3] transition cursor-pointer"
-              title="Download Master JSON"
+              title="Download Master JSON (validator.py Benchmark)"
             >
               <FileDown className="w-3.5 h-3.5" />
-              <span>Export</span>
+              <span>JSON</span>
             </a>
           </div>
         </div>
@@ -594,8 +669,17 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
           <div className="min-w-[1050px]">
             {/* Header Timings */}
             <div className="grid grid-cols-[80px_repeat(5,1fr)_44px_repeat(4,1fr)] bg-[#F7F6F3] border-b border-[#EBEBEA] text-center text-xs select-none">
-              <div className="p-2 border-r border-[#EBEBEA] font-medium text-[#787774] flex items-center justify-center">
-                Day
+              <div
+                onClick={toggleAllDays}
+                className="p-2 border-r border-[#EBEBEA] font-medium text-[#787774] flex items-center justify-center gap-1 cursor-pointer hover:bg-[#EFEFEA] transition-colors select-none"
+                title={areAllCollapsed ? 'Expand All Days' : 'Collapse All Days'}
+              >
+                <span>Day</span>
+                {areAllCollapsed ? (
+                  <ChevronRight className="w-3 h-3 text-[#787774]" />
+                ) : (
+                  <ChevronDown className="w-3 h-3 text-[#787774]" />
+                )}
               </div>
               <div className="p-2 border-r border-[#EBEBEA]">
                 <span className="font-semibold text-[#37352F] text-[11px] block">P1 · 08:00</span>
@@ -646,6 +730,36 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
             {/* Rows MON–FRI */}
             {days.map((day, idx) => {
               const isHighlighted = highlightDay === day;
+              const collapsed = isDayCollapsed(day);
+
+              if (collapsed) {
+                return (
+                  <div
+                    key={day}
+                    id={`day-row-${day}`}
+                    onClick={() => toggleDayCollapse(day)}
+                    className={`flex items-center justify-between px-3 py-2 bg-[#FDFDFD] hover:bg-[#F7F6F3] cursor-pointer transition-colors text-xs select-none ${
+                      idx !== days.length - 1 ? 'border-b border-[#EBEBEA]' : ''
+                    } ${
+                      isHighlighted ? 'border-l-2 border-l-[#18181B] bg-[#FBFBFA]' : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1.5 font-semibold text-[#37352F] w-16">
+                        <ChevronRight className="w-3.5 h-3.5 text-[#787774]" />
+                        <span>{day}</span>
+                      </div>
+                      <span className="text-[11px] font-mono text-[#787774] bg-[#F1F1EF] px-1.5 py-0.5 rounded">
+                        {getDayHours(day)}h scheduled
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-[#9B9A97] hover:text-[#37352F] transition-colors">
+                      Click to expand day schedule
+                    </span>
+                  </div>
+                );
+              }
+
               return (
                 <div
                   key={day}
@@ -660,39 +774,44 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
                 >
                   {/* Day Label */}
                   <div
-                    className={`p-2 border-r border-[#EBEBEA] flex flex-col justify-center items-center select-none transition-colors ${
+                    onClick={() => toggleDayCollapse(day)}
+                    className={`p-2 border-r border-[#EBEBEA] flex flex-col justify-center items-center select-none transition-colors cursor-pointer hover:bg-[#ECECE9] ${
                       isHighlighted
                         ? 'bg-[#F4F4F5] text-[#18181B]'
                         : 'bg-[#F7F6F3]/50'
                     }`}
+                    title="Click to collapse day"
                   >
-                    <span
-                      className={`text-xs ${
-                        isHighlighted ? 'text-[#18181B] font-semibold' : 'text-[#37352F] font-semibold'
-                      }`}
-                    >
-                      {day}
-                    </span>
+                    <div className="flex items-center gap-0.5">
+                      <span
+                        className={`text-xs ${
+                          isHighlighted ? 'text-[#18181B] font-semibold' : 'text-[#37352F] font-semibold'
+                        }`}
+                      >
+                        {day}
+                      </span>
+                      <ChevronDown className="w-3 h-3 text-[#787774]" />
+                    </div>
                     <span className="text-[10px] text-[#9B9A97] font-mono mt-0.5">
                       {getDayHours(day)}h
                     </span>
                   </div>
 
-                {/* Morning Periods (P1–P5) */}
-                {renderPeriodBlock(day, 1, 5)}
+                  {/* Morning Periods (P1–P5) */}
+                  {renderPeriodBlock(day, 1, 5)}
 
-                {/* Lunch Strip */}
-                <div className="border-r border-[#EBEBEA] bg-[repeating-linear-gradient(-45deg,#FAFAF9,#FAFAF9_4px,#F4F4F2_4px,#F4F4F2_8px)] flex items-center justify-center select-none">
-                  <span className="text-[9px] font-mono text-[#9B9A97] rotate-90 tracking-widest uppercase font-medium">
-                    Break
-                  </span>
+                  {/* Lunch Strip */}
+                  <div className="border-r border-[#EBEBEA] bg-[repeating-linear-gradient(-45deg,#FAFAF9,#FAFAF9_4px,#F4F4F2_4px,#F4F4F2_8px)] flex items-center justify-center select-none">
+                    <span className="text-[9px] font-mono text-[#9B9A97] rotate-90 tracking-widest uppercase font-medium">
+                      Break
+                    </span>
+                  </div>
+
+                  {/* Afternoon Periods (P6–P9) */}
+                  {renderPeriodBlock(day, 6, 9)}
                 </div>
-
-                {/* Afternoon Periods (P6–P9) */}
-                {renderPeriodBlock(day, 6, 9)}
-              </div>
-            );
-          })}
+              );
+            })}
           </div>
         </div>
 
