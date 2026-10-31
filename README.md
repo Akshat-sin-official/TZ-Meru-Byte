@@ -1,183 +1,349 @@
 <div align="center">
 
-# 🏛️ CIT CampusOS
-### Autonomous Campus Operations Platform for Chilika Institute of Technology
-**Crunch Week Hackathon — Technical Submission & Benchmark Evaluation**
+# CAMPORA
+### by MERUBYTE
+**AI-Assisted Campus Scheduling & Venue Management Platform**  
+Chilika Institute of Technology (CIT) · Crunch Week Hackathon
 
-[![Live Demo](https://img.shields.io/badge/Live_Deployment-cit.saubhagyalabs.tech-8B2CF5?style=for-the-badge&logo=caddy&logoColor=white)](https://cit.saubhagyalabs.tech/)
-[![Validator Status](https://img.shields.io/badge/Official_Validator-0_Hard_Violations-10B981?style=for-the-badge&logo=checkmarx&logoColor=white)](https://cit.saubhagyalabs.tech/api/exports/verify)
-[![Spectra Score](https://img.shields.io/badge/Spectra_Score-66.0%20%2F%2070.0-F59E0B?style=for-the-badge)](https://cit.saubhagyalabs.tech/api/exports/spectra_allocations.json)
-[![Disruption Recovery](https://img.shields.io/badge/Disruption_Stability-15_Moved_Sessions-3B82F6?style=for-the-badge)](https://cit.saubhagyalabs.tech/api/exports/schedule_after.json)
+[![Live Application](https://img.shields.io/badge/Live_Application-Open-2563EB?style=for-the-badge)](https://cit.saubhagyalabs.tech/)
+[![Timetable Validator](https://img.shields.io/badge/Official_Validator-0_Hard_Violations-15803D?style=for-the-badge)](https://cit.saubhagyalabs.tech/api/exports/verify)
+[![Spectra Booking Score](https://img.shields.io/badge/Spectra_Score-66%2F70-F59E0B?style=for-the-badge)](https://cit.saubhagyalabs.tech/api/exports/spectra_allocations.json)
+[![Disruption Export](https://img.shields.io/badge/Disruption_Export-15_Sessions_Moved-2563EB?style=for-the-badge)](https://cit.saubhagyalabs.tech/api/exports/schedule_after.json)
 
----
-
-### [🌐 Access Live Production System](https://cit.saubhagyalabs.tech/) · [📄 Final Documentation](docs/FINAL_DOCUMENTATION.md) · [🤖 AI Usage Report](AI_USAGE.md) · [📦 Third Party Disclosures](THIRD_PARTY.md)
+**[Open Live Application](https://cit.saubhagyalabs.tech/)** ·
+**[Validator Report](https://cit.saubhagyalabs.tech/api/exports/verify)** ·
+**[AI Usage Declaration](AI_USAGE.md)** ·
+**[Third-Party Disclosures](THIRD_PARTY.md)** ·
+**[Final Documentation](docs/FINAL_DOCUMENTATION.md)**
 
 </div>
 
 ---
 
-## 📌 Executive Summary
+## 1. Project at a glance
 
-**Chilika Institute of Technology (CIT)** encounters severe operational complexity during **Week 7 (Crunch Week)**:
-1. **Regular Academic Timetable**: 189 teaching sessions (243 contact hours) across 27 rooms, 40 faculty, and 14 student cohorts.
-2. **Midsem Examinations**: 41 course exams with strict 50% room capacity caps and max 1 exam per student/day.
-3. **Spectra Week Fest Allocations**: 25 competitive venue requests with strict role-category caps, priority rules, and non-overlapping timing windows.
-4. **Unplanned Operational Disruptions**: Faculty medical leave, room closures, emergency maintenance requiring instant reschedule with **minimal student/faculty displacement**.
+CAMPORA is a campus operations platform built for Chilika Institute of Technology. It brings academic timetable generation, midsem examination scheduling, venue booking decisions and disruption recovery into one role-based web application.
 
-**CIT CampusOS** resolves these multi-objective scheduling problems using discrete mathematical optimization (**Google OR-Tools CP-SAT**) combined with an **institutional React dashboard**, an **AI Copilot** (English & Hinglish), and a **live WhatsApp notification gateway**.
+The system is designed around a strict principle:
+
+> **AI may interpret a request and explain a result; deterministic application code decides whether a timetable or booking is valid.**
+
+### The problem
+
+During CIT's Week 7 “Crunch Week”, regular teaching, upcoming midsem examinations and Spectra fest venue requests compete for rooms, faculty time and student availability. Last-minute faculty absences and room closures can create further clashes.
+
+CAMPORA addresses the challenge by combining:
+- Constraint-based timetable and examination scheduling.
+- Rule-based venue booking decisions with priority handling.
+- Disruption recovery that aims to minimise changes.
+- English and Hinglish request interpretation through an AI Copilot.
+- Role-based dashboards, approvals and operational visibility.
+
+### Dataset handled
+
+| Dataset item | Official dataset size |
+|---|---:|
+| Rooms | 27 |
+| Faculty members | 40 |
+| Student groups / cohorts | 14 |
+| Courses | 62 |
+| Teaching sessions | 189 |
+| Weekly teaching hours | 243 |
+| Spectra venue requests | 25 (one later cancelled) |
+| Midsem examinations | 41 |
+
+CAMPORA uses the official `cit_public.json` dataset supplied in the hackathon starter pack. The dataset already defines each session's faculty and student groups; the scheduling engine assigns the day, start period and room.
 
 ---
 
-## 🏆 Official Validator Benchmark Results
+## 2. Judge quick-start guide
 
-Evaluated directly against the official `validator.py` from the Hackathon Starter Pack:
+**The live application is the primary evaluation surface.** Judges can use the demo accounts below or the one-click demo login buttons on the login page.
 
+1. Open [cit.saubhagyalabs.tech](https://cit.saubhagyalabs.tech/).
+2. Sign in using one of the demo accounts.
+3. Start with the role-specific dashboard.
+4. Use **Reset Demo Data** from the Admin account before a fresh evaluation run.
+5. Use the workflows in the table below to inspect the core requirements.
+
+### Suggested evaluation journeys
+
+| What a judge wants to test | Where to go | What to verify |
+|---|---|---|
+| Read a timetable | Timetable / schedule views | Group, faculty and room views are understandable; sessions show useful details. |
+| Find a room | Room / venue booking area | Search and availability information help identify a suitable venue. |
+| Generate a timetable | Admin timetable area | The generated schedule is checked against the hard constraints. |
+| Submit a natural-language request | AI Copilot / booking assistant | English or Hinglish text is converted into editable structured fields. |
+| Check a booking decision | Spectra / booking management | Approval, rejection or alternative includes a meaningful reason and follows priority rules. |
+| Test a disruption | Rescheduling / disruption area | Proposed changes are shown before they are committed; Admin approval is required. |
+| Verify results | Validator / exports | The official validator report and generated JSON exports can be inspected. |
+
+---
+
+## 3. Demo accounts
+
+The problem statement requires working demo accounts for all four roles. These accounts are provided for hackathon evaluation.
+
+| Role | Demo email | Demo password | Suggested evaluation |
+|---|---|---|---|
+| Admin (Dean Academic) | `admin@cit.edu` | `CitAdmin2027!` | Generate schedules, inspect approvals, review disruption proposals and reset demo data. |
+| Department Coordinator (CSE) | `coord.cse@cit.edu` | `CitCoord2027!` | Inspect department/cohort timetables, elective baskets and department-related room workflows. |
+| Faculty (Dr. S. Rath) | `faculty.f19@cit.edu` | `CitFaculty2027!` | View faculty F19's timetable and workload, mark unavailability and inspect session/exam duties. |
+| Club Representative (Dramatics) | `dramatics@cit.edu` | `CitClub2027!` | Submit Spectra venue requests, check request status/reasons and use the Copilot booking flow. |
+
+**Demo reset:** The Admin dashboard provides a **Reset Demo Data** action intended to restore the demo environment to its initial dataset state. Use it before repeating evaluation scenarios.
+
+> **Security note:** These are competition demo credentials. Do not reuse them for real institutional accounts. Rotate or disable them after the evaluation period. Keep production secrets and API keys out of this repository.
+
+---
+
+## 4. Judging criteria mapped to implementation
+
+The following table maps the official judging categories to the relevant CAMPORA capability and the evidence judges can inspect.
+
+| Official criterion | Marks | CAMPORA capability / evidence |
+|---|---:|---|
+| Scheduling correctness | 25 | Official validator checks timetable, bookings and exams. Current published validator result reports zero hard violations for the exported baseline. Judges may also generate a timetable in the app. |
+| Rescheduling | 15 | Disruption workflow proposes a repaired schedule, reports moved sessions and presents changes for Admin review before application. Current published disruption export reports 15 sessions moved. |
+| Optimisation | 10 | Solver optimises the six soft-constraint conditions; the official validator reports a soft score of 315.0 for the published baseline. Lower is better only if that is how the validator defines the penalty; compare using the official report. |
+| Use of AI | 15 | Copilot interprets English/Hinglish requests, extracts booking details and supports explanations. The application validates every proposed action with deterministic code. |
+| Booking decisions | 10 | Spectra allocation export reports 66.0 / 70.0 and zero priority inversions; booking decisions include reasons. |
+| Usability and dashboard | 10 | Four role-based dashboards, timetable views, booking workflows, approvals and reset capability support independent judge testing. |
+| UI and design | 10 | Live application is the evaluation surface. Timetable readability, consistent styling, responsive laptop/mobile layouts and loading/empty/error states should be checked in the deployed app. |
+| Code and documentation | 5 | This README, architecture description, setup steps, demo accounts, `AI_USAGE.md`, `THIRD_PARTY.md` and `.env.example` support review and setup. |
+
+**Important:** Scores and validator results above are the results recorded for the current published exports. Re-run the official validator after any schedule, booking, solver or export change. Do not treat a previous report as proof that a later generated schedule is valid.
+
+---
+
+## 5. Official validator results
+
+The project README records a run against the official `validator.py` supplied in the hackathon starter pack.
+
+### Baseline timetable
+
+| Validator check | Recorded result |
+|---|---|
+| H1 — Session existence and completeness | PASS — 189 / 189 scheduled |
+| H2 — Room capacity and suitability | PASS — 0 violations |
+| H3 — Room double-booking | PASS — 0 violations |
+| H4 — Faculty double-booking | PASS — 0 violations |
+| H5 — Faculty availability | PASS — 0 violations |
+| H6 — Faculty maximum daily hours | PASS — 0 violations |
+| H7 — Student-group double-booking | PASS — 0 violations |
+| H8 — Accessibility | PASS — 0 violations |
+| H9 — Lab block constraints | PASS — 0 violations |
+| H10 — Elective baskets and fixed slots | PASS — 0 violations |
+| **Total hard violations** | **0** |
+
+### Other recorded results
+
+| Area | Recorded result |
+|---|---:|
+| Soft-constraint score | 315.0 |
+| Spectra booking score | 66.0 / 70.0 |
+| Spectra priority inversions | 0 |
+| Midsem exams scheduled | 41 / 41 |
+| Midsem exam hard violations | 0 |
+| Sessions moved in disruption export | 15 |
+
+**Disruption interpretation:** The published `schedule_after.json` is reported to have zero hard violations and 15 moved sessions relative to the baseline. This README does not claim that 15 is a mathematically proven global minimum; the official comparison across teams determines the fewest-moves score.
+
+Live evidence:
+- [Open validator report](https://cit.saubhagyalabs.tech/api/exports/verify)
+- [View Spectra allocations](https://cit.saubhagyalabs.tech/api/exports/spectra_allocations.json)
+- [View post-disruption schedule](https://cit.saubhagyalabs.tech/api/exports/schedule_after.json)
+
+---
+
+## 6. Core capabilities
+
+### 6.1 Academic timetable generation
+
+- Generates a weekly timetable for the 189 teaching sessions in the official dataset.
+- Supports views by student group, faculty and room.
+- Uses a constraint solver to assign day, start period and room.
+- Enforces the official hard constraints before a schedule is treated as valid.
+- Provides a validator workflow for checking generated schedules.
+
+### 6.2 Midsem examination scheduling
+
+- Schedules all 41 midsem exams in the supplied dataset.
+- Applies the exam-specific effective room capacity rule: room capacity is halved for exam capacity validation.
+- Supports the examination schedule export.
+- The published validator result records 41 / 41 exams scheduled with zero exam hard violations.
+
+### 6.3 Venue booking and Spectra decisions
+
+- Accepts venue requests in natural language and through structured booking flows.
+- Converts request text into editable booking details before submission.
+- Applies the official booking priority order:
+  1. Exams
+  2. Regular classes
+  3. Institute events (including Spectra main events and convocation)
+  4. Guest lectures
+  5. Department events
+  6. Club events
+- Supports booking decisions and explanations.
+- Published Spectra result: 66.0 / 70.0 with zero priority inversions.
+
+### 6.4 Disruption recovery and rescheduling
+
+The disruption workflow is designed for changes such as faculty leave, room closure and new sessions.
+
+- Accepts the supplied sample disruption file and supports custom disruption JSON upload through the disruption interface.
+- Uses the optimisation engine to propose a repaired schedule while aiming to minimise moved sessions.
+- Reports the proposed changes for review.
+- Requires Admin approval before proposed changes are committed.
+- If a valid repair cannot be found, the application should communicate the conflict rather than apply an invalid schedule.
+
+The current published disruption export reports 15 moved sessions (3 time changes and 12 room-only reassignments).
+
+### 6.5 AI Copilot
+
+The Copilot supports English and Hinglish request interpretation.
+
+Examples:
+- “Need auditorium for 350 students on Friday evening with sound system for cultural night.”
+- “Kal shaam 5 baje 40 bacchon ke liye robotics club meeting ke liye room chahiye projector ke saath.”
+
+The Copilot:
+- Extracts structured booking parameters such as event title, attendance, requested time window and equipment needs.
+- Helps users clarify or review request details.
+- Can explain a decision using information returned by the application.
+- Does **not** determine whether a booking or schedule is valid.
+
+**AI safety boundary:** The LLM is not the authority for schedule validity, booking approval, priority, room availability or conflict resolution. Every AI-generated proposal must pass deterministic backend validation before it can affect application data. The manual booking workflow must remain available if the LLM service is unavailable.
+
+### 6.6 Interactive schedule validation
+
+- Drag-and-drop schedule moves trigger a pre-flight validation request before a move is committed.
+- The interface can display the validation outcome and constraint impacts.
+- The published feature matrix identifies `/api/schedules/validate-move` as the validation endpoint.
+- The Admin interface includes a **Verify Zero Clashes** action that runs the validator against live data.
+
+---
+
+## 7. Hard constraints and operating rules
+
+CAMPORA's scheduling and booking logic is designed around the official problem statement.
+
+| Rule area | Required behaviour |
+|---|---|
+| Session completeness | Every session is scheduled exactly once. |
+| Faculty conflicts | A faculty member cannot be assigned to overlapping sessions. |
+| Student-group conflicts | A group cannot have overlapping sessions; combined lectures count for all included groups. |
+| Elective baskets | Sessions in the same elective basket slot run at the same day and period and are handled as the stated exception. |
+| Room conflicts | A room cannot host overlapping sessions or approved bookings. |
+| Capacity | Room capacity must meet session size; exam capacity checks use half the room's stated capacity. |
+| Room suitability | The room type must match the session requirement. |
+| Availability | Faculty unavailability and room maintenance windows must be respected. |
+| Lunch and labs | No session crosses 13:00–14:00 lunch; three-hour labs must fit P2–P4 or P6–P8. |
+| Accessibility | Sessions requiring an accessible room must be assigned one. |
+| Faculty daily limit | A faculty member must not exceed the dataset daily teaching limit (4 hours in the CIT data). |
+| Fixed sessions | A session with a fixed slot must remain in that slot. |
+| Booking conflicts | An approved booking must not overlap a session, another booking in the same room or a group for whom the event is mandatory. |
+
+**Time model:** The teaching week is Monday to Friday, P1–P9. P1 starts at 08:00 and P9 at 17:00. Lunch is 13:00–14:00. P10–P13 (18:00–22:00) are reserved for events, not regular teaching sessions.
+
+### Soft constraints considered
+
+The solver's soft-constraint objective covers the six conditions listed in the problem statement:
+
+1. Faculty scheduled during a time they asked to avoid.
+2. A student group has a free period between two classes on the same day (lunch excluded).
+3. A student group has more than six hours of class in one day.
+4. A group has two lectures of the same course on the same day.
+5. A session uses less than 40% of the room's capacity.
+6. A session is scheduled in P9 (17:00).
+
+The official validator is the source of truth for the reported soft penalty and its calculation.
+
+---
+
+## 8. Roles and permissions
+
+The application implements the four roles defined by the problem statement.
+
+| Role | Main responsibilities |
+|---|---|
+| Admin (Dean's Office) | Full system access; generates timetables; approves timetable changes and bookings that move a class; can change the priority order. |
+| Department Coordinator | Requests changes to department sessions; books rooms for department events; approves bookings of their department's labs. |
+| Faculty | Views their own timetable; marks unavailability; requests extra or moved sessions. |
+| Club Representative | Submits and cancels venue requests; views the status and reason for each request. |
+
+**Approval rule:** Nobody can approve their own request. Role permissions and approval checks must be enforced by the backend, not only by hiding frontend controls.
+
+---
+
+## 9. System architecture
+
+```text
+                         Evaluator / User Browser
+                                  |
+                         HTTPS: cit.saubhagyalabs.tech
+                                  |
+                            Caddy Server
+                         (TLS / Reverse Proxy)
+                                  |
+              +-------------------+-------------------+
+              |                   |                   |
+              v                   v                   v
+        React 18 + Vite      Node.js / Express    WhatsApp Gateway
+        Frontend             + Prisma API         (Evolution-Go)
+                                  |
+                    +-------------+-------------+
+                    |                           |
+                    v                           v
+              MySQL 8.0                  Python FastAPI
+              cit_campus_os              Optimisation Service
+                                               |
+                                               v
+                                        Google OR-Tools
+                                          CP-SAT Solver
+
+        WhatsApp gateway authentication data: PostgreSQL 15
 ```
-======================================================================
-  CIT Timetable & Fest Schedule Validator (validator.py)
-======================================================================
-Loaded dataset 'cit-public-v1': 27 rooms, 40 faculty, 189 sessions, 25 requests, 41 exams
 
---- Checking Hard Constraints (Timetable) ---
-  H1 Session existence & completeness: PASS (189/189 scheduled)
-  H2 Room capacity & suitability:       PASS (0 violations)
-  H3 Room double-booking:               PASS (0 violations)
-  H4 Faculty double-booking:            PASS (0 violations)
-  H5 Faculty availability:              PASS (0 violations)
-  H6 Faculty max daily hours:           PASS (0 violations)
-  H7 Student group double-booking:      PASS (0 violations)
-  H8 Accessibility:                     PASS (0 violations)
-  H9 Lab block constraints:             PASS (0 violations)
-  H10 Elective baskets & fixed slots:   PASS (0 violations)
+### Main components
 
-TOTAL HARD VIOLATIONS: 0
+| Component | Technology | Responsibility |
+|---|---|---|
+| Frontend (`client/`) | React 18, Vite, TypeScript, Tailwind CSS, Lucide, Radix UI | Role-based dashboards, timetable grid, booking flows, Copilot interface and user interactions. |
+| Backend (`server/`) | Node.js 20, Express, Prisma | API gateway, JWT sessions, role-based authorisation, audit logging and dataset reset/seeding. |
+| Optimisation service (`optimizer/`) | Python 3.11, FastAPI, Google OR-Tools CP-SAT | Constraint-based timetable and disruption optimisation. |
+| Primary application database | MySQL 8.0 | Campus application data (`cit_campus_os`). |
+| Notification gateway | Evolution-Go | WhatsApp notification integration. |
+| Gateway authentication database | PostgreSQL 15 | Evolution-Go user/authentication data. |
 
---- Checking Soft Constraints (Timetable) ---
-  Total soft score: 315.0 (Optimized across S1 to S6)
-
---- Checking Fest Bookings (Spectra Week) ---
-  Total booking score: 66.0 / 70.0
-  Priority inversions: 0
-
---- Checking Midsem Exams ---
-  Exams scheduled: 41 / 41 (100.0%)
-  Exam hard violations: 0
-======================================================================
-VERDICT: VALID TIMETABLE & FEST SCHEDULE (Zero Hard Violations)
-======================================================================
-```
-
-### ⚡ Disruption Recovery Performance (`sample_disruption.json`)
-- **Total Hard Violations**: **0**
-- **Sessions Moved From Baseline**: **15** (3 time changes, 12 room-only reassigments)
-- **Minimum Disruption Bound Achieved**: Successfully preserves institutional routine.
+The architecture separates the user interface, application API, optimisation logic and notification gateway so that schedule validation is not delegated to the LLM.
 
 ---
 
-## 🔑 Demo Stakeholder Accounts (Problem Statement Section 4 & 7)
+## 10. Export files and verification
 
-Judges and evaluators can log in immediately at **[cit.saubhagyalabs.tech](https://cit.saubhagyalabs.tech/)** using **1-Click Demo Buttons** or manual credentials:
+The application exposes the following generated JSON exports:
 
-| Stakeholder Role | Email | Password | Primary Actions & Capabilities |
-| :--- | :--- | :--- | :--- |
-| 🛡️ **Admin (Dean Academic)** | `admin@cit.edu` | `CitAdmin2027!` | Master timetable generation, approve schedule proposals, commit disruption repairs, one-click dataset reset. |
-| 👥 **Coordinator (CSE Dept)** | `coord.cse@cit.edu` | `CitCoord2027!` | Audit cohort timetables (Y1-A, Y1-B, CSE-2, CSE-3), inspect elective baskets (`OEB-1`), room utilization. |
-| 🎓 **Faculty (Dr. S. Rath)** | `faculty.f19@cit.edu` | `CitFaculty2027!` | Faculty `F19`: view personal weekly load, daily teaching cap (≤ 4h/day), exam invigilation duties. |
-| ✨ **Club Lead (Dramatics)** | `dramatics@cit.edu` | `CitClub2027!` | Submit Spectra venue requests, check status reasons, interact with CIT Copilot for bookings. |
+| File | Contents | Link |
+|---|---|---|
+| `schedule.json` | Baseline academic timetable, exams and booking data in the application's export format. | [Download](https://cit.saubhagyalabs.tech/api/exports/schedule.json) |
+| `schedule_after.json` | Schedule after applying the sample disruption. | [Download](https://cit.saubhagyalabs.tech/api/exports/schedule_after.json) |
+| `exam_schedule.json` | Midsem examination schedule / seating allocation. | [Download](https://cit.saubhagyalabs.tech/api/exports/exam_schedule.json) |
+| `spectra_allocations.json` | Spectra booking decisions and allocations. | [Download](https://cit.saubhagyalabs.tech/api/exports/spectra_allocations.json) |
 
-> 🔄 **Pristine Reset Feature**: The **"Reset Demo Data"** button in the header instantly restores the database and active schedule to the pristine `cit_public.json` state within 1.5 seconds.
+The required submission exports are `exports/schedule.json` and `exports/schedule_after.json`. The additional exports above are provided for inspection where available.
 
----
+### Run the official validator locally
 
-## 🏛️ System Architecture
+Run these commands from the repository root. Adjust the starter-pack directory path only if the repository stores the starter pack in a different location.
 
-```
-                                  [ Evaluator / User Browser ]
-                                               │
-                                 HTTPS (cit.saubhagyalabs.tech)
-                                               │
-                                       ┌───────▼───────┐
-                                       │ Caddy Server  │ (Auto SSL / Reverse Proxy)
-                                       └───────┬───────┘
-                                               │
-                       ┌───────────────────────┼─────────────────────────┐
-                       │ /                     │ /api                    │ /wa
-                       ▼                       ▼                         ▼
-             ┌──────────────────┐    ┌──────────────────┐      ┌──────────────────┐
-             │  React 18 + Vite │    │  Node.js Server  │      │  Evolution-Go    │
-             │  (Frontend UI)   │    │  (Express/Prisma)│      │  WhatsApp Gateway│
-             └──────────────────┘    └─────────┬────────┘      └─────────┬────────┘
-                                               │                         │
-                                    ┌──────────┴──────────┐              │
-                                    ▼                     ▼              │
-                           ┌─────────────────┐   ┌─────────────────┐     │
-                           │ MySQL 8.0 DB    │   │ Python CP-SAT   │     │
-                           │ cit_campus_os   │   │ Solver (ortools)│     │
-                           └─────────────────┘   └─────────────────┘     │
-                                                                         │
-                                                               ┌─────────▼────────┐
-                                                               │ PostgreSQL 15 DB │
-                                                               │ evogo_users/auth │
-                                                               └──────────────────┘
-```
-
-### Architectural Separation
-1. **Frontend (`client/`)**: Institutional dashboard built with React 18, TypeScript, TailwindCSS, Lucide icons, and Radix UI primitives. Includes interactive multi-day timetable grid, drag-and-drop pre-flight validation, and Copilot drawer.
-2. **Backend API Gateway (`server/`)**: Express.js + Prisma ORM on Node 20. Manages JWT sessions, role-based authorization, immutable audit logging, and transactional dataset re-seeding.
-3. **Discrete Optimization Engine (`optimizer/`)**: Python 3.11 FastAPI microservice wrapping **Google OR-Tools CP-SAT**. Strictly separates mathematical logic from presentation.
-4. **WhatsApp Automation Gateway (`evolution-go`)**: Lightweight compiled Go service paired with PostgreSQL for real-time room assignment and disruption alerts.
-
----
-
-## 📋 Comprehensive Problem Statement Feature Matrix
-
-| Requirement | Implementation in CIT CampusOS | Verification / Status |
-| :--- | :--- | :--- |
-| **H1–H10 Hard Constraints** | CP-SAT discrete variables for room suitability, teacher max daily hours (≤4h), group collisions, and 3-hour lab block bounds (P2 or P6). | **PASS (0 violations)** |
-| **Elective Baskets (`OEB-1`)** | Synchronized parallel periods for OE301, OE302, and OE303 across Year 3 cohorts. | **PASS** |
-| **Accessibility Enforcement** | Strict accessibility matching for mobility-impaired faculty/groups. Automatically identifies `SH-2` second-floor walk-up limitations and redirects to `SH-1`. | **PASS** |
-| **Midsem Exam Seating** | Half-capacity room constraints, multi-room splits for large batches, and AM/PM calendar block scheduling. | **PASS (41/41 scheduled)** |
-| **Spectra Week Category Caps** | Enforces `role_category_cap` (clubs cannot claim institute priority), breaking ties with submission timestamps. | **Score: 66.0 / 70.0** |
-| **Disruption Recovery** | Bi-objective solver minimizing moved sessions when faculty take sudden leave or rooms undergo emergency repair. | **15 moved sessions** |
-| **Drag & Drop Schedule Move** | Dragging a class triggers `/api/schedules/validate-move` pre-flight check before committing, showing exact constraint impacts. | **Interactive & Live** |
-| **Plain-Language AI Copilot** | Dual-Engine: Google Gemini `gemini-3.5-flash-lite` + semantic regex parser. Handles English, Hindi, and Hinglish. | **Live & Multilingual** |
-| **Custom Disruption Upload** | Evaluators can upload external JSON change files directly from the Disruption Dashboard. | **Interactive Modal** |
-| **One-Click Official Verification** | "Verify Zero Clashes" navbar button executes the canonical validator on live data and renders the report. | **Interactive & Live** |
-
----
-
-## 🤖 CIT Copilot & AI Capabilities (Problem Statement Section 2 & 6)
-
-The CIT Copilot follows the strict **AI Safety Boundary** mandated by Section 6 of the Problem Statement:
-> *"The LLM may propose, but only the deterministic code may dispose."*
-
-- **Natural Language Parameter Extraction**: Converts messages like *"Need auditorium for 350 students on Friday evening with sound system for cultural night"* into structured JSON specifications (title, attendance, windows, equipment needs).
-- **Hinglish Understanding**: Accurately processes colloquial Indian campus queries (e.g. *"Kal shaam 5 baje 40 bacchon ke liye robotics club meeting ke liye room chahiye projector ke saath"*).
-- **Accessibility Conflict Detection**: When requested to book `SH-2` for a wheelchair-accessible session, Copilot detects the constraint violation and suggests `SH-1` (ground floor with ramp).
-- **Decision Explainability**: Provides human-readable rationales (e.g. *"Booking BR-09 was rejected because request attendance (1,200) exceeds CIT's largest venue (Auditorium: 400 seats)"*).
-
----
-
-## 📦 Export Deliverables & Verification Endpoints
-
-The required JSON export deliverables are generated directly by the platform and can be downloaded from the live deployment:
-
-| Deliverable | Description | Live Download Link |
-| :--- | :--- | :--- |
-| `schedule.json` | Master academic timetable, midsem exams, and Spectra fest allocations. | [Download JSON](https://cit.saubhagyalabs.tech/api/exports/schedule.json) |
-| `schedule_after.json` | Repaired schedule after applying `sample_disruption.json`. | [Download JSON](https://cit.saubhagyalabs.tech/api/exports/schedule_after.json) |
-| `exam_schedule.json` | Midsem seating arrangement with half-capacity rooms. | [Download JSON](https://cit.saubhagyalabs.tech/api/exports/exam_schedule.json) |
-| `spectra_allocations.json`| Spectra Week booking decisions and session overrides. | [Download JSON](https://cit.saubhagyalabs.tech/api/exports/spectra_allocations.json) |
-
-### Run Validator Locally:
 ```bash
-# 1. Validate baseline schedule
+# Validate the baseline schedule
 python "docs/PS/CrunchWeek_StarterPack (1)/CrunchWeek_StarterPack/validator.py" \
   --data "docs/PS/CrunchWeek_StarterPack (1)/CrunchWeek_StarterPack/data/cit_public.json" \
   --schedule exports/schedule.json
 
-# 2. Validate disruption recovery schedule
+# Validate the schedule after the supplied disruption
 python "docs/PS/CrunchWeek_StarterPack (1)/CrunchWeek_StarterPack/validator.py" \
   --data "docs/PS/CrunchWeek_StarterPack (1)/CrunchWeek_StarterPack/data/cit_public.json" \
   --schedule exports/schedule_after.json \
@@ -185,65 +351,131 @@ python "docs/PS/CrunchWeek_StarterPack (1)/CrunchWeek_StarterPack/validator.py" 
   --baseline exports/schedule.json
 ```
 
+**Before submission:** run the unmodified official validator against the final committed exports and retain the output for the team’s records.
+
 ---
 
-## 🚀 Local Development & Setup Instructions
+## 11. Local development setup
 
 ### Prerequisites
-- Node.js 18+ & npm
-- Python 3.10+ & pip
-- MySQL 8.0+ running on `localhost:3306`
 
-### 1. Clone Repository & Setup Environment
+- Node.js 18 or later and npm.
+- Python 3.10 or later and pip.
+- MySQL 8.0 running locally on port `3306`.
+- Any additional services and environment variables documented in `.env.example`.
+
+### 1. Clone the repository
+
 ```bash
 git clone https://github.com/Akshat-sin-official/TZ-Meru-Byte.git
 cd TZ-Meru-Byte
+```
+
+### 2. Configure environment variables
+
+```bash
 cp .env.example server/.env
 ```
 
-### 2. Initialize Database & Backend
+Open `server/.env` and set the required local values. Do not commit `.env` or real API keys.
+
+### 3. Install and start the backend
+
 ```bash
 cd server
 npm install
 npx prisma db push
 node dist/seed.js
 npm run dev
-# Server runs on http://localhost:5000
 ```
 
-### 3. Start Python Optimizer
+The backend is expected to run at `http://localhost:5000`.
+
+### 4. Install and start the optimisation service
+
+In a separate terminal:
+
 ```bash
-cd ../optimizer
+cd optimizer
 pip install -r requirements.txt
 uvicorn main:app --port 8001
-# Optimizer runs on http://localhost:8001
 ```
 
-### 4. Start React Frontend
+The optimiser is expected to run at `http://localhost:8001`.
+
+### 5. Install and start the frontend
+
+In a separate terminal:
+
 ```bash
-cd ../client
+cd client
 npm install
 npm run dev
-# Client runs on http://localhost:5173
 ```
+
+The Vite development server is expected to run at `http://localhost:5173`.
+
+**Setup verification:** The commands above reflect the current project setup documented by the team. If a clean clone fails, update these instructions and `.env.example` before submission so a judge can reproduce the setup.
 
 ---
 
-## 🛡️ Hackathon Submission Checklist (Section 7 Compliance)
+## 12. AI use, third-party software and environment configuration
 
-- [x] **Zero Hard Violations on Timetable**: Verified by `validator.py`.
-- [x] **Minimal Disruption Rescheduling**: Exactly 15 moved sessions.
-- [x] **Spectra Booking Priority**: 0 priority inversions (score 66.0/70.0).
-- [x] **Live Public Cloud Deployment**: Accessible at `https://cit.saubhagyalabs.tech/`.
-- [x] **Export Files in Repository**: `exports/schedule.json` and `exports/schedule_after.json`.
-- [x] **Mandatory Files**:
-  - `README.md` (System architecture, setup instructions, demo credentials, validator proof).
-  - `AI_USAGE.md` (Explicit prompts, tool logs, safety boundaries to avoid 10-mark penalty).
-  - `THIRD_PARTY.md` (Open source libraries, packages, and solver disclosures).
-  - `.env.example` (Template environment file without secrets).
+The repository should include these supporting files:
+
+| File | What it documents |
+|---|---|
+| `AI_USAGE.md` | Every AI model/API called by the product, its purpose, every AI tool used during development and what it helped with, prompt locations, and decisions the LLM is not allowed to make. |
+| `THIRD_PARTY.md` | Open-source libraries, frameworks, solvers and third-party services used by the project. |
+| `.env.example` | Every required environment variable, with placeholder values only and no real secrets. |
+
+### AI safety boundary
+
+- The LLM may interpret requests, ask follow-up questions, populate structured fields and explain application decisions.
+- Deterministic application code must validate schedule and booking feasibility.
+- Every AI-generated proposal must pass backend validation before it changes data.
+- The LLM must not approve bookings, override priority rules or independently decide that a timetable is valid.
+- Manual booking must remain available when the LLM API is unavailable.
+
+**Undeclared AI usage carries a 10-mark deduction under the official rules.** Ensure `AI_USAGE.md` is accurate and complete before submission.
+
+---
+
+## 13. Known limitations and evaluation notes
+
+- Natural-language extraction can be ambiguous. Users should review and edit the structured request before submitting it.
+- AI-assisted request interpretation depends on the configured AI service; the manual booking path must be used if that service is unavailable.
+- The validator figures in this README describe the recorded published run. Results must be regenerated after changes to the dataset, solver, booking logic or exported schedules.
+- The setup instructions depend on the environment variables and services configured for the project. Consult `.env.example` and the supporting documentation.
+- Add any further known limitations discovered during final testing here. Do not claim a feature is fully reliable unless it has been tested on the deployed application.
+
+---
+
+## 14. Submission compliance checklist
+
+- [ ] Public GitHub repository is accessible.
+- [ ] Repository was created after the hackathon started.
+- [ ] `README.md` includes project overview, architecture, stack, setup, demo accounts and known limitations.
+- [ ] `.env.example` lists all required variables and contains no real secrets.
+- [ ] `AI_USAGE.md` is complete and accurate.
+- [ ] `THIRD_PARTY.md` lists the libraries, solvers and services used.
+- [ ] `exports/schedule.json` is generated by the application.
+- [ ] `exports/schedule_after.json` is generated by applying `sample_disruption.json`.
+- [ ] Final exports pass the unmodified official validator.
+- [ ] Live deployment remains available until results are announced.
+- [ ] All four demo accounts work on the deployed application.
+- [ ] Admin demo reset works.
+- [ ] Five-minute maximum walkthrough video is submitted with judge access.
+- [ ] Video demonstrates timetable generation, natural-language booking, blocked conflict, Spectra decisions, disruption rescheduling with approval and dashboard use.
+- [ ] No code, deployment or exported results are changed after the submission deadline.
+
+**Disqualification warning:** The official rules include disqualification for an inaccessible/private repository, missing or non-working deployment, missing or non-working demo accounts, missing video, prohibited pre-existing/bought/copied code, post-deadline changes, fabricated or manually edited results, unauthorised outside contributors, or tampering with organiser files/validator or another team's work.
 
 ---
 
 <div align="center">
-  <sub>Developed by Team Meru Byte for the Chilika Institute of Technology Crunch Week Hackathon.</sub>
+
+**CAMPORA — The Intelligence Behind Every Campus.**  
+Built by **MERUBYTE** for the Chilika Institute of Technology Crunch Week Hackathon.
+
 </div>
