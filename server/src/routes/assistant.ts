@@ -133,7 +133,7 @@ async function processPromptWithAI(message: string, role: string): Promise<any> 
     try {
       const client = new GoogleGenerativeAI(activeKey);
       const model = client.getGenerativeModel({
-        model: 'gemini-1.5-flash',
+        model: 'gemini-3.5-flash-lite',
         generationConfig: {
           responseMimeType: 'application/json',
           temperature: 0.2,
