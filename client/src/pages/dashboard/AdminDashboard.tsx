@@ -135,7 +135,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateTab })
           </button>
 
           <a
-            href="http://localhost:5000/api/exports/schedule.json"
+            href="/api/exports/schedule.json"
             download="schedule.json"
             className="rounded-lg border border-[#E5E7EB] bg-white hover:bg-slate-50 text-[#111926] shadow-2xs font-bold font-poppins px-3.5 py-2 text-xs inline-flex items-center gap-1.5 transition"
           >

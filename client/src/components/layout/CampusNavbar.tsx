@@ -111,7 +111,7 @@ export const CampusNavbar: React.FC<CampusNavbarProps> = ({
           </Button>
 
           <a
-            href="http://localhost:5000/api/exports/schedule.json"
+            href="/api/exports/schedule.json"
             download="schedule.json"
             className="inline-flex items-center justify-center rounded-md text-xs text-[#18181B] h-8 px-2.5 hover:bg-[#F4F4F5] transition-colors"
           >
