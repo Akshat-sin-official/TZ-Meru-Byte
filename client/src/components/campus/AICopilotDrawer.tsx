@@ -35,6 +35,8 @@ interface ChatMessage {
   type?: 'explanation' | 'booking_extraction' | 'reschedule_proposal' | 'information' | 'error';
   extracted?: any;
   disruptionProposal?: any;
+  comparison?: any;
+  ai_engine?: string;
   timestamp: string;
 }
 
@@ -52,6 +54,7 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
   const { user } = useCampusAuth();
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(false);
+  const [aiMode, setAiMode] = useState<'n8n_only' | 'gemini_only' | 'both_compare'>('both_compare');
   const [submittingBooking, setSubmittingBooking] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -120,7 +123,7 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
     setLoading(true);
 
     try {
-      const response = await campusApi.chatWithAssistant(textToSend, user?.role || 'admin');
+      const response = await campusApi.chatWithAssistant(textToSend, user?.role || 'admin', aiMode);
 
       const botMsgId = `bot-${Date.now()}`;
       const botMsg: ChatMessage = {
@@ -130,6 +133,8 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
         type: response.type || 'information',
         extracted: response.extracted || null,
         disruptionProposal: response.disruptionProposal || null,
+        comparison: response.comparison || null,
+        ai_engine: response.ai_engine || null,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
 
@@ -233,6 +238,48 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
           </div>
         </SheetHeader>
 
+        {/* AI Engine Evaluation Mode Toggle */}
+        <div className="px-4 py-2 bg-slate-50 border-b border-[#E5E7EB] flex items-center justify-between gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-700">
+            <span>Engine Mode:</span>
+          </div>
+          <div className="flex items-center p-0.5 bg-slate-200/80 rounded-lg text-xs">
+            <button
+              onClick={() => setAiMode('n8n_only')}
+              className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition cursor-pointer ${
+                aiMode === 'n8n_only'
+                  ? 'bg-white text-blue-700 font-bold shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+              title="Route exclusively to n8n Cloud workflow"
+            >
+              ⚡ n8n Only
+            </button>
+            <button
+              onClick={() => setAiMode('gemini_only')}
+              className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition cursor-pointer ${
+                aiMode === 'gemini_only'
+                  ? 'bg-white text-purple-700 font-bold shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+              title="Route directly to Google Gemini"
+            >
+              🧠 Gemini Only
+            </button>
+            <button
+              onClick={() => setAiMode('both_compare')}
+              className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition cursor-pointer ${
+                aiMode === 'both_compare'
+                  ? 'bg-indigo-600 text-white font-bold shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+              title="Run both in parallel and compare accuracy & response time"
+            >
+              ⚖️ Compare Both
+            </button>
+          </div>
+        </div>
+
         {/* Scrollable Message List */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 bg-[#F9F9FB]">
           {messages.map((msg) => (
@@ -268,6 +315,42 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
                 <div className="whitespace-pre-wrap font-sans">
                   {msg.text}
                 </div>
+
+                {/* Side-by-Side Model Comparison Benchmark Card */}
+                {msg.comparison && (
+                  <div className="p-3.5 rounded-xl border border-indigo-200 bg-gradient-to-br from-indigo-50/70 to-purple-50/70 space-y-2 mt-2 text-xs">
+                    <div className="flex items-center justify-between border-b border-indigo-200/80 pb-2">
+                      <span className="font-bold font-poppins text-xs text-indigo-950 flex items-center gap-1.5">
+                        <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                        <span>Evaluation Benchmark</span>
+                      </span>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold border border-emerald-300">
+                        Faster: {msg.comparison.faster}
+                      </span>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-[11px] border-collapse">
+                        <thead>
+                          <tr className="border-b border-indigo-200/60 text-slate-500 text-left">
+                            <th className="py-1 px-1 font-semibold">Evaluation Metric</th>
+                            <th className="py-1 px-1 font-semibold text-purple-700">Gemini Direct</th>
+                            <th className="py-1 px-1 font-semibold text-blue-700">n8n Workflow</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-indigo-100/80 font-sans">
+                          {msg.comparison.metrics?.map((m: any, idx: number) => (
+                            <tr key={idx} className="hover:bg-white/40">
+                              <td className="py-1.5 px-1 font-medium text-slate-700">{m.metric}</td>
+                              <td className="py-1.5 px-1 font-mono text-purple-900 font-medium">{m.gemini}</td>
+                              <td className="py-1.5 px-1 font-mono text-blue-900 font-medium">{m.n8n}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
 
                 {/* Extracted Booking Card Widget */}
                 {msg.extracted && (

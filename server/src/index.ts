@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
 
 import authRoutes from './routes/auth.js';
 import datasetRoutes from './routes/datasets.js';
@@ -9,9 +10,13 @@ import examRoutes from './routes/exams.js';
 import bookingRoutes from './routes/bookings.js';
 import disruptionRoutes from './routes/disruptions.js';
 import assistantRoutes from './routes/assistant.js';
+import aiRoutes from './routes/ai.js';
 import exportRoutes from './routes/exports.js';
 
+// Load .env from server dir or root dir
 dotenv.config();
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -41,12 +46,13 @@ app.use('/api/exams', examRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/disruptions', disruptionRoutes);
 app.use('/api/assistant', assistantRoutes);
+app.use('/api/ai', aiRoutes);
 app.use('/api/exports', exportRoutes);
 
 app.listen(PORT, () => {
   console.log(`====================================================`);
   console.log(` CIT CampusOS API Gateway listening on port ${PORT}`);
   console.log(` Health: http://localhost:${PORT}/api/health`);
+  console.log(` AI Endpoints: /api/ai/booking-intake, /api/ai/schedule-change, /api/ai/decision-explainer`);
   console.log(`====================================================`);
 });
-

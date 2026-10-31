@@ -49,6 +49,7 @@ model User {
 
   auditLogs    AuditLog[]
   notifications Notification[]
+  aiConversations AiConversation[]
 }
 
 model DatasetVersion {
@@ -323,3 +324,30 @@ model Notification {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+
+model AiConversation {
+  id           String      @id @default(uuid())
+  userId       String
+  workflowType String
+  currentDraft Json?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages     AiMessage[]
+
+  @@index([userId, workflowType])
+}
+
+model AiMessage {
+  id             String         @id @default(uuid())
+  conversationId String
+  sender         String
+  message        String         @db.Text
+  rawAiResponse  Json?
+  createdAt      DateTime       @default(now())
+
+  conversation   AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+}
