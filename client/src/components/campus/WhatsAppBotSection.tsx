@@ -34,6 +34,33 @@ interface Contact {
   };
 }
 
+const COUNTRY_CODES = [
+  { code: '91', name: 'India', flag: '🇮🇳' },
+  { code: '1', name: 'USA / Canada', flag: '🇺🇸' },
+  { code: '44', name: 'UK', flag: '🇬🇧' },
+  { code: '971', name: 'UAE', flag: '🇦🇪' },
+  { code: '65', name: 'Singapore', flag: '🇸🇬' },
+  { code: '61', name: 'Australia', flag: '🇦🇺' },
+  { code: '49', name: 'Germany', flag: '🇩🇪' },
+  { code: '33', name: 'France', flag: '🇫🇷' },
+  { code: '81', name: 'Japan', flag: '🇯🇵' },
+  { code: '966', name: 'Saudi Arabia', flag: '🇸🇦' },
+  { code: '974', name: 'Qatar', flag: '🇶🇦' },
+  { code: '968', name: 'Oman', flag: '🇴🇲' },
+  { code: '965', name: 'Kuwait', flag: '🇰🇼' },
+  { code: '880', name: 'Bangladesh', flag: '🇧🇩' },
+  { code: '977', name: 'Nepal', flag: '🇳🇵' },
+  { code: '94', name: 'Sri Lanka', flag: '🇱🇰' },
+  { code: '60', name: 'Malaysia', flag: '🇲🇾' },
+  { code: '62', name: 'Indonesia', flag: '🇮🇩' },
+  { code: '86', name: 'China', flag: '🇨🇳' },
+  { code: '7', name: 'Russia', flag: '🇷🇺' },
+  { code: '55', name: 'Brazil', flag: '🇧🇷' },
+  { code: '27', name: 'South Africa', flag: '🇿🇦' },
+  { code: '234', name: 'Nigeria', flag: '🇳🇬' },
+  { code: '254', name: 'Kenya', flag: '🇰🇪' },
+];
+
 export const WhatsAppBotSection: React.FC = () => {
   const [status, setStatus] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -41,12 +68,14 @@ export const WhatsAppBotSection: React.FC = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
 
   // New contact form
+  const [countryCode, setCountryCode] = useState('91');
   const [newPhone, setNewPhone] = useState('');
   const [newName, setNewName] = useState('');
   const [newRole, setNewRole] = useState('club');
   const [addingContact, setAddingContact] = useState(false);
 
   // Test dispatch
+  const [testCountryCode, setTestCountryCode] = useState('91');
   const [testPhone, setTestPhone] = useState('');
   const [testMsg, setTestMsg] = useState('');
   const [sendingTest, setSendingTest] = useState(false);
@@ -103,19 +132,20 @@ export const WhatsAppBotSection: React.FC = () => {
 
   const handleAddContact = async (e: React.FormEvent) => {
     e.preventDefault();
-    const clean = newPhone.replace(/[^0-9]/g, '');
+    let clean = newPhone.replace(/[^0-9]/g, '').replace(/^0+/, '');
     if (!clean || clean.length < 5) {
-      toast.error('Enter a valid mobile number with country code (e.g. 919876543210)');
+      toast.error('Enter a valid mobile phone number');
       return;
     }
+    const fullPhone = clean.startsWith(countryCode) ? clean : `${countryCode}${clean}`;
     setAddingContact(true);
     try {
       await campusApi.addWhatsAppContact({
-        phone: clean,
+        phone: fullPhone,
         name: newName.trim() || undefined,
         role: newRole,
       });
-      toast.success(`Registered +${clean} as ${newRole.toUpperCase()}`);
+      toast.success(`Registered +${fullPhone} as ${newRole.toUpperCase()}`);
       setNewPhone('');
       setNewName('');
       await fetchContacts();
@@ -139,14 +169,16 @@ export const WhatsAppBotSection: React.FC = () => {
 
   const handleSendTest = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!testPhone.trim()) {
+    let clean = testPhone.replace(/[^0-9]/g, '').replace(/^0+/, '');
+    if (!clean) {
       toast.error('Enter recipient phone number');
       return;
     }
+    const fullPhone = clean.startsWith(testCountryCode) ? clean : `${testCountryCode}${clean}`;
     setSendingTest(true);
     try {
       const res = await campusApi.testSendWhatsApp({
-        phone: testPhone.trim(),
+        phone: fullPhone,
         message: testMsg.trim() || undefined,
       });
       if (res.success) {
@@ -429,13 +461,26 @@ export const WhatsAppBotSection: React.FC = () => {
 
               {/* Inline Add Contact Form */}
               <form onSubmit={handleAddContact} className="p-4 bg-slate-50/80 border-t border-[#E5E7EB] flex flex-wrap items-center gap-3">
-                <div className="flex-1 min-w-[160px]">
+                <div className="flex items-center gap-1.5 flex-1 min-w-[260px]">
+                  <select
+                    value={countryCode}
+                    onChange={(e) => setCountryCode(e.target.value)}
+                    aria-label="Select Country"
+                    title="Select Country"
+                    className="h-8 text-xs border border-[#E5E7EB] rounded-md px-2 bg-white font-poppins text-[#111926] shrink-0 max-w-[130px] truncate cursor-pointer hover:border-[#D1D5DB] transition-colors focus:outline-none focus:ring-1 focus:ring-primary"
+                  >
+                    {COUNTRY_CODES.map((c) => (
+                      <option key={c.code} value={c.code}>
+                        {c.flag} +{c.code} ({c.name})
+                      </option>
+                    ))}
+                  </select>
                   <Input
-                    type="text"
-                    placeholder="Mobile with country code (e.g. 919876543210)"
+                    type="tel"
+                    placeholder="Mobile number (e.g. 9876543210)"
                     value={newPhone}
                     onChange={(e) => setNewPhone(e.target.value)}
-                    className="h-8 text-xs font-mono bg-white"
+                    className="h-8 text-xs font-mono bg-white flex-1"
                   />
                 </div>
                 <div className="flex-1 min-w-[140px]">
@@ -489,13 +534,28 @@ export const WhatsAppBotSection: React.FC = () => {
                   <label className="text-[11px] font-semibold text-muted-foreground block mb-1">
                     Recipient Phone Number
                   </label>
-                  <Input
-                    type="text"
-                    placeholder="919876543210"
-                    value={testPhone}
-                    onChange={(e) => setTestPhone(e.target.value)}
-                    className="h-8 text-xs font-mono"
-                  />
+                  <div className="flex items-center gap-1.5">
+                    <select
+                      value={testCountryCode}
+                      onChange={(e) => setTestCountryCode(e.target.value)}
+                      aria-label="Recipient Country Code"
+                      title="Select Country Code"
+                      className="h-8 text-xs border border-[#E5E7EB] rounded-md px-2 bg-white font-poppins text-[#111926] shrink-0 max-w-[125px] truncate cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary"
+                    >
+                      {COUNTRY_CODES.map((c) => (
+                        <option key={c.code} value={c.code}>
+                          {c.flag} +{c.code}
+                        </option>
+                      ))}
+                    </select>
+                    <Input
+                      type="tel"
+                      placeholder="9876543210"
+                      value={testPhone}
+                      onChange={(e) => setTestPhone(e.target.value)}
+                      className="h-8 text-xs font-mono flex-1"
+                    />
+                  </div>
                 </div>
                 <div>
                   <label className="text-[11px] font-semibold text-muted-foreground block mb-1">
