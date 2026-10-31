@@ -188,7 +188,7 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
       {/* Refined Minimalist Sidebar */}
       <aside
         className={`hidden lg:flex flex-col flex-shrink-0 z-30 select-none h-full relative transition-all duration-200 ease-in-out border-r border-[#E5E7EB] bg-[#FBFBFA] ${
-          sidebarCollapsed ? 'w-16' : 'w-[270px]'
+          sidebarCollapsed ? 'w-16' : 'w-[280px]'
         }`}
       >
         {/* Workspace Header */}
@@ -334,9 +334,9 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
                 }`}
                 title="Overview Dashboard"
               >
-                <div className="flex items-center gap-2.5">
-                  <LayoutDashboard className={`h-4 w-4 ${activeTab === 'dashboard' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
-                  {!sidebarCollapsed && <span>Overview</span>}
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <LayoutDashboard className={`h-4 w-4 shrink-0 ${activeTab === 'dashboard' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
+                  {!sidebarCollapsed && <span className="whitespace-nowrap">Overview</span>}
                 </div>
               </button>
 
@@ -360,12 +360,12 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
                   }`}
                   title="Weekly Timetable"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <CalendarDays className={`h-4 w-4 ${activeTab === 'timetable' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
-                    {!sidebarCollapsed && <span>Weekly Timetable</span>}
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <CalendarDays className={`h-4 w-4 shrink-0 ${activeTab === 'timetable' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
+                    {!sidebarCollapsed && <span className="whitespace-nowrap">Weekly Timetable</span>}
                   </div>
                   {!sidebarCollapsed && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                       <span className="text-[11px] font-mono font-medium text-[#52525B] bg-[#F4F4F5] px-1.5 py-0.5 rounded">
                         189
                       </span>
@@ -399,8 +399,8 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
                               : 'text-[#52525B] hover:text-[#09090B] hover:bg-[#F4F4F5] font-medium'
                           }`}
                         >
-                          <span className="truncate">{cohort.label}</span>
-                          <span className="text-[10.5px] font-mono text-[#71717A]">{cohort.hours}</span>
+                          <span className="truncate whitespace-nowrap">{cohort.label}</span>
+                          <span className="text-[10.5px] font-mono text-[#71717A] shrink-0 ml-1">{cohort.hours}</span>
                         </button>
                       );
                     })}
@@ -418,12 +418,12 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
                 }`}
                 title="Exam Schedule"
               >
-                <div className="flex items-center gap-2.5">
-                  <FileSpreadsheet className={`h-4 w-4 ${activeTab === 'exams' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
-                  {!sidebarCollapsed && <span>Exam Timetable</span>}
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <FileSpreadsheet className={`h-4 w-4 shrink-0 ${activeTab === 'exams' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
+                  {!sidebarCollapsed && <span className="whitespace-nowrap">Exam Timetable</span>}
                 </div>
                 {!sidebarCollapsed && (
-                  <span className="text-[11px] font-mono font-medium text-[#52525B] bg-[#F4F4F5] px-1.5 py-0.5 rounded">
+                  <span className="text-[11px] font-mono font-medium text-[#52525B] bg-[#F4F4F5] px-1.5 py-0.5 rounded shrink-0">
                     Midsem
                   </span>
                 )}
@@ -439,12 +439,12 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
                 }`}
                 title="Fest Bookings"
               >
-                <div className="flex items-center gap-2.5">
-                  <PartyPopper className={`h-4 w-4 ${activeTab === 'bookings' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
-                  {!sidebarCollapsed && <span>Spectra Bookings</span>}
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <PartyPopper className={`h-4 w-4 shrink-0 ${activeTab === 'bookings' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
+                  {!sidebarCollapsed && <span className="whitespace-nowrap">Spectra Bookings</span>}
                 </div>
                 {!sidebarCollapsed && (
-                  <span className="text-[11px] font-mono font-medium text-[#52525B] bg-[#F4F4F5] px-1.5 py-0.5 rounded">
+                  <span className="text-[11px] font-mono font-medium text-[#52525B] bg-[#F4F4F5] px-1.5 py-0.5 rounded shrink-0">
                     Oct 22-24
                   </span>
                 )}
@@ -461,12 +461,12 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
                   }`}
                   title="Disruptions & Recovery"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <AlertTriangle className={`h-4 w-4 ${activeTab === 'disruptions' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
-                    {!sidebarCollapsed && <span>Disruptions</span>}
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <AlertTriangle className={`h-4 w-4 shrink-0 ${activeTab === 'disruptions' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
+                    {!sidebarCollapsed && <span className="whitespace-nowrap">Disruptions</span>}
                   </div>
                   {!sidebarCollapsed && (
-                    <span className="text-[11px] font-mono font-medium text-[#52525B] bg-[#F4F4F5] px-1.5 py-0.5 rounded">
+                    <span className="text-[11px] font-mono font-medium text-[#52525B] bg-[#F4F4F5] px-1.5 py-0.5 rounded shrink-0">
                       0 Clashes
                     </span>
                   )}
