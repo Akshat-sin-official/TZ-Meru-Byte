@@ -46,6 +46,28 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
   const [solving, setSolving] = useState(false);
   const [data, setData] = useState<any>(null);
 
+  const metadata = data?.metadata || {};
+  const assignments = data?.schedule?.assignments || [];
+
+  // Lookup maps
+  const sessionsMap = useMemo(() => {
+    const map = new Map<string, any>();
+    (metadata.sessions || []).forEach((s: any) => map.set(s.externalId, s));
+    return map;
+  }, [metadata.sessions]);
+
+  const roomsMap = useMemo(() => {
+    const map = new Map<string, any>();
+    (metadata.rooms || []).forEach((r: any) => map.set(r.externalId, r));
+    return map;
+  }, [metadata.rooms]);
+
+  const facultyMap = useMemo(() => {
+    const map = new Map<string, any>();
+    (metadata.faculty || []).forEach((f: any) => map.set(f.externalId, f));
+    return map;
+  }, [metadata.faculty]);
+
   // Filters (Auto-scoped by Role per RBAC Matrix in ini.md)
   const isFaculty = user?.role === 'faculty';
   const facultySelfId = user?.facultyId || 'F19';
@@ -260,28 +282,6 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
       setApplyingMove(false);
     }
   };
-
-  const metadata = data?.metadata || {};
-  const assignments = data?.schedule?.assignments || [];
-
-  // Lookup maps
-  const sessionsMap = useMemo(() => {
-    const map = new Map<string, any>();
-    (metadata.sessions || []).forEach((s: any) => map.set(s.externalId, s));
-    return map;
-  }, [metadata.sessions]);
-
-  const roomsMap = useMemo(() => {
-    const map = new Map<string, any>();
-    (metadata.rooms || []).forEach((r: any) => map.set(r.externalId, r));
-    return map;
-  }, [metadata.rooms]);
-
-  const facultyMap = useMemo(() => {
-    const map = new Map<string, any>();
-    (metadata.faculty || []).forEach((f: any) => map.set(f.externalId, f));
-    return map;
-  }, [metadata.faculty]);
 
   // Filtered assignments
   const filteredAssignments = useMemo(() => {
