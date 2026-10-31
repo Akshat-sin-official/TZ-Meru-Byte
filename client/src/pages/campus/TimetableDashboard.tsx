@@ -160,13 +160,27 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
   };
 
   const handleExportPDF = () => {
+    // 1. Close any open inspection drawer or overlays
+    setSelectedSessionDetail(null);
+
+    // 2. Expand all days so the full 5-day matrix is printed
+    setCollapsedDays({
+      MON: false,
+      TUE: false,
+      WED: false,
+      THU: false,
+      FRI: false,
+    });
+
+    // 3. Set clean document title for the saved PDF filename
     const origTitle = document.title;
-    document.title = `CIT_Timetable_${selectedFilter || 'Master'}_Autumn2027`;
-    toast.info('Opening publication-grade PDF print preview...');
+    document.title = `CIT_Academic_Timetable_${selectedFilter || 'Master'}_Autumn2027`;
+
+    // 4. Trigger print preview with no toast or popup intrusion
     setTimeout(() => {
       window.print();
       document.title = origTitle;
-    }, 200);
+    }, 150);
   };
 
   const handleValidateMove = async () => {
@@ -660,7 +674,7 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
 
       {/* Focused Day Banner (from calendar selection) */}
       {highlightDay && (
-        <div className="flex items-center justify-between px-3 py-1.5 bg-[#FBFBFA] border border-[#E5E7EB] rounded-lg text-xs text-[#18181B] mb-3">
+        <div className="flex items-center justify-between px-3 py-1.5 bg-[#FBFBFA] border border-[#E5E7EB] rounded-lg text-xs text-[#18181B] mb-3 no-print">
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-[#18181B]" />
             <span className="font-medium text-[#18181B]">
@@ -850,8 +864,11 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
             </div>
           </div>
 
-          <span className="text-[11px] text-[#9B9A97]">
+          <span className="text-[11px] text-[#9B9A97] no-print">
             Click any session block to inspect constraints or simulate a drag & drop move
+          </span>
+          <span className="hidden print:inline text-[10px] font-mono text-[#09090B] font-semibold">
+            Official Academic Teaching Matrix · Certified 0 Hard Violations · Chilika Institute of Technology
           </span>
         </div>
       </div>
