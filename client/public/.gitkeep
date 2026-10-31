@@ -1,0 +1,8 @@
+# Public folder for static assets
+# Files in this folder are served as-is at the root URL
+# Examples:
+# - favicon.ico, favicon.svg
+# - robots.txt
+# - manifest.json
+# - images, fonts, etc.
+

@@ -1,0 +1,27 @@
+@import '../../styles/theme.css';
+
+.section {
+    padding: var(--spacing-md) 0;
+    background-color: var(--color-grey-50);
+    border-bottom: 1px solid var(--color-grey-200);
+}
+
+.container {
+    max-width: var(--container-max-width);
+    margin: 0 auto;
+    padding: 0 var(--container-padding);
+    text-align: center;
+}
+
+.text {
+    font-size: var(--font-size-sm);
+    color: var(--color-grey-600);
+    font-weight: var(--font-weight-medium);
+    margin: 0;
+    letter-spacing: 0.02em;
+}
+
+.highlight {
+    color: var(--color-orange);
+    font-weight: var(--font-weight-bold);
+}

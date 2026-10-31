@@ -1,0 +1,34 @@
+﻿/* ===========================================
+   V4 Sections — Responsive Typography
+   Replaces the Framer SSR variant system
+   =========================================== */
+
+/* ── Section Headings (H2) ── */
+/* The .framer-text h2 elements get their desktop font-size from inline style (52px).
+   These overrides apply at smaller breakpoints. */
+
+@media (min-width: 810px) and (max-width: 1199.98px) {
+  /* Tablet: reduce heading font sizes */
+  h2.framer-text {
+    --framer-font-size: 36px !important;
+  }
+  h3.framer-text {
+    --framer-font-size: 24px !important;
+  }
+}
+
+@media (max-width: 809.98px) {
+  /* Mobile: further reduce headings */
+  h2.framer-text {
+    --framer-font-size: 28px !important;
+  }
+  h3.framer-text {
+    --framer-font-size: 20px !important;
+  }
+  p.framer-text {
+    --framer-font-size: 16px !important;
+  }
+}
+
+/* ── Framer-components.css comment cleanup ── */
+/* Remove the auto-generated comment from the CSS preamble — cosmetic only */

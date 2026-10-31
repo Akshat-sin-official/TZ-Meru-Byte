@@ -1,0 +1,60 @@
+import React, { useState } from 'react';
+import { CampusAuthProvider } from '@/contexts/CampusAuthContext';
+import { CampusNavbar } from '@/components/layout/CampusNavbar';
+import { TimetableDashboard } from '@/pages/campus/TimetableDashboard';
+import { ExamsView } from '@/pages/campus/ExamsView';
+import { SpectraBookingsView } from '@/pages/campus/SpectraBookingsView';
+import { DisruptionsView } from '@/pages/campus/DisruptionsView';
+import { AICopilotDrawer } from '@/components/campus/AICopilotDrawer';
+import { Toaster as Sonner } from '@/components/ui/sonner';
+import { TooltipProvider } from '@/components/ui/tooltip';
+
+export const AppContent: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<'timetable' | 'exams' | 'bookings' | 'disruptions'>('timetable');
+  const [copilotOpen, setCopilotOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const handleRefreshData = () => {
+    setRefreshKey((prev) => prev + 1);
+  };
+
+  return (
+    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
+      {/* Top Navbar */}
+      <CampusNavbar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        openCopilot={() => setCopilotOpen(true)}
+        onRefreshData={handleRefreshData}
+      />
+
+      {/* Main View Area */}
+      <main className="flex-1 pb-12" key={refreshKey}>
+        {activeTab === 'timetable' && <TimetableDashboard />}
+        {activeTab === 'exams' && <ExamsView />}
+        {activeTab === 'bookings' && <SpectraBookingsView />}
+        {activeTab === 'disruptions' && <DisruptionsView />}
+      </main>
+
+      {/* AI Copilot Drawer */}
+      <AICopilotDrawer
+        open={copilotOpen}
+        onClose={() => setCopilotOpen(false)}
+        onBookingSubmitted={handleRefreshData}
+      />
+
+      {/* Toast Notifications */}
+      <Sonner position="top-right" richColors />
+    </div>
+  );
+};
+
+export default function App() {
+  return (
+    <TooltipProvider>
+      <CampusAuthProvider>
+        <AppContent />
+      </CampusAuthProvider>
+    </TooltipProvider>
+  );
+}

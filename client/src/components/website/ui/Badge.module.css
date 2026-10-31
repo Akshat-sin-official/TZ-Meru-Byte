@@ -1,0 +1,45 @@
+@import '../../../styles/theme.css';
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--border-radius-xl);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+}
+
+.badge.default {
+  background-color: var(--color-grey-100);
+  color: var(--color-grey-700);
+}
+
+.badge.orange {
+  background-color: var(--color-orange-light);
+  color: var(--color-orange);
+}
+
+.badge.green {
+  background-color: var(--color-green-light);
+  color: var(--color-green);
+}
+
+.badge.grey {
+  background-color: var(--color-grey-200);
+  color: var(--color-grey-700);
+}
+
+.badge.sm {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-xs);
+}
+
+.badge.md {
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-sm);
+}
+
+.badge.lg {
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: var(--font-size-base);
+}

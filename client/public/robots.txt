@@ -1,0 +1,17 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /seeker/
+Disallow: /expert/
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /_next/
+Disallow: /static/
+
+# Sitemap location
+Sitemap: https://martechadda.com/sitemap.xml

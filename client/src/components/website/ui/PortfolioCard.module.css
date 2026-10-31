@@ -1,0 +1,142 @@
+@import '../../../styles/theme.css';
+
+.portfolioCard {
+  padding: var(--spacing-lg);
+  border: 2px dashed var(--color-grey-300);
+  transition: all var(--transition-base);
+}
+
+.portfolioCard:hover {
+  border-color: var(--color-orange);
+  box-shadow: var(--shadow-sm);
+}
+
+.portfolioHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.portfolioNumber {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-grey-700);
+}
+
+.removeButton {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--color-grey-300);
+  background-color: var(--color-white);
+  color: var(--color-grey-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.removeButton:hover {
+  background-color: var(--color-grey-100);
+  border-color: var(--color-grey-400);
+  color: var(--color-grey-900);
+}
+
+.portfolioImagePlaceholder {
+  width: 100%;
+  height: 180px;
+  border: 2px dashed var(--color-grey-300);
+  border-radius: var(--border-radius-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  background-color: var(--color-grey-50);
+  position: relative;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  margin-bottom: var(--spacing-md);
+}
+
+.portfolioImagePlaceholder:hover {
+  border-color: var(--color-orange);
+  background-color: var(--color-orange-light);
+}
+
+.imageIcon {
+  font-size: var(--font-size-2xl);
+  color: var(--color-grey-400);
+}
+
+.imageText {
+  font-size: var(--font-size-sm);
+  color: var(--color-grey-500);
+}
+
+.imageInput {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.portfolioForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.portfolioInput,
+.portfolioTextarea {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--color-grey-300);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family-primary);
+  color: var(--color-grey-900);
+  transition: all var(--transition-base);
+}
+
+.portfolioInput:focus,
+.portfolioTextarea:focus {
+  outline: none;
+  border-color: var(--color-orange);
+  box-shadow: 0 0 0 3px var(--color-orange-light);
+}
+
+.portfolioTextarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.portfolioLink {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--color-grey-300);
+  border-radius: var(--border-radius-md);
+  background-color: var(--color-grey-50);
+}
+
+.linkIcon {
+  color: var(--color-grey-500);
+  flex-shrink: 0;
+}
+
+.portfolioLink .portfolioInput {
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.portfolioLink .portfolioInput:focus {
+  box-shadow: none;
+}

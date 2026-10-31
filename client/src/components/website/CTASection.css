@@ -1,0 +1,145 @@
+.cta-section {
+  padding: 6rem 0;
+  background: linear-gradient(135deg, #3B59DA 0%, #6366F1 50%, #8B5CF6 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-section::before {
+  display: none;
+}
+
+.cta-container {
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  position: relative;
+  z-index: 1;
+}
+
+.cta-content {
+  text-align: center;
+  color: white;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.cta-headline {
+  font-size: 3rem;
+  font-weight: 800;
+  margin: 0 0 1.5rem 0;
+  line-height: 1.2;
+}
+
+.cta-subheading {
+  font-size: 1.25rem;
+  margin: 0 0 2.5rem 0;
+  line-height: 1.7;
+  opacity: 0.95;
+}
+
+.cta-buttons {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.cta-button-primary {
+  background: white;
+  color: #3B59DA;
+  border: none;
+  padding: 1rem 2.5rem;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 1.125rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.cta-button-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  background: #F8FAFC;
+}
+
+.cta-button-secondary {
+  background: transparent;
+  color: white;
+  border: 2px solid white;
+  padding: 1rem 2.5rem;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 1.125rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cta-button-secondary:hover {
+  background: white;
+  color: #3B59DA;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.cta-note {
+  font-size: 0.95rem;
+  opacity: 0.9;
+  margin: 0;
+  line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .cta-section {
+    padding: 4rem 0;
+  }
+
+  .cta-container {
+    padding: 0 1.5rem;
+  }
+
+  .cta-headline {
+    font-size: 2.625rem;
+  }
+
+  .cta-subheading {
+    font-size: 1.125rem;
+    margin-bottom: 2rem;
+  }
+
+  .cta-buttons {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cta-button-primary,
+  .cta-button-secondary {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .cta-section {
+    padding: 3rem 0;
+  }
+
+  .cta-container {
+    padding: 0 1rem;
+  }
+
+  .cta-headline {
+    font-size: 2.625rem;
+  }
+
+  .cta-subheading {
+    font-size: 1rem;
+  }
+
+  .cta-button-primary,
+  .cta-button-secondary {
+    padding: 0.875rem 2rem;
+    font-size: 1rem;
+  }
+}

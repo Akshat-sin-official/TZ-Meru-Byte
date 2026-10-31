@@ -1,0 +1,212 @@
+/* Contact Form Black Bar / Gradient Removal */
+.framer-clp60v,
+[data-framer-name='Gradiant'] {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  width: 0 !important;
+}
+
+/* Hide all gradient boxes in header menu items */
+.framer-acjg2c[data-framer-name='Gradiant'] {
+  display: none !important;
+}
+.framer-SGtWI:hover,
+.framer-SGtWI.framer-v-1ym4jt3:hover {
+  background: transparent !important;
+}
+.framer-SGtWI {
+  background-color: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* FAQ Styling */
+.framer-XmLyD {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.framer-XmLyD.faq-open .framer-dz2t8z {
+  opacity: 0 !important;
+}
+.framer-answer {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: all 0.3s ease-in-out;
+  padding: 0 24px;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  color: rgb(61, 61, 61);
+}
+
+/* Mobile Menu */
+.mobile-menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(17, 17, 17, 0.98);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.mobile-menu-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+.mobile-menu-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 40px;
+  cursor: pointer;
+}
+.mobile-menu-links {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  max-width: 320px;
+  padding: 0 24px;
+}
+.mobile-menu-links a {
+  color: #fff;
+  font-size: 24px;
+  text-decoration: none;
+  font-family: 'Switzer', sans-serif;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+.mobile-menu-links a:hover {
+  color: #ff2e2e;
+}
+.mobile-menu-cta {
+  display: block;
+  background: linear-gradient(90deg, #ff2e2e 0%, #ee7b16 100%);
+  border: none;
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Switzer', sans-serif;
+  width: 100%;
+  text-align: center;
+  text-decoration: none;
+}
+.mobile-menu-cta.outline {
+  background: transparent;
+  border: 2px solid #fff;
+  margin-top: 10px;
+}
+
+/* Growth Section - "Alignment Before Commitment" card text positioning fix */
+.framer-QX5tO.framer-7bad0t {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-end !important;
+}
+.framer-QX5tO .framer-1ck5g5t {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 24px !important;
+  margin-top: auto !important;
+}
+
+/* About Section - Stat card icon boxes: hide boxes, show only checkmark */
+.framer-hjbpe9,
+.framer-wksebn,
+.framer-16u178j,
+.framer-17m0qz3 {
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.framer-s0daqs,
+.framer-1yitw5t,
+.framer-xpivio,
+.framer-1p99dmw {
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  overflow: visible !important;
+}
+.framer-xebqea,
+.framer-thom2n,
+.framer-j29yrb,
+.framer-1souk6f {
+  display: none !important;
+}
+.framer-i2uvh8-container svg,
+.framer-14jsrs3-container svg,
+.framer-1y4mrf9-container svg,
+.framer-ar4ac6-container svg {
+  width: 32px !important;
+  height: 32px !important;
+}
+
+/* Footer Links & Text Visibility Overrides */
+footer a,
+.framer-1hql1e0 a,
+.framer-t7h3r2 a,
+.framer-2j041b a,
+.framer-z1j02k a,
+.framer-158vbjf a,
+a.framer-text {
+  color: rgba(255, 255, 255, 0.85) !important;
+  text-decoration: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transition: color 0.2s ease !important;
+}
+footer a:hover,
+.framer-1hql1e0 a:hover,
+.framer-t7h3r2 a:hover,
+a.framer-text:hover {
+  color: #ff2e2e !important;
+}
+
+/* Ensure all text inside footer headers/paragraphs is visible */
+footer p.framer-text,
+footer span.framer-text,
+footer .framer-text,
+footer p,
+footer span {
+  color: rgba(255, 255, 255, 0.9) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Specifically style the footer social icons to be white and visible */
+.framer-sef3id,
+.framer-sef3id a,
+.framer-1wqkfd-container,
+.framer-1wlkg5n-container {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+.framer-sef3id a svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  fill: none !important;
+}
+.framer-sef3id a:hover svg {
+  color: #ff2e2e !important;
+  stroke: #ff2e2e !important;
+}

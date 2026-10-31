@@ -1,0 +1,247 @@
+@import '../../styles/theme.css';
+
+.solution {
+  padding: 96px 0;
+  background-color: var(--color-white);
+  position: relative;
+}
+
+.container {
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 var(--spacing-xl);
+  position: relative;
+  z-index: 1;
+}
+
+.titleSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-4xl);
+  text-align: center;
+}
+
+.titleBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-md);
+  background: rgba(45, 134, 89, 0.1);
+  border: 1px solid rgba(45, 134, 89, 0.2);
+  border-radius: var(--border-radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-green);
+  margin-bottom: var(--spacing-xs);
+}
+
+.title {
+  font-size: clamp(28px, 4.5vw, 48px);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-grey-900);
+  margin: 0;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  font-size: var(--font-size-lg);
+  color: var(--color-grey-600);
+  margin: var(--spacing-xs) 0 0 0;
+  max-width: 700px;
+  line-height: 1.6;
+  font-weight: var(--font-weight-medium);
+}
+
+.benefitsSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-2xl);
+  width: 100%;
+  margin: 0 auto;
+}
+
+.benefitsList {
+  list-style: none;
+  display: flex;
+  flex-direction: row;
+  gap: var(--spacing-lg);
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+.benefitItem {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-xl);
+  background-color: var(--color-white);
+  border: 1px solid var(--color-grey-200);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-base);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-grey-900);
+  line-height: 1.5;
+  flex: 1;
+  min-width: 0;
+}
+
+.benefitItem:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-green);
+}
+
+.checkIcon {
+  font-size: 24px;
+  color: var(--color-green);
+  flex-shrink: 0;
+  stroke-width: 2.5;
+  transition: all var(--transition-base);
+}
+
+.benefitItem:hover .checkIcon {
+  transform: scale(1.1);
+  color: var(--color-green-hover);
+}
+
+.benefitItem span {
+  flex: 1;
+}
+
+.note {
+  font-size: var(--font-size-xl);
+  color: var(--color-grey-900);
+  margin: 0;
+  text-align: center;
+  font-style: normal;
+  line-height: 1.6;
+  font-weight: var(--font-weight-bold);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .benefitsSection {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .solution {
+    padding: 60px 0;
+  }
+  
+  .container {
+    padding: 0 var(--spacing-lg);
+  }
+  
+  .titleSection {
+    margin-bottom: var(--spacing-3xl);
+  }
+  
+  .title {
+    font-size: clamp(24px, 4vw, 40px);
+  }
+  
+  .subtitle {
+    font-size: var(--font-size-base);
+  }
+  
+  .benefitsList {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+  
+  .benefitItem {
+    padding: var(--spacing-lg);
+    font-size: var(--font-size-base);
+  }
+  
+  .checkIcon {
+    font-size: 20px;
+  }
+  
+  .note {
+    font-size: var(--font-size-base);
+  }
+}
+
+@media (max-width: 640px) {
+  .solution {
+    padding: 52px 0;
+  }
+  
+  .container {
+    padding: 0 var(--spacing-md);
+  }
+  
+  .benefitItem {
+    padding: var(--spacing-lg);
+  }
+}
+
+@media (max-width: 480px) {
+  .solution {
+    padding: 48px 0;
+  }
+  
+  .container {
+    padding: 0 var(--spacing-sm);
+  }
+  
+  .titleBadge {
+    font-size: var(--font-size-xs);
+    padding: 6px var(--spacing-sm);
+  }
+  
+  .title {
+    font-size: clamp(20px, 4vw, 36px);
+  }
+  
+  .subtitle {
+    font-size: var(--font-size-sm);
+  }
+  
+  .benefitItem {
+    padding: var(--spacing-md);
+    font-size: var(--font-size-sm);
+  }
+  
+  .checkIcon {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 360px) {
+  .solution {
+    padding: 40px 0;
+  }
+  
+  .title {
+    font-size: 22px;
+  }
+  
+  .benefitItem {
+    padding: var(--spacing-sm);
+    font-size: var(--font-size-xs);
+  }
+}
+
+@media (min-width: 1400px) {
+  .container {
+    max-width: 1400px;
+  }
+  
+  .solution {
+    padding: 120px 0;
+  }
+}

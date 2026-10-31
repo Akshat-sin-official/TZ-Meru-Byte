@@ -341,10 +341,12 @@ The system serves four user roles — Admin, Department Coordinator, Faculty, an
 #### Acceptance Criteria
 
 1. THE Canonical_Validator SHALL be the sole implementation of Hard_Constraints HC-01 through HC-16 used by the Scheduling_Engine, Exam_Engine, Disruption_Engine, manual move endpoint, drag/drop preview endpoint, booking validation, AI-generated proposal validation, and export verification.
-2. WHEN called, THE Canonical_Validator SHALL return a response with fields `valid` (boolean), `violations[]` (each with code, entity_ids, day, period, and message), and `warnings[]`.
-3. THE Canonical_Validator SHALL return all applicable violations in a single call, not only the first violation found.
-4. THE Canonical_Validator SHALL use stable, documented reason codes that the UI translates into human-readable messages using code + contextual data.
-5. THE System SHALL have no second, separate implementation of any Hard_Constraint rule; if a rule must change, it changes in one place.
+2. WHEN called with a schedule context containing the entity under validation and the full set of existing scheduled entities against which constraints are checked, THE Canonical_Validator SHALL return a response with fields: valid (boolean), violations[] (each with code, entity_ids, day, period, and message), and warnings[].
+3. THE Canonical_Validator SHALL evaluate all Hard_Constraints HC-01 through HC-16 applicable to the provided schedule context in a single call and return every violation found, not only the first.
+4. THE Canonical_Validator SHALL use reason codes that are immutable once published; any new rule or rule change SHALL introduce a new reason code and SHALL NOT reuse or alter an existing code's semantics, so that UI translations keyed to a code remain valid across versions.
+5. THE System SHALL have no second, separate implementation of any Hard_Constraint rule; WHEN a Hard_Constraint rule definition changes, THE Canonical_Validator SHALL be the only file or module modified to enforce that change.
+6. IF the Canonical_Validator encounters an invalid or incomplete schedule context that prevents constraint evaluation, THEN THE Canonical_Validator SHALL return valid as false with a violations entry containing a designated input-error code and SHALL NOT partially evaluate remaining constraints.
+7. IF the Canonical_Validator fails due to an internal runtime error, THEN THE Canonical_Validator SHALL propagate a structured error response to the caller indicating the failure, and the calling engine or endpoint SHALL reject the operation rather than proceeding without constraint verification.
 
 ---
 

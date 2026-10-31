@@ -1,0 +1,73 @@
+/* Responsiveness Overrides */
+@media (max-width: 1024px) {
+  .martech-header {
+    padding: 0 24px;
+  }
+  .martech-header .nav-links {
+    display: none;
+  }
+  .martech-header .nav-actions {
+    display: none;
+  }
+  .martech-header .nav-mobile-toggle {
+    display: flex;
+  }
+  .hero-title {
+    font-size: 48px;
+    letter-spacing: -1.5px;
+  }
+  .hero-description {
+    font-size: 17px;
+  }
+}
+
+@media (max-width: 810px) {
+  .clock-item {
+    font-size: 28px !important;
+    height: 40px !important;
+    line-height: 40px !important;
+    transform: rotateX(var(--r)) translateZ(45px) !important;
+    min-width: 100% !important;
+    width: max-content !important;
+    left: 15px !important;
+  }
+  .clock-scroller-container {
+    height: 60px !important;
+  }
+  .framer-1tvn93 {
+    min-width: 320px !important;
+    overflow: visible !important;
+  }
+  .hero-title {
+    font-size: 38px;
+    letter-spacing: -1px;
+  }
+  .hero-actions {
+    flex-direction: column;
+    width: 100%;
+    gap: 12px;
+  }
+  .hero-btn-primary,
+  .hero-btn-secondary {
+    width: 100%;
+    text-align: center;
+  }
+}
+@media (max-width: 480px) {
+  .clock-item {
+    font-size: 22px !important;
+    height: 32px !important;
+    line-height: 32px !important;
+    transform: rotateX(var(--r)) translateZ(35px) !important;
+    min-width: 100% !important;
+    width: max-content !important;
+    left: 10px !important;
+  }
+  .clock-scroller-container {
+    height: 48px !important;
+  }
+  .framer-1tvn93 {
+    min-width: 260px !important;
+    overflow: visible !important;
+  }
+}

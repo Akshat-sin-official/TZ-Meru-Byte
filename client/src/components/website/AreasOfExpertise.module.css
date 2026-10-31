@@ -1,0 +1,189 @@
+@import '../../styles/theme.css';
+
+.section {
+  padding: var(--spacing-3xl) 0;
+  position: relative;
+  background-color: var(--color-white);
+  overflow: hidden;
+}
+
+.container {
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  padding: 0 var(--container-padding);
+}
+
+.header {
+  text-align: center;
+  max-width: 800px;
+  margin: 0 auto var(--spacing-3xl);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.titleWrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.title {
+  font-size: clamp(2rem, 4vw, 2.5rem);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-grey-900);
+  margin-bottom: var(--spacing-md);
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+
+.subtitle {
+  font-size: var(--font-size-lg);
+  color: var(--color-grey-600);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Grid Layout */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-2xl);
+}
+
+@media (min-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Card Styling */
+.card {
+  background: var(--color-white);
+  border: 1px solid var(--color-grey-200);
+  border-radius: 16px;
+  padding: var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  transition: all 0.3s ease;
+  cursor: default;
+  position: relative;
+  overflow: hidden;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+  border-color: rgba(255, 107, 53, 0.3);
+}
+
+/* Icon Styling */
+.iconContainer {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: #FFF5F1;
+  /* Retaining this specific color as it matches the brand orange tint */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--spacing-lg);
+  transition: all 0.3s ease;
+}
+
+.card:hover .iconContainer {
+  background-color: #FFEADD;
+  transform: scale(1.05);
+}
+
+.icon {
+  width: 24px;
+  height: 24px;
+  color: var(--color-orange);
+  /* Using theme variable assuming it matches #FF5A1F */
+  stroke-width: 2px;
+}
+
+.cardTitle {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-grey-900);
+  margin: 0 0 var(--spacing-sm) 0;
+}
+
+.cardSubtitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-grey-600);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Footer Styling */
+.footer {
+  text-align: center;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.footerText {
+  font-size: var(--font-size-sm);
+  color: var(--color-grey-500);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Decorative Crosshair Circle */
+.decorativeCircle {
+  position: absolute;
+  top: 40%;
+  /* Approx center of the title text which might have margin */
+  transform: translateY(-50%);
+  right: -90px;
+  /* Offset to the right of the header */
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 107, 53, 0.2);
+  display: none;
+  /* Hidden on mobile */
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.decorativeCircle::before,
+.decorativeCircle::after {
+  content: '';
+  position: absolute;
+  background-color: rgba(255, 107, 53, 0.4);
+}
+
+/* Vertical line */
+.decorativeCircle::before {
+  width: 1px;
+  height: 100%;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Horizontal line */
+.decorativeCircle::after {
+  width: 100%;
+  height: 1px;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+}
+
+@media (min-width: 768px) {
+  .decorativeCircle {
+    display: flex;
+  }
+}

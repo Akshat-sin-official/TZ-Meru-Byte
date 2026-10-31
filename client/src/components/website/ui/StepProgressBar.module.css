@@ -1,0 +1,192 @@
+@import '../../../styles/theme.css';
+
+.progressBar {
+  width: 100%;
+  padding: var(--spacing-xl) 0;
+}
+
+.progressContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  margin-bottom: var(--spacing-lg);
+}
+
+.stepWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  position: relative;
+  z-index: 1;
+}
+
+.stepButton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--spacing-sm);
+  transition: all var(--transition-base);
+  width: 100%;
+}
+
+.stepButton:disabled {
+  cursor: not-allowed;
+}
+
+.stepCircle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-base);
+  transition: all var(--transition-base);
+  background-color: var(--color-white);
+  border: 2px solid var(--color-grey-300);
+  color: var(--color-grey-600);
+  position: relative;
+}
+
+.stepButton.active .stepCircle {
+  background-color: var(--color-orange);
+  color: var(--color-white);
+  border-color: var(--color-orange);
+  box-shadow: 0 0 0 4px var(--color-orange-light);
+  transform: scale(1.1);
+}
+
+.stepButton.completed .stepCircle {
+  background-color: var(--color-green);
+  color: var(--color-white);
+  border-color: var(--color-green);
+}
+
+.stepButton.upcoming .stepCircle {
+  background-color: var(--color-white);
+  color: var(--color-grey-400);
+  border-color: var(--color-grey-300);
+}
+
+.stepNumber {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+}
+
+.checkIcon {
+  width: 24px;
+  height: 24px;
+  stroke-width: 3;
+}
+
+.stepLabel {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-grey-600);
+  text-align: center;
+  max-width: 100px;
+  line-height: 1.3;
+}
+
+.stepButton.active .stepLabel {
+  color: var(--color-orange);
+  font-weight: var(--font-weight-semibold);
+}
+
+.stepButton.completed .stepLabel {
+  color: var(--color-grey-700);
+}
+
+.stepButton.upcoming .stepLabel {
+  color: var(--color-grey-400);
+}
+
+.connector {
+  flex: 1;
+  height: 2px;
+  margin: 0 var(--spacing-sm);
+  position: relative;
+  top: -24px;
+  z-index: 0;
+}
+
+.connectorLine {
+  width: 100%;
+  height: 2px;
+  background-color: var(--color-grey-300);
+  border-radius: 1px;
+  position: relative;
+  overflow: hidden;
+}
+
+.connector.completed .connectorLine {
+  background-color: var(--color-green);
+  opacity: 0.5;
+}
+
+.connector.active .connectorLine {
+  background: var(--color-orange);
+}
+
+.timeEstimate {
+  text-align: center;
+  font-size: var(--font-size-xs);
+  color: var(--color-grey-500);
+  margin: 0;
+}
+
+.saveDraftLink {
+  background: none;
+  border: none;
+  color: var(--color-orange);
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: inherit;
+  font-family: inherit;
+  padding: 0;
+  margin-left: var(--spacing-xs);
+}
+
+.saveDraftLink:hover {
+  color: var(--color-orange-hover);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .progressContainer {
+    overflow-x: auto;
+    padding-bottom: var(--spacing-md);
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .progressContainer::-webkit-scrollbar {
+    display: none;
+  }
+
+  .stepWrapper {
+    min-width: 80px;
+    flex-shrink: 0;
+  }
+
+  .stepCircle {
+    width: 40px;
+    height: 40px;
+  }
+
+  .stepLabel {
+    font-size: 10px;
+    max-width: 70px;
+  }
+
+  .connector {
+    min-width: 40px;
+  }
+}
