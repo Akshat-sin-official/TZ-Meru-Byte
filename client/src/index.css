@@ -90,15 +90,80 @@
   }
 }
 
+/* Pre-print state trigger to annihilate any scrollbars before print preview render */
+body.printing-pdf,
+body.printing-pdf *,
+body.printing-pdf *::before,
+body.printing-pdf *::after {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+body.printing-pdf *::-webkit-scrollbar,
+body.printing-pdf ::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
 @media print {
   @page {
     size: landscape;
     margin: 0.6cm;
   }
 
+  html,
   body {
     background: #ffffff !important;
     color: #000000 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+
+  /* Universal scrollbar killer in print mode */
+  *,
+  *::before,
+  *::after {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  *::-webkit-scrollbar,
+  ::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    background: transparent !important;
+    opacity: 0 !important;
+  }
+
+  /* Unconstrain viewport height & all container overflows */
+  html,
+  body,
+  #root,
+  div,
+  main,
+  section,
+  article,
+  .h-screen,
+  .h-full,
+  .min-h-screen,
+  div[class*="h-screen"],
+  div[class*="h-full"],
+  div[class*="overflow-"],
+  div[class*="scrollbar-"] {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    position: static !important;
   }
 
   /* Completely strip out all toasts, popups, notifications, dialogs, drawers, sidebars, headers */
@@ -132,10 +197,14 @@
     padding: 0 !important;
     box-shadow: none !important;
     border: none !important;
+    overflow: visible !important;
   }
 
-  * {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
+  /* Force print grid to stretch 100% of landscape A4 without horizontal overflow scrollbars */
+  .print-grid-fit {
+    min-width: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
   }
 }

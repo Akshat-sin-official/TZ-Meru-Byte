@@ -206,10 +206,14 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
     const origTitle = document.title;
     document.title = `CIT_Academic_Timetable_${selectedFilter || 'Master'}_Autumn2027`;
 
-    // 4. Trigger print preview with no toast or popup intrusion
+    // 4. Temporarily add printing class to body to ensure zero scrollbars in print snapshot
+    document.body.classList.add('printing-pdf');
+
+    // 5. Trigger print preview with no toast or popup intrusion
     setTimeout(() => {
       window.print();
       document.title = origTitle;
+      document.body.classList.remove('printing-pdf');
     }, 150);
   };
 
@@ -414,7 +418,7 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
           <div
             key={p}
             style={{ gridColumn: `span ${dur} / span ${dur}` }}
-            className="p-1 border-r border-[#EBEBEA] flex min-h-[76px]"
+            className="p-1 border-r border-[#EBEBEA] flex min-h-[76px] print:min-h-[54px] print:p-0.5"
           >
             <div
               onClick={() => {
@@ -429,7 +433,7 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
                 setTargetRoom(assignment.roomExternalId);
                 setMoveValidationResult(null);
               }}
-              className={`w-full ${cardBg} border rounded-md p-2 flex flex-col justify-between cursor-pointer transition-all duration-150 select-none shadow-2xs hover:shadow-xs`}
+              className={`w-full ${cardBg} border rounded-md p-2 print:p-1 flex flex-col justify-between cursor-pointer transition-all duration-150 select-none shadow-2xs hover:shadow-xs print:shadow-none`}
             >
               <div className="flex items-start justify-between gap-1">
                 <span className="font-semibold text-xs tracking-tight truncate">
@@ -439,7 +443,7 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
                   {assignment.roomExternalId}
                 </span>
               </div>
-              <div className="flex items-center justify-between text-[11px] text-[#787774] mt-1">
+              <div className="flex items-center justify-between text-[11px] text-[#787774] mt-1 print:mt-0.5">
                 <span className="truncate">{session.facultyId}</span>
                 <span className="text-[9px] font-medium opacity-85">{typeBadge}</span>
               </div>
@@ -451,7 +455,7 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
         cells.push(
           <div
             key={p}
-            className="p-1 border-r border-[#EBEBEA] flex items-center justify-center text-[10px] text-[#9B9A97] min-h-[76px] hover:bg-[#FBFBFA] transition-colors"
+            className="p-1 border-r border-[#EBEBEA] flex items-center justify-center text-[10px] text-[#9B9A97] min-h-[76px] print:min-h-[54px] print:p-0.5 hover:bg-[#FBFBFA] transition-colors"
           >
             <span className="opacity-30">—</span>
           </div>
@@ -754,11 +758,11 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
       )}
 
       {/* 4. Notion Schedule Matrix Table */}
-      <div className="bg-white border border-[#EBEBEA] rounded-xl overflow-hidden shadow-xs">
-        <div className="overflow-x-auto">
-          <div className="min-w-[1050px]">
+      <div className="bg-white border border-[#EBEBEA] rounded-xl overflow-hidden shadow-xs print:border print:border-[#E5E7EB] print:shadow-none print:rounded-lg print:overflow-visible">
+        <div className="overflow-x-auto print:overflow-visible print:w-full">
+          <div className="min-w-[1050px] print:min-w-0 print:w-full print-grid-fit">
             {/* Header Timings */}
-            <div className="grid grid-cols-[80px_repeat(5,1fr)_44px_repeat(4,1fr)] bg-[#F7F6F3] border-b border-[#EBEBEA] text-center text-xs select-none">
+            <div className="grid grid-cols-[80px_repeat(5,1fr)_44px_repeat(4,1fr)] print:grid-cols-[68px_repeat(5,1fr)_34px_repeat(4,1fr)] bg-[#F7F6F3] border-b border-[#EBEBEA] text-center text-xs select-none">
               <div
                 onClick={toggleAllDays}
                 className="p-2 border-r border-[#EBEBEA] font-medium text-[#787774] flex items-center justify-center gap-1 cursor-pointer hover:bg-[#EFEFEA] transition-colors select-none"
@@ -854,7 +858,7 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
                 <div
                   key={day}
                   id={`day-row-${day}`}
-                  className={`grid grid-cols-[80px_repeat(5,1fr)_44px_repeat(4,1fr)] min-h-[82px] transition-all duration-150 ${
+                  className={`grid grid-cols-[80px_repeat(5,1fr)_44px_repeat(4,1fr)] print:grid-cols-[68px_repeat(5,1fr)_34px_repeat(4,1fr)] min-h-[82px] print:min-h-[58px] transition-all duration-150 ${
                     idx !== days.length - 1 ? 'border-b border-[#EBEBEA]' : ''
                   } ${
                     isHighlighted
