@@ -16,7 +16,25 @@ import {
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-export const TimetableDashboard: React.FC = () => {
+interface TimetableDashboardProps {
+  highlightDay?: string | null;
+  onSelectDay?: (day: string | null, date?: number) => void;
+  externalCohort?: string;
+  onCohortChange?: (cohort: string) => void;
+  externalQuickFilter?: 'all' | 'labs' | 'lectures' | 'tutorials';
+  onQuickFilterChange?: (qf: 'all' | 'labs' | 'lectures' | 'tutorials') => void;
+  selectedDate?: number | null;
+}
+
+export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
+  highlightDay,
+  onSelectDay,
+  externalCohort,
+  onCohortChange,
+  externalQuickFilter,
+  onQuickFilterChange,
+  selectedDate,
+}) => {
   const { user } = useCampusAuth();
   const [loading, setLoading] = useState(true);
   const [solving, setSolving] = useState(false);
@@ -24,8 +42,32 @@ export const TimetableDashboard: React.FC = () => {
 
   // Filters
   const [filterType, setFilterType] = useState<'group' | 'faculty' | 'room'>('group');
-  const [selectedFilter, setSelectedFilter] = useState<string>('CSE-2');
-  const [quickFilter, setQuickFilter] = useState<'all' | 'labs' | 'lectures' | 'tutorials'>('all');
+  const [selectedFilter, setSelectedFilter] = useState<string>(externalCohort || 'CSE-2');
+  const [quickFilter, setQuickFilter] = useState<'all' | 'labs' | 'lectures' | 'tutorials'>(
+    externalQuickFilter || 'all'
+  );
+
+  useEffect(() => {
+    if (externalCohort) {
+      setFilterType('group');
+      setSelectedFilter(externalCohort);
+    }
+  }, [externalCohort]);
+
+  useEffect(() => {
+    if (externalQuickFilter) {
+      setQuickFilter(externalQuickFilter);
+    }
+  }, [externalQuickFilter]);
+
+  useEffect(() => {
+    if (highlightDay) {
+      const el = document.getElementById(`day-row-${highlightDay}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+  }, [highlightDay]);
 
   // Session Drawer Details & Rescheduling
   const [selectedSessionDetail, setSelectedSessionDetail] = useState<any | null>(null);
@@ -527,6 +569,31 @@ export const TimetableDashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* Focused Day Banner (from calendar selection) */}
+      {highlightDay && (
+        <div className="flex items-center justify-between px-3.5 py-2.5 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/90 rounded-xl text-xs text-amber-950 shadow-xs mb-3 animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-2 w-2 relative">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+            </span>
+            <span className="font-semibold text-amber-950">
+              Filtered Day: {highlightDay === 'MON' ? 'Monday' : highlightDay === 'TUE' ? 'Tuesday' : highlightDay === 'WED' ? 'Wednesday' : highlightDay === 'THU' ? 'Thursday' : 'Friday'}
+              {selectedDate ? ` (October ${selectedDate}, 2027)` : ''}
+            </span>
+            <span className="text-[11px] text-amber-700/80 font-mono hidden sm:inline">
+              · Calendar Target Focused
+            </span>
+          </div>
+          <button
+            onClick={() => onSelectDay?.(null)}
+            className="px-2.5 py-1 rounded-md bg-white border border-amber-200 text-amber-900 hover:text-amber-950 hover:bg-amber-100/60 text-[11px] font-semibold transition cursor-pointer shadow-2xs"
+          >
+            Show All 5 Days
+          </button>
+        </div>
+      )}
+
       {/* 4. Notion Schedule Matrix Table */}
       <div className="bg-white border border-[#EBEBEA] rounded-xl overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
@@ -583,20 +650,44 @@ export const TimetableDashboard: React.FC = () => {
             </div>
 
             {/* Rows MON–FRI */}
-            {days.map((day, idx) => (
-              <div
-                key={day}
-                className={`grid grid-cols-[80px_repeat(5,1fr)_44px_repeat(4,1fr)] min-h-[82px] ${
-                  idx !== days.length - 1 ? 'border-b border-[#EBEBEA]' : ''
-                }`}
-              >
-                {/* Day Label */}
-                <div className="p-2 border-r border-[#EBEBEA] bg-[#F7F6F3]/50 flex flex-col justify-center items-center select-none">
-                  <span className="font-semibold text-xs text-[#37352F]">{day}</span>
-                  <span className="text-[10px] text-[#9B9A97] font-mono mt-0.5">
-                    {getDayHours(day)}h
-                  </span>
-                </div>
+            {days.map((day, idx) => {
+              const isHighlighted = highlightDay === day;
+              return (
+                <div
+                  key={day}
+                  id={`day-row-${day}`}
+                  className={`grid grid-cols-[80px_repeat(5,1fr)_44px_repeat(4,1fr)] min-h-[82px] transition-all duration-200 ${
+                    idx !== days.length - 1 ? 'border-b border-[#EBEBEA]' : ''
+                  } ${
+                    isHighlighted
+                      ? 'bg-amber-50/30 ring-2 ring-inset ring-amber-400/90 shadow-sm'
+                      : ''
+                  }`}
+                >
+                  {/* Day Label */}
+                  <div
+                    className={`p-2 border-r border-[#EBEBEA] flex flex-col justify-center items-center select-none transition-colors ${
+                      isHighlighted
+                        ? 'bg-amber-100/80 border-r-amber-300'
+                        : 'bg-[#F7F6F3]/50'
+                    }`}
+                  >
+                    <span
+                      className={`text-xs ${
+                        isHighlighted ? 'text-amber-950 font-bold' : 'text-[#37352F] font-semibold'
+                      }`}
+                    >
+                      {day}
+                    </span>
+                    {isHighlighted && (
+                      <span className="text-[8.5px] uppercase font-mono font-bold tracking-wider text-amber-800 bg-amber-200/80 px-1 rounded mt-0.5 shadow-2xs">
+                        Focus
+                      </span>
+                    )}
+                    <span className="text-[10px] text-[#9B9A97] font-mono mt-0.5">
+                      {getDayHours(day)}h
+                    </span>
+                  </div>
 
                 {/* Morning Periods (P1–P5) */}
                 {renderPeriodBlock(day, 1, 5)}
@@ -611,7 +702,8 @@ export const TimetableDashboard: React.FC = () => {
                 {/* Afternoon Periods (P6–P9) */}
                 {renderPeriodBlock(day, 6, 9)}
               </div>
-            ))}
+            );
+          })}
           </div>
         </div>
 

@@ -18,8 +18,30 @@ export const AppContent: React.FC = () => {
   const [copilotOpen, setCopilotOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
+  // Cross-component dynamic workspace state (Sidebar <-> Timetable)
+  const [highlightDay, setHighlightDay] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<number | null>(null);
+  const [selectedCohort, setSelectedCohort] = useState<string>('CSE-2');
+  const [quickFilter, setQuickFilter] = useState<'all' | 'labs' | 'lectures' | 'tutorials'>('all');
+
   const handleRefreshData = () => {
     setRefreshKey((prev) => prev + 1);
+  };
+
+  const handleSelectDay = (day: string | null, date?: number) => {
+    setHighlightDay(day);
+    if (date !== undefined) setSelectedDate(date);
+    setActiveTab('timetable');
+  };
+
+  const handleSelectCohort = (cohortId: string) => {
+    setSelectedCohort(cohortId);
+    setActiveTab('timetable');
+  };
+
+  const handleSelectQuickFilter = (qf: 'all' | 'labs' | 'lectures' | 'tutorials') => {
+    setQuickFilter(qf);
+    setActiveTab('timetable');
   };
 
   if (loading) {
@@ -49,6 +71,13 @@ export const AppContent: React.FC = () => {
       setActiveTab={setActiveTab}
       openCopilot={() => setCopilotOpen(true)}
       onRefreshData={handleRefreshData}
+      selectedDay={highlightDay}
+      onSelectDay={handleSelectDay}
+      selectedDate={selectedDate}
+      selectedCohort={selectedCohort}
+      onSelectCohort={handleSelectCohort}
+      quickFilter={quickFilter}
+      onSelectQuickFilter={handleSelectQuickFilter}
     >
       <div key={refreshKey}>
         {activeTab === 'dashboard' && (
@@ -57,7 +86,17 @@ export const AppContent: React.FC = () => {
             openCopilot={() => setCopilotOpen(true)}
           />
         )}
-        {activeTab === 'timetable' && <TimetableDashboard />}
+        {activeTab === 'timetable' && (
+          <TimetableDashboard
+            highlightDay={highlightDay}
+            onSelectDay={setHighlightDay}
+            externalCohort={selectedCohort}
+            onCohortChange={setSelectedCohort}
+            externalQuickFilter={quickFilter}
+            onQuickFilterChange={setQuickFilter}
+            selectedDate={selectedDate}
+          />
+        )}
         {activeTab === 'exams' && <ExamsView />}
         {activeTab === 'bookings' && <SpectraBookingsView />}
         {activeTab === 'disruptions' && <DisruptionsView />}
