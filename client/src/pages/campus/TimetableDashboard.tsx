@@ -4,24 +4,15 @@ import { useCampusAuth } from '@/contexts/CampusAuthContext';
 import { toast } from 'sonner';
 import {
   Sparkles,
-  Calendar,
   CheckCircle2,
-  Clock,
-  DoorOpen,
-  User,
-  Users,
-  Search,
   RotateCw,
   X,
-  Plus,
   Share2,
   SlidersHorizontal,
-  ChevronDown,
-  Building,
-  GraduationCap,
   ShieldCheck,
   ArrowRight,
-  AlertCircle
+  AlertCircle,
+  FileDown
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -34,9 +25,7 @@ export const TimetableDashboard: React.FC = () => {
   // Filters
   const [filterType, setFilterType] = useState<'group' | 'faculty' | 'room'>('group');
   const [selectedFilter, setSelectedFilter] = useState<string>('CSE-2');
-  const [viewMode, setViewMode] = useState<'week' | 'day' | 'matrix'>('week');
   const [quickFilter, setQuickFilter] = useState<'all' | 'labs' | 'lectures' | 'tutorials'>('all');
-  const [searchQuery, setSearchQuery] = useState('');
 
   // Session Drawer Details & Rescheduling
   const [selectedSessionDetail, setSelectedSessionDetail] = useState<any | null>(null);
@@ -235,13 +224,6 @@ export const TimetableDashboard: React.FC = () => {
   };
 
   const days = ['MON', 'TUE', 'WED', 'THU', 'FRI'];
-  const dayNames: Record<string, string> = {
-    MON: 'Monday',
-    TUE: 'Tuesday',
-    WED: 'Wednesday',
-    THU: 'Thursday',
-    FRI: 'Friday',
-  };
 
   if (loading || !data) {
     return (
@@ -268,7 +250,6 @@ export const TimetableDashboard: React.FC = () => {
         const isLab = kind === 'lab' || dur > 1;
         const isTutorial = kind === 'tutorial';
 
-        // Precise Atelier Monolith / Notion-like color palettes
         let cardBg = 'bg-[#E0F2FE]/45 border-[#BAE6FD] hover:border-[#7DD3FC] text-[#0369A1]';
         let badgeBg = 'bg-white/90 border-[#BAE6FD] text-[#0369A1]';
         let typeBadge = 'Core Lecture';
@@ -291,7 +272,7 @@ export const TimetableDashboard: React.FC = () => {
           <div
             key={p}
             style={{ gridColumn: `span ${dur} / span ${dur}` }}
-            className="p-1 border-r border-[#EBEBEA] flex min-h-[82px]"
+            className="p-1 border-r border-[#EBEBEA] flex min-h-[76px]"
           >
             <div
               onClick={() => {
@@ -328,9 +309,9 @@ export const TimetableDashboard: React.FC = () => {
         cells.push(
           <div
             key={p}
-            className="p-1 border-r border-[#EBEBEA] flex items-center justify-center text-[10px] text-[#9B9A97] min-h-[82px] hover:bg-[#FBFBFA] transition-colors"
+            className="p-1 border-r border-[#EBEBEA] flex items-center justify-center text-[10px] text-[#9B9A97] min-h-[76px] hover:bg-[#FBFBFA] transition-colors"
           >
-            <span className="opacity-40">—</span>
+            <span className="opacity-30">—</span>
           </div>
         );
         p += 1;
@@ -343,59 +324,21 @@ export const TimetableDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white text-[#37352F] font-sans antialiased flex flex-col border border-[#EBEBEA] rounded-xl overflow-hidden shadow-xs">
-      {/* 1. Notion-Style Top Header & Calm Status Bar */}
-      <div className="h-11 border-b border-[#EBEBEA] px-6 flex items-center justify-between flex-shrink-0 bg-white">
-        <div className="flex items-center gap-2 text-xs">
-          <span className="text-[#9B9A97] hover:text-[#787774] cursor-pointer">CIT CampusOS</span>
-          <span className="text-[#EBEBEA] font-mono">/</span>
-          <span className="text-[#9B9A97] hover:text-[#787774] cursor-pointer">Schedules</span>
-          <span className="text-[#EBEBEA] font-mono">/</span>
-          <span className="font-medium text-[#37352F]">{entityStats.entityLabel}</span>
-          
-          <span className="ml-3 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-800 border border-emerald-200/80">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-            All 189 Sessions Clash-Free (H1–H10)
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => {
-              navigator.clipboard.writeText(window.location.href);
-              toast.success('Schedule link copied to clipboard');
-            }}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs text-[#787774] hover:text-[#37352F] rounded-md border border-[#EBEBEA] hover:bg-[#F7F6F3] transition cursor-pointer"
-          >
-            <Share2 className="w-3.5 h-3.5" />
-            <span>Share</span>
-          </button>
-          <a
-            href="/api/exports/schedule.json"
-            download="schedule.json"
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs text-[#787774] hover:text-[#37352F] rounded-md border border-[#EBEBEA] hover:bg-[#F7F6F3] transition cursor-pointer"
-          >
-            <span>Export JSON</span>
-          </a>
-        </div>
-      </div>
-
-      {/* 2. Workspace Page Header & Action Controls */}
-      <div className="px-6 sm:px-8 pt-5 pb-4 border-b border-[#EBEBEA] bg-white flex-shrink-0 space-y-4">
+    <div className="space-y-4 font-sans text-[#37352F] antialiased">
+      {/* 1. Concise Controls & Metrics Bar (No duplicate breadcrumbs or headers) */}
+      <div className="bg-white border border-[#EBEBEA] rounded-xl p-4 sm:p-5 shadow-xs space-y-4">
+        {/* Top Action Row */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl leading-none select-none">📅</span>
-            <div>
-              <h1 className="text-lg font-semibold text-[#37352F] tracking-tight flex items-center gap-2">
-                Academic Schedule Matrix
-                <span className="text-xs font-normal text-[#787774] bg-[#F7F6F3] border border-[#EBEBEA] px-2 py-0.5 rounded-md">
-                  Autumn 2027 · Week 7
-                </span>
-              </h1>
-              <p className="text-xs text-[#787774] mt-0.5">
-                Chilika Institute of Technology · {entityStats.entitySub || 'Institutional Teaching Grid'}
-              </p>
-            </div>
+          <div>
+            <h1 className="text-base sm:text-lg font-semibold text-[#37352F] tracking-tight flex items-center gap-2">
+              Academic Schedule Matrix
+              <span className="text-xs font-normal text-[#787774] bg-[#F7F6F3] border border-[#EBEBEA] px-2 py-0.5 rounded-md">
+                Autumn 2027 · Week 7
+              </span>
+            </h1>
+            <p className="text-xs text-[#787774] mt-0.5">
+              Chilika Institute of Technology · {entityStats.entitySub || 'Instructional Teaching Grid'}
+            </p>
           </div>
 
           <div className="flex items-center gap-2">
@@ -405,7 +348,7 @@ export const TimetableDashboard: React.FC = () => {
                 disabled={solving}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#37352F] text-white hover:bg-black rounded-md text-xs font-medium transition shadow-2xs cursor-pointer disabled:opacity-50"
               >
-                {solving ? <RotateCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                {solving ? <RotateCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-amber-300" />}
                 <span>{solving ? 'Solving CP-SAT...' : 'Auto-Schedule'}</span>
               </button>
             )}
@@ -418,20 +361,30 @@ export const TimetableDashboard: React.FC = () => {
               <RotateCw className="w-3.5 h-3.5 text-[#787774]" />
               <span>Refresh</span>
             </button>
+
+            <a
+              href="/api/exports/schedule.json"
+              download="schedule.json"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-[#787774] hover:text-[#37352F] rounded-md border border-[#EBEBEA] hover:bg-[#F7F6F3] transition cursor-pointer"
+              title="Download Master JSON"
+            >
+              <FileDown className="w-3.5 h-3.5" />
+              <span>Export</span>
+            </a>
           </div>
         </div>
 
-        {/* 3. Humanized Summary KPI Row (Flat, calm cards) */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 pt-1">
-          <div className="bg-[#F7F6F3] border border-[#EBEBEA] rounded-md px-3.5 py-2.5">
+        {/* 2. Flat Summary KPI Row (Quiet, non-bloated) */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 pt-1 border-t border-[#EBEBEA]/80">
+          <div className="bg-[#F7F6F3] border border-[#EBEBEA] rounded-md px-3.5 py-2">
             <span className="text-[10px] uppercase font-medium tracking-wider text-[#9B9A97] block">
-              Perspective
+              Current Perspective
             </span>
             <div className="text-xs font-semibold text-[#37352F] mt-0.5 truncate">{entityStats.entityLabel}</div>
             <span className="text-[11px] text-[#787774] truncate block">{entityStats.entitySub}</span>
           </div>
 
-          <div className="bg-[#F7F6F3] border border-[#EBEBEA] rounded-md px-3.5 py-2.5">
+          <div className="bg-[#F7F6F3] border border-[#EBEBEA] rounded-md px-3.5 py-2">
             <span className="text-[10px] uppercase font-medium tracking-wider text-[#9B9A97] block">
               Teaching Load
             </span>
@@ -439,7 +392,7 @@ export const TimetableDashboard: React.FC = () => {
             <span className="text-[11px] text-[#787774]">{entityStats.sessionCount} scheduled periods</span>
           </div>
 
-          <div className="bg-[#F7F6F3] border border-[#EBEBEA] rounded-md px-3.5 py-2.5">
+          <div className="bg-[#F7F6F3] border border-[#EBEBEA] rounded-md px-3.5 py-2">
             <span className="text-[10px] uppercase font-medium tracking-wider text-[#9B9A97] block">
               Facility Footprint
             </span>
@@ -447,7 +400,7 @@ export const TimetableDashboard: React.FC = () => {
             <span className="text-[11px] text-emerald-700">Suitability Verified (H2)</span>
           </div>
 
-          <div className="bg-[#F7F6F3] border border-[#EBEBEA] rounded-md px-3.5 py-2.5">
+          <div className="bg-[#F7F6F3] border border-[#EBEBEA] rounded-md px-3.5 py-2">
             <span className="text-[10px] uppercase font-medium tracking-wider text-[#9B9A97] block">
               Integrity Status
             </span>
@@ -459,9 +412,8 @@ export const TimetableDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* 4. Notion View Selector & Clean Filter Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-          {/* Quick Perspective Switcher */}
+        {/* 3. Filter Controls Toolbar */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-[#EBEBEA]/80">
           <div className="inline-flex bg-[#F7F6F3] p-0.5 rounded-md border border-[#EBEBEA] text-xs">
             <button
               onClick={() => {
@@ -498,7 +450,6 @@ export const TimetableDashboard: React.FC = () => {
             </button>
           </div>
 
-          {/* Quick Filter Pills */}
           <div className="flex items-center gap-1.5 flex-wrap text-xs">
             <button
               onClick={() => setQuickFilter('all')}
@@ -544,8 +495,8 @@ export const TimetableDashboard: React.FC = () => {
               Tutorials
             </button>
 
-            {/* Target Entity Select Box */}
-            <div className="w-48 ml-1">
+            {/* Target Select Dropdown */}
+            <div className="w-52 ml-1">
               <Select value={selectedFilter} onValueChange={setSelectedFilter}>
                 <SelectTrigger className="h-7 text-xs bg-white border-[#EBEBEA] text-[#37352F]">
                   <SelectValue placeholder="Select target..." />
@@ -576,120 +527,122 @@ export const TimetableDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* 5. Notion Flat Schedule Matrix */}
-      <div className="flex-1 overflow-auto p-4 sm:p-6 bg-white">
-        <div className="min-w-[1100px] border border-[#EBEBEA] rounded-lg bg-white overflow-hidden shadow-2xs">
-          {/* Matrix Header Row: Periods & Timings */}
-          <div className="grid grid-cols-[85px_repeat(5,1fr)_48px_repeat(4,1fr)] bg-[#F7F6F3] border-b border-[#EBEBEA] text-center text-xs select-none">
-            <div className="p-2.5 border-r border-[#EBEBEA] font-medium text-[#787774] flex items-center justify-center">
-              Day
-            </div>
-            <div className="p-2 border-r border-[#EBEBEA]">
-              <span className="font-semibold text-[#37352F] text-[11px] block">P1 · 08:00</span>
-              <span className="text-[10px] text-[#9B9A97]">08:00–09:00</span>
-            </div>
-            <div className="p-2 border-r border-[#EBEBEA]">
-              <span className="font-semibold text-[#37352F] text-[11px] block">P2 · 09:00</span>
-              <span className="text-[10px] text-[#9B9A97]">09:00–10:00</span>
-            </div>
-            <div className="p-2 border-r border-[#EBEBEA]">
-              <span className="font-semibold text-[#37352F] text-[11px] block">P3 · 10:00</span>
-              <span className="text-[10px] text-[#9B9A97]">10:00–11:00</span>
-            </div>
-            <div className="p-2 border-r border-[#EBEBEA]">
-              <span className="font-semibold text-[#37352F] text-[11px] block">P4 · 11:00</span>
-              <span className="text-[10px] text-[#9B9A97]">11:00–12:00</span>
-            </div>
-            <div className="p-2 border-r border-[#EBEBEA]">
-              <span className="font-semibold text-[#37352F] text-[11px] block">P5 · 12:00</span>
-              <span className="text-[10px] text-[#9B9A97]">12:00–13:00</span>
+      {/* 4. Notion Schedule Matrix Table */}
+      <div className="bg-white border border-[#EBEBEA] rounded-xl overflow-hidden shadow-xs">
+        <div className="overflow-x-auto">
+          <div className="min-w-[1050px]">
+            {/* Header Timings */}
+            <div className="grid grid-cols-[80px_repeat(5,1fr)_44px_repeat(4,1fr)] bg-[#F7F6F3] border-b border-[#EBEBEA] text-center text-xs select-none">
+              <div className="p-2 border-r border-[#EBEBEA] font-medium text-[#787774] flex items-center justify-center">
+                Day
+              </div>
+              <div className="p-2 border-r border-[#EBEBEA]">
+                <span className="font-semibold text-[#37352F] text-[11px] block">P1 · 08:00</span>
+                <span className="text-[10px] text-[#9B9A97]">08:00–09:00</span>
+              </div>
+              <div className="p-2 border-r border-[#EBEBEA]">
+                <span className="font-semibold text-[#37352F] text-[11px] block">P2 · 09:00</span>
+                <span className="text-[10px] text-[#9B9A97]">09:00–10:00</span>
+              </div>
+              <div className="p-2 border-r border-[#EBEBEA]">
+                <span className="font-semibold text-[#37352F] text-[11px] block">P3 · 10:00</span>
+                <span className="text-[10px] text-[#9B9A97]">10:00–11:00</span>
+              </div>
+              <div className="p-2 border-r border-[#EBEBEA]">
+                <span className="font-semibold text-[#37352F] text-[11px] block">P4 · 11:00</span>
+                <span className="text-[10px] text-[#9B9A97]">11:00–12:00</span>
+              </div>
+              <div className="p-2 border-r border-[#EBEBEA]">
+                <span className="font-semibold text-[#37352F] text-[11px] block">P5 · 12:00</span>
+                <span className="text-[10px] text-[#9B9A97]">12:00–13:00</span>
+              </div>
+
+              {/* Lunch Column */}
+              <div className="p-1 border-r border-[#EBEBEA] bg-[#ECECE9] flex flex-col justify-center items-center">
+                <span className="text-[9px] font-semibold tracking-wider text-[#787774] uppercase">Lunch</span>
+                <span className="text-[9px] font-mono text-[#9B9A97]">13–14</span>
+              </div>
+
+              {/* Afternoon Columns */}
+              <div className="p-2 border-r border-[#EBEBEA]">
+                <span className="font-semibold text-[#37352F] text-[11px] block">P6 · 14:00</span>
+                <span className="text-[10px] text-[#9B9A97]">14:00–15:00</span>
+              </div>
+              <div className="p-2 border-r border-[#EBEBEA]">
+                <span className="font-semibold text-[#37352F] text-[11px] block">P7 · 15:00</span>
+                <span className="text-[10px] text-[#9B9A97]">15:00–16:00</span>
+              </div>
+              <div className="p-2 border-r border-[#EBEBEA]">
+                <span className="font-semibold text-[#37352F] text-[11px] block">P8 · 16:00</span>
+                <span className="text-[10px] text-[#9B9A97]">16:00–17:00</span>
+              </div>
+              <div className="p-2">
+                <span className="font-semibold text-[#37352F] text-[11px] block">P9 · 17:00</span>
+                <span className="text-[10px] text-[#9B9A97]">17:00–18:00</span>
+              </div>
             </div>
 
-            {/* Lunch Header */}
-            <div className="p-1 border-r border-[#EBEBEA] bg-[#ECECE9] flex flex-col justify-center items-center">
-              <span className="text-[9px] font-semibold tracking-wider text-[#787774] uppercase">Lunch</span>
-              <span className="text-[9px] font-mono text-[#9B9A97]">13–14</span>
-            </div>
+            {/* Rows MON–FRI */}
+            {days.map((day, idx) => (
+              <div
+                key={day}
+                className={`grid grid-cols-[80px_repeat(5,1fr)_44px_repeat(4,1fr)] min-h-[82px] ${
+                  idx !== days.length - 1 ? 'border-b border-[#EBEBEA]' : ''
+                }`}
+              >
+                {/* Day Label */}
+                <div className="p-2 border-r border-[#EBEBEA] bg-[#F7F6F3]/50 flex flex-col justify-center items-center select-none">
+                  <span className="font-semibold text-xs text-[#37352F]">{day}</span>
+                  <span className="text-[10px] text-[#9B9A97] font-mono mt-0.5">
+                    {getDayHours(day)}h
+                  </span>
+                </div>
 
-            {/* Afternoon Periods */}
-            <div className="p-2 border-r border-[#EBEBEA]">
-              <span className="font-semibold text-[#37352F] text-[11px] block">P6 · 14:00</span>
-              <span className="text-[10px] text-[#9B9A97]">14:00–15:00</span>
+                {/* Morning Periods (P1–P5) */}
+                {renderPeriodBlock(day, 1, 5)}
+
+                {/* Lunch Strip */}
+                <div className="border-r border-[#EBEBEA] bg-[repeating-linear-gradient(-45deg,#FAFAF9,#FAFAF9_4px,#F4F4F2_4px,#F4F4F2_8px)] flex items-center justify-center select-none">
+                  <span className="text-[9px] font-mono text-[#9B9A97] rotate-90 tracking-widest uppercase font-medium">
+                    Break
+                  </span>
+                </div>
+
+                {/* Afternoon Periods (P6–P9) */}
+                {renderPeriodBlock(day, 6, 9)}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Legend Footer */}
+        <div className="border-t border-[#EBEBEA] bg-[#FDFDFD] px-5 py-2.5 flex flex-wrap items-center justify-between text-xs text-[#787774] gap-3">
+          <div className="flex items-center gap-4 flex-wrap">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[#38BDF8]"></span>
+              <span className="text-[11px]">Core Lecture</span>
             </div>
-            <div className="p-2 border-r border-[#EBEBEA]">
-              <span className="font-semibold text-[#37352F] text-[11px] block">P7 · 15:00</span>
-              <span className="text-[10px] text-[#9B9A97]">15:00–16:00</span>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[#A855F7]"></span>
+              <span className="text-[11px]">Practical Lab (3h)</span>
             </div>
-            <div className="p-2 border-r border-[#EBEBEA]">
-              <span className="font-semibold text-[#37352F] text-[11px] block">P8 · 16:00</span>
-              <span className="text-[10px] text-[#9B9A97]">16:00–17:00</span>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[#22C55E]"></span>
+              <span className="text-[11px]">Tutorial</span>
             </div>
-            <div className="p-2">
-              <span className="font-semibold text-[#37352F] text-[11px] block">P9 · 17:00</span>
-              <span className="text-[10px] text-[#9B9A97]">17:00–18:00</span>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[#F59E0B]"></span>
+              <span className="text-[11px]">Elective / Basket</span>
             </div>
           </div>
 
-          {/* Matrix Rows: MON to FRI */}
-          {days.map((day, idx) => (
-            <div
-              key={day}
-              className={`grid grid-cols-[85px_repeat(5,1fr)_48px_repeat(4,1fr)] min-h-[92px] ${
-                idx !== days.length - 1 ? 'border-b border-[#EBEBEA]' : ''
-              }`}
-            >
-              {/* Day Label */}
-              <div className="p-2.5 border-r border-[#EBEBEA] bg-[#F7F6F3]/50 flex flex-col justify-center items-center select-none">
-                <span className="font-semibold text-xs text-[#37352F]">{day}</span>
-                <span className="text-[10px] text-[#9B9A97] font-mono mt-0.5">
-                  {getDayHours(day)} hrs
-                </span>
-              </div>
-
-              {/* Morning Periods (P1 to P5) */}
-              {renderPeriodBlock(day, 1, 5)}
-
-              {/* Lunch Break Strip */}
-              <div className="border-r border-[#EBEBEA] bg-[repeating-linear-gradient(-45deg,#FAFAF9,#FAFAF9_4px,#F4F4F2_4px,#F4F4F2_8px)] flex items-center justify-center select-none">
-                <span className="text-[9px] font-mono text-[#9B9A97] rotate-90 tracking-widest uppercase font-medium">
-                  Break
-                </span>
-              </div>
-
-              {/* Afternoon Periods (P6 to P9) */}
-              {renderPeriodBlock(day, 6, 9)}
-            </div>
-          ))}
+          <span className="text-[11px] text-[#9B9A97]">
+            Click any session block to inspect constraints or simulate a drag & drop move
+          </span>
         </div>
       </div>
 
-      {/* 6. Clean Subdued Footer Legend */}
-      <div className="h-10 border-t border-[#EBEBEA] bg-white px-6 flex items-center justify-between text-xs text-[#787774] flex-shrink-0">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-[#38BDF8]"></span>
-            <span>Core Lecture</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-[#A855F7]"></span>
-            <span>Practical Lab (3h)</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-[#22C55E]"></span>
-            <span>Tutorial</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-[#F59E0B]"></span>
-            <span>Elective / Basket</span>
-          </div>
-        </div>
-
-        <div className="text-[11px] text-[#9B9A97]">
-          Click any session block to review constraints or simulate reschedule move
-        </div>
-      </div>
-
-      {/* 7. Slide-Over Session Drawer (Notion Atelier Style) */}
+      {/* 5. Slide-Over Session Drawer */}
       {selectedSessionDetail && (
         <div className="fixed inset-y-0 right-0 w-84 sm:w-96 bg-white border-l border-[#EBEBEA] shadow-xl z-50 flex flex-col font-sans animate-in slide-in-from-right-4 duration-200">
           <div className="p-4 border-b border-[#EBEBEA] flex items-center justify-between bg-white">
@@ -707,7 +660,7 @@ export const TimetableDashboard: React.FC = () => {
             </button>
           </div>
 
-          <div className="p-5 flex-1 overflow-y-auto space-y-5">
+          <div className="p-5 flex-1 overflow-y-auto space-y-4">
             <div>
               <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded bg-[#F7F6F3] border border-[#EBEBEA] text-[#37352F]">
                 {selectedSessionDetail.session.courseId}
@@ -720,7 +673,7 @@ export const TimetableDashboard: React.FC = () => {
               </p>
             </div>
 
-            <div className="space-y-2.5 text-xs">
+            <div className="space-y-2 text-xs">
               <div className="flex items-center justify-between py-1.5 border-b border-[#EBEBEA]/80">
                 <span className="text-[#787774]">Format</span>
                 <span className="font-medium text-[#37352F] capitalize">
@@ -754,7 +707,7 @@ export const TimetableDashboard: React.FC = () => {
               </div>
             </div>
 
-            {/* Interactive Reschedule Simulation Box */}
+            {/* Pre-flight Reschedule Simulation */}
             <div className="p-3.5 rounded-lg border border-[#EBEBEA] bg-[#F7F6F3] space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-[#37352F] flex items-center gap-1.5">
