@@ -167,5 +167,6 @@ export const campusApi = {
   },
 };
 
-export default api;
+export { api };
+export default campusApi;
 

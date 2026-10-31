@@ -18,7 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import campusApi from '@/services/api';
+import { campusApi } from '@/services/api';
 
 interface Contact {
   id: string;
