@@ -48,15 +48,19 @@ router.post('/reset-demo', authenticate, requireRole([Role.admin]), async (req: 
     console.log(`Admin Demo Reset triggered by user ${req.user?.email}...`);
     await seedDatabase();
 
-    // Log in AuditLog
-    await prisma.auditLog.create({
-      data: {
-        userId: req.user?.id,
-        action: 'ADMIN_DEMO_RESET',
-        entityType: 'DATASET',
-        details: { message: 'Reset database to clean cit_public.json and seeded demo accounts' },
-      },
-    });
+    // Re-fetch the fresh admin user created by the seeder to avoid foreign key violation
+    const freshUser = await prisma.user.findFirst({ where: { role: Role.admin } });
+
+    if (freshUser) {
+      await prisma.auditLog.create({
+        data: {
+          userId: freshUser.id,
+          action: 'ADMIN_DEMO_RESET',
+          entityType: 'DATASET',
+          details: { message: 'Reset database to clean cit_public.json and seeded demo accounts' },
+        },
+      });
+    }
 
     return res.json({
       success: true,

@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import { PrismaClient, ScheduleStatus } from '@prisma/client';
 import fs from 'fs';
 import path from 'path';
+import axios from 'axios';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 
@@ -12,6 +13,7 @@ const prisma = new PrismaClient();
 const DATA_PATH = path.resolve(__dirname, '../../../docs/PS/CrunchWeek_StarterPack (1)/CrunchWeek_StarterPack/data/cit_public.json');
 const VALIDATOR_PATH = path.resolve(__dirname, '../../../docs/PS/CrunchWeek_StarterPack (1)/CrunchWeek_StarterPack/validator.py');
 const EXPORTS_DIR = path.resolve(__dirname, '../../../exports');
+const OPTIMIZER_URL = process.env.OPTIMIZER_URL || 'http://127.0.0.1:8001';
 
 // GET schedule.json (generated from database)
 router.get('/schedule.json', async (req, res) => {
@@ -83,14 +85,46 @@ router.get('/schedule_after.json', async (req, res) => {
   return res.status(404).json({ error: 'schedule_after.json not generated yet' });
 });
 
-// Run official validator.py
+// Run official validator (dispatches to internal optimizer validator service or local python)
 router.post('/verify', async (req, res) => {
   try {
+    const dataset = await prisma.datasetVersion.findFirst({ where: { isCurrent: true } });
     const schedPath = path.join(EXPORTS_DIR, 'schedule.json');
     if (!fs.existsSync(schedPath)) {
       return res.status(400).json({ error: 'exports/schedule.json does not exist. Please generate timetable first.' });
     }
 
+    const schedData = JSON.parse(fs.readFileSync(schedPath, 'utf-8'));
+
+    // 1. First attempt: call internal Python optimizer service (always available in Docker)
+    if (dataset && dataset.rawJson) {
+      try {
+        const valRes = await axios.post(`${OPTIMIZER_URL}/internal/validate`, {
+          dataset: dataset.rawJson,
+          schedule: schedData,
+        });
+
+        const report = valRes.data;
+        const outLines = [
+          '=== CANONICAL VALIDATOR REPORT ===',
+          `Dataset: ${dataset.datasetId}`,
+          `Hard Violations: ${report.total_hard_violations}`,
+          `Soft Score: ${report.soft_total}`,
+          report.total_hard_violations === 0 ? 'VALIDATION PASSED (Zero Hard Violations)' : 'VALIDATION FAILED',
+        ];
+
+        return res.json({
+          verified: report.total_hard_violations === 0,
+          output: outLines.join('\n'),
+          errors: report.total_hard_violations > 0 ? report.violations : null,
+          details: report,
+        });
+      } catch (svcErr: any) {
+        console.warn('Optimizer internal validation fallback to CLI:', svcErr.message);
+      }
+    }
+
+    // 2. Fallback: local CLI python invocation
     const { stdout, stderr } = await execFileAsync('python', [
       VALIDATOR_PATH,
       '--data', DATA_PATH,
