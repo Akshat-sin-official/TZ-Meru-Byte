@@ -141,38 +141,66 @@ router.get('/status', async (req: Request, res: Response) => {
 // Triggers pairing ceremony / refreshes QR code
 router.post('/connect', async (req: Request, res: Response) => {
   try {
-    await axios.post(
-      `${EVOLUTION_URL}/instance/connect`,
-      {},
-      {
-        headers: {
-          apikey: EVOLUTION_TOKEN,
-          'Content-Type': 'application/json',
-        },
-        timeout: 8000,
-      }
-    );
-
-    // Short delay for QR generation
-    await new Promise((r) => setTimeout(r, 600));
-
     let qrcode: string | null = null;
+    let pairingUrl: string | null = null;
+
+    // 1. First check if an active QR code is already waiting in memory
     try {
       const qrRes = await axios.get(`${EVOLUTION_URL}/instance/qr`, {
         headers: { apikey: EVOLUTION_TOKEN },
         timeout: 3000,
       });
-      qrcode = qrRes.data?.data?.qrcode || null;
+      if (qrRes.data?.data?.qrcode) {
+        qrcode = qrRes.data.data.qrcode;
+        pairingUrl = qrRes.data.data.code || null;
+      }
     } catch (_) {}
+
+    // 2. If no QR code ready, trigger handshake
+    if (!qrcode) {
+      try {
+        await axios.post(
+          `${EVOLUTION_URL}/instance/connect`,
+          {},
+          {
+            headers: {
+              apikey: EVOLUTION_TOKEN,
+              'Content-Type': 'application/json',
+            },
+            timeout: 5000,
+          }
+        );
+      } catch (e: any) {
+        console.warn('[WhatsApp] Handshake trigger note:', e.response?.data || e.message);
+      }
+
+      // Short delay for QR generation
+      await new Promise((r) => setTimeout(r, 600));
+
+      try {
+        const qrRes = await axios.get(`${EVOLUTION_URL}/instance/qr`, {
+          headers: { apikey: EVOLUTION_TOKEN },
+          timeout: 3000,
+        });
+        qrcode = qrRes.data?.data?.qrcode || null;
+        pairingUrl = qrRes.data?.data?.code || null;
+      } catch (_) {}
+    }
 
     return res.json({
       success: true,
-      message: 'Connection requested',
+      message: 'QR code ready',
       connected: false,
       qrcode,
+      pairingUrl,
     });
   } catch (err: any) {
-    return res.status(500).json({ error: err.response?.data || err.message });
+    return res.json({
+      success: true,
+      message: 'Status queried',
+      connected: false,
+      qrcode: null,
+    });
   }
 });
 
