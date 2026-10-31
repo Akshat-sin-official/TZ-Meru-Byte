@@ -219,8 +219,8 @@ router.post('/proposals/:id/approve', authenticate, requireRole([Role.admin]), a
   }
 });
 
-// POST /apply-move: Apply a validated manual move to the active timetable
-router.post('/apply-move', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+// POST /apply-move: Apply a validated manual move to the active timetable (Admin only per RBAC Matrix)
+router.post('/apply-move', authenticate, requireRole([Role.admin]), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { session_id, target_day, target_start_period, target_room_id } = req.body;
     if (!session_id || !target_day || !target_start_period || !target_room_id) {

@@ -43,12 +43,26 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
   const [solving, setSolving] = useState(false);
   const [data, setData] = useState<any>(null);
 
-  // Filters
-  const [filterType, setFilterType] = useState<'group' | 'faculty' | 'room'>('group');
-  const [selectedFilter, setSelectedFilter] = useState<string>(externalCohort || 'CSE-2');
+  // Filters (Auto-scoped by Role per RBAC Matrix)
+  const [filterType, setFilterType] = useState<'group' | 'faculty' | 'room'>(
+    user?.role === 'faculty' ? 'faculty' : 'group'
+  );
+  const [selectedFilter, setSelectedFilter] = useState<string>(
+    externalCohort || (user?.role === 'faculty' ? (user.facultyId || 'F01') : 'CSE-2')
+  );
   const [quickFilter, setQuickFilter] = useState<'all' | 'labs' | 'lectures' | 'tutorials'>(
     externalQuickFilter || 'all'
   );
+
+  useEffect(() => {
+    if (user?.role === 'faculty') {
+      setFilterType('faculty');
+      setSelectedFilter(user.facultyId || 'F01');
+    } else if (user?.role === 'department_coordinator' && user.department) {
+      setFilterType('group');
+      setSelectedFilter(`${user.department}-1`);
+    }
+  }, [user?.role, user?.facultyId, user?.department]);
 
   // Collapsed Days state
   const [collapsedDays, setCollapsedDays] = useState<Record<string, boolean>>({});

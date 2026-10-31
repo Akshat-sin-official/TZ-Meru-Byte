@@ -86,6 +86,7 @@ export const SpectraBookingsView: React.FC = () => {
   const [solving, setSolving] = useState(false);
   const [data, setData] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState<'all' | 'approved' | 'rejected'>('all');
+  const [scope, setScope] = useState<'all' | 'mine'>(user?.role === 'admin' ? 'all' : 'mine');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
 
@@ -173,6 +174,20 @@ export const SpectraBookingsView: React.FC = () => {
 
   const filteredRequests = useMemo(() => {
     return requests.filter((r: any) => {
+      // Role scope filter (RBAC Section 3: View own booking status)
+      if (user?.role === 'club' && scope === 'mine') {
+        const isMyClub = r.role === 'club' || (user?.clubName && r.requester.toLowerCase().includes(user.clubName.toLowerCase()));
+        if (!isMyClub) return false;
+      }
+      if (user?.role === 'faculty' && scope === 'mine') {
+        const isMyFac = r.role === 'faculty' || r.effectiveCategory === 'guest_lecture';
+        if (!isMyFac) return false;
+      }
+      if (user?.role === 'department_coordinator' && scope === 'mine') {
+        const isMyDept = r.role === 'coordinator' || r.effectiveCategory === 'department_event';
+        if (!isMyDept) return false;
+      }
+
       const dec = decisionsMap.get(r.id);
       const status = dec?.status || 'pending';
 
@@ -190,7 +205,7 @@ export const SpectraBookingsView: React.FC = () => {
 
       return true;
     });
-  }, [requests, decisionsMap, statusFilter, searchQuery]);
+  }, [requests, decisionsMap, statusFilter, searchQuery, scope, user?.role, user?.clubName]);
 
   // Pagination state (Show limited rows at once)
   const [currentPage, setCurrentPage] = useState(1);
@@ -427,37 +442,64 @@ export const SpectraBookingsView: React.FC = () => {
 
         {/* 3. Filter Controls & Search Toolbar */}
         <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-[#EBEBEA]/80">
-          <div className="inline-flex bg-[#F7F6F3] p-0.5 rounded-md border border-[#EBEBEA] text-xs">
-            <button
-              onClick={() => setStatusFilter('all')}
-              className={`px-3 py-1 rounded text-xs font-medium transition cursor-pointer ${
-                statusFilter === 'all'
-                  ? 'bg-white text-[#09090B] shadow-2xs font-semibold'
-                  : 'text-[#71717A] hover:text-[#09090B]'
-              }`}
-            >
-              All Requests ({requests.length})
-            </button>
-            <button
-              onClick={() => setStatusFilter('approved')}
-              className={`px-3 py-1 rounded text-xs font-medium transition cursor-pointer ${
-                statusFilter === 'approved'
-                  ? 'bg-white text-[#09090B] shadow-2xs font-semibold'
-                  : 'text-[#71717A] hover:text-[#09090B]'
-              }`}
-            >
-              Approved ({approvedCount})
-            </button>
-            <button
-              onClick={() => setStatusFilter('rejected')}
-              className={`px-3 py-1 rounded text-xs font-medium transition cursor-pointer ${
-                statusFilter === 'rejected'
-                  ? 'bg-white text-[#09090B] shadow-2xs font-semibold'
-                  : 'text-[#71717A] hover:text-[#09090B]'
-              }`}
-            >
-              Rejected ({rejectedCount})
-            </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            {user?.role !== 'admin' && (
+              <div className="inline-flex bg-[#F7F6F3] p-0.5 rounded-md border border-[#EBEBEA] text-xs">
+                <button
+                  onClick={() => setScope('mine')}
+                  className={`px-3 py-1 rounded text-xs font-medium transition cursor-pointer ${
+                    scope === 'mine'
+                      ? 'bg-white text-[#09090B] shadow-2xs font-semibold'
+                      : 'text-[#71717A] hover:text-[#09090B]'
+                  }`}
+                >
+                  My Requests
+                </button>
+                <button
+                  onClick={() => setScope('all')}
+                  className={`px-3 py-1 rounded text-xs font-medium transition cursor-pointer ${
+                    scope === 'all'
+                      ? 'bg-white text-[#09090B] shadow-2xs font-semibold'
+                      : 'text-[#71717A] hover:text-[#09090B]'
+                  }`}
+                >
+                  All Requests
+                </button>
+              </div>
+            )}
+
+            <div className="inline-flex bg-[#F7F6F3] p-0.5 rounded-md border border-[#EBEBEA] text-xs">
+              <button
+                onClick={() => setStatusFilter('all')}
+                className={`px-3 py-1 rounded text-xs font-medium transition cursor-pointer ${
+                  statusFilter === 'all'
+                    ? 'bg-white text-[#09090B] shadow-2xs font-semibold'
+                    : 'text-[#71717A] hover:text-[#09090B]'
+                }`}
+              >
+                All Status
+              </button>
+              <button
+                onClick={() => setStatusFilter('approved')}
+                className={`px-3 py-1 rounded text-xs font-medium transition cursor-pointer ${
+                  statusFilter === 'approved'
+                    ? 'bg-white text-[#09090B] shadow-2xs font-semibold'
+                    : 'text-[#71717A] hover:text-[#09090B]'
+                }`}
+              >
+                Approved ({approvedCount})
+              </button>
+              <button
+                onClick={() => setStatusFilter('rejected')}
+                className={`px-3 py-1 rounded text-xs font-medium transition cursor-pointer ${
+                  statusFilter === 'rejected'
+                    ? 'bg-white text-[#09090B] shadow-2xs font-semibold'
+                    : 'text-[#71717A] hover:text-[#09090B]'
+                }`}
+              >
+                Rejected ({rejectedCount})
+              </button>
+            </div>
           </div>
 
           <div className="relative w-full sm:w-64">

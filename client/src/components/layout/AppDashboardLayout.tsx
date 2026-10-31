@@ -163,6 +163,18 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
     { id: 'Y1-A', label: 'First Year', sub: 'Sec A', hours: '36h' },
   ];
 
+  // RBAC Scoped Cohorts
+  const visibleCohorts = useMemo(() => {
+    if (user?.role === 'department_coordinator') {
+      const dept = user.department || 'CSE';
+      return cohorts.filter((c) => c.id.startsWith(dept));
+    }
+    if (user?.role === 'club') {
+      return [];
+    }
+    return cohorts;
+  }, [cohorts, user]);
+
   // Calendar Day Calculation (Oct 1, 2027 is Friday)
   const getOctDayOfWeek = (date: number): { day: string; isWeekend: boolean; label: string } => {
     const dayIndex = (date - 1 + 4) % 7;
@@ -426,10 +438,10 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
                   )}
                 </button>
 
-                {/* Sub-cohort list */}
-                {!sidebarCollapsed && cohortMenuOpen && (
+                {/* Sub-cohort list (Scoped by role) */}
+                {!sidebarCollapsed && cohortMenuOpen && visibleCohorts.length > 0 && (
                   <div className="ml-5 pl-2.5 pr-2 pb-2 pt-1 space-y-1 border-l border-[#E5E7EB] text-xs">
-                    {cohorts.map((cohort) => {
+                    {visibleCohorts.map((cohort) => {
                       const isSelected = selectedCohort === cohort.id;
                       return (
                         <button
@@ -450,26 +462,28 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
                 )}
               </div>
 
-              {/* Exams */}
-              <button
-                onClick={() => setActiveTab('exams')}
-                className={`w-full flex items-center justify-between px-3 py-2 text-[13.5px] rounded-lg transition cursor-pointer ${
-                  activeTab === 'exams'
-                    ? 'bg-white font-semibold text-[#09090B] border border-[#E5E7EB] shadow-2xs'
-                    : 'text-[#3F3F46] hover:text-[#09090B] hover:bg-[#F4F4F5] border border-transparent font-medium'
-                }`}
-                title="Exam Schedule"
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <FileSpreadsheet className={`h-4 w-4 shrink-0 ${activeTab === 'exams' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
-                  {!sidebarCollapsed && <span className="whitespace-nowrap">Exam Timetable</span>}
-                </div>
-                {!sidebarCollapsed && (
-                  <span className="text-[11px] font-mono font-medium text-[#52525B] bg-[#F4F4F5] px-1.5 py-0.5 rounded shrink-0">
-                    Midsem
-                  </span>
-                )}
-              </button>
+              {/* Exams (Restricted to Admin, Coordinator, Faculty per RBAC Matrix) */}
+              {user?.role !== 'club' && (
+                <button
+                  onClick={() => setActiveTab('exams')}
+                  className={`w-full flex items-center justify-between px-3 py-2 text-[13.5px] rounded-lg transition cursor-pointer ${
+                    activeTab === 'exams'
+                      ? 'bg-white font-semibold text-[#09090B] border border-[#E5E7EB] shadow-2xs'
+                      : 'text-[#3F3F46] hover:text-[#09090B] hover:bg-[#F4F4F5] border border-transparent font-medium'
+                  }`}
+                  title="Exam Schedule"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <FileSpreadsheet className={`h-4 w-4 shrink-0 ${activeTab === 'exams' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
+                    {!sidebarCollapsed && <span className="whitespace-nowrap">Exam Timetable</span>}
+                  </div>
+                  {!sidebarCollapsed && (
+                    <span className="text-[11px] font-mono font-medium text-[#52525B] bg-[#F4F4F5] px-1.5 py-0.5 rounded shrink-0">
+                      Midsem
+                    </span>
+                  )}
+                </button>
+              )}
 
               {/* Spectra Fest */}
               <button
