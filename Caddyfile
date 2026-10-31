@@ -1,4 +1,4 @@
-:80 {
+cit.saubhagyalabs.tech, saubhagyalabs.tech, www.saubhagyalabs.tech {
     # 1. API proxy for CIT CampusOS
     handle /api/* {
         reverse_proxy server:5000
@@ -7,10 +7,10 @@
     # 2. WhatsApp API & Webhook proxy
     handle /wa/* {
         uri strip_prefix /wa
-        reverse_proxy whatsapp:8080
+        reverse_proxy 172.17.0.1:8080
     }
 
-    # 3. WhatsApp Manager Web UI (on /wa-ui/)
+    # 3. WhatsApp Manager Web UI (on /wa-ui/*)
     handle_path /wa-ui* {
         root * /var/www/whatsapp
         file_server
@@ -24,4 +24,3 @@
         try_files {path} /index.html
     }
 }
-
