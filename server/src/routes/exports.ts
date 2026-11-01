@@ -93,7 +93,7 @@ router.get('/schedule.json', authenticate, requireRole([Role.admin]), async (req
     }
 
     const payload = {
-      team: 'CIT CampusOS Team',
+      team: 'Campora Team',
       dataset_id: dataset.datasetId,
       sessions: activeSchedule.assignments.map((a) => ({
         session_id: a.sessionExternalId,
@@ -110,7 +110,7 @@ router.get('/schedule.json', authenticate, requireRole([Role.admin]), async (req
               ...(d.startPeriod ? { start_period: d.startPeriod } : {}),
               ...(d.endPeriod ? { end_period: d.endPeriod } : {}),
               ...(d.roomExternalId ? { room_id: d.roomExternalId } : {}),
-              reason: d.reason || 'Decision rendered by CIT CampusOS',
+              reason: d.reason || 'Decision rendered by Campora',
             }))
           : (fileFallback?.fest_week?.bookings || []),
         session_overrides: sessionOverrides.length > 0
@@ -191,7 +191,7 @@ router.get('/exam_schedule.json', authenticate, requireRole([Role.admin]), async
     }
 
     const payload = {
-      team: 'CIT CampusOS Team',
+      team: 'Campora Team',
       dataset_id: dataset.datasetId,
       exams: allocations.length > 0
         ? allocations.map((e) => ({
@@ -258,7 +258,7 @@ router.get('/spectra_allocations.json', authenticate, requireRole([Role.admin]),
     }
 
     const payload = {
-      team: 'CIT CampusOS Team',
+      team: 'Campora Team',
       dataset_id: dataset.datasetId,
       fest_week: {
         bookings: bookingDecisions.length > 0
@@ -269,7 +269,7 @@ router.get('/spectra_allocations.json', authenticate, requireRole([Role.admin]),
               ...(d.startPeriod ? { start_period: d.startPeriod } : {}),
               ...(d.endPeriod ? { end_period: d.endPeriod } : {}),
               ...(d.roomExternalId ? { room_id: d.roomExternalId } : {}),
-              reason: d.reason || 'Decision rendered by CIT CampusOS',
+              reason: d.reason || 'Decision rendered by Campora',
             }))
           : (fileFestWeek?.bookings || []),
         session_overrides: sessionOverrides.length > 0

@@ -64,7 +64,7 @@ export const AppContent: React.FC = () => {
       <div className="min-h-screen bg-[#FAF9F6] flex flex-col items-center justify-center gap-3">
         <RotateCw className="h-8 w-8 animate-spin text-primary" />
         <p className="text-xs font-semibold font-poppins text-ink-soft">
-          Connecting to CIT CampusOS...
+          Connecting to Campora...
         </p>
       </div>
     );

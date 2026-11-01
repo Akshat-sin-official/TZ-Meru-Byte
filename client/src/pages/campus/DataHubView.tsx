@@ -345,7 +345,7 @@ export const DataHubView: React.FC = () => {
                 className="hidden"
               />
               <p className="text-[11px] text-muted-foreground mt-1">
-                JSON files conforming to CIT CampusOS starter-pack schema
+                JSON files conforming to Campora starter-pack schema
               </p>
             </div>
           </div>

@@ -563,7 +563,7 @@ export const WhatsAppBotSection: React.FC = () => {
                   </label>
                   <textarea
                     rows={3}
-                    placeholder="Leave empty for standard CIT CampusOS verification ping..."
+                    placeholder="Leave empty for standard Campora verification ping..."
                     value={testMsg}
                     onChange={(e) => setTestMsg(e.target.value)}
                     className="w-full text-xs p-2.5 rounded-md border border-[#E5E7EB] font-poppins focus:outline-none focus:ring-1 focus:ring-primary"

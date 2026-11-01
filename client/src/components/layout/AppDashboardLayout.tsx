@@ -283,11 +283,11 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
                 title="Workspace Menu"
               >
                 <div className="w-9 h-9 rounded-lg bg-white border border-[#E5E7EB] flex items-center justify-center p-0.5 shrink-0 shadow-2xs overflow-hidden">
-                  <img src="/logo.jpeg" alt="CIT CampusOS" className="w-full h-full object-cover rounded-md" />
+                  <img src="/logo.jpeg" alt="Campora" className="w-full h-full object-cover rounded-md" />
                 </div>
                 <div className="flex flex-col min-w-0 text-left justify-center">
                   <span className="text-[13.5px] font-semibold tracking-tight text-[#09090B] leading-tight truncate">
-                    CIT CampusOS
+                    Campora
                   </span>
                   <span className="text-[11px] font-medium text-[#52525B] leading-tight mt-0.5">
                     Autumn 2027
@@ -315,11 +315,11 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
                   onClick={() => setSidebarCollapsed(false)}
                   className="w-10 h-10 rounded-xl bg-white border border-[#E5E7EB] flex items-center justify-center p-0.5 cursor-pointer shadow-2xs hover:border-[#09090B] hover:shadow-xs transition-all group overflow-hidden"
                 >
-                  <img src="/logo.jpeg" alt="CIT CampusOS" className="w-full h-full object-cover rounded-lg group-hover:scale-105 transition-transform" />
+                  <img src="/logo.jpeg" alt="Campora" className="w-full h-full object-cover rounded-lg group-hover:scale-105 transition-transform" />
                 </button>
               </TooltipTrigger>
               <TooltipContent side="right" sideOffset={12} className="bg-[#09090B] text-white border-0 py-1.5 px-3 shadow-lg">
-                <div className="text-xs font-semibold">CIT CampusOS</div>
+                <div className="text-xs font-semibold">Campora</div>
                 <div className="text-[10.5px] text-[#A1A1AA]">Autumn 2027 · Click to expand</div>
               </TooltipContent>
             </Tooltip>
@@ -1238,7 +1238,7 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
         {/* Top Header */}
         <header className="h-14 border-b border-[#E5E7EB] bg-white px-6 flex items-center justify-between shrink-0 sticky top-0 z-30 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
           <div className="flex items-center gap-2 text-[13px]">
-            <span className="text-[#52525B] font-medium">CIT CampusOS</span>
+            <span className="text-[#52525B] font-medium">Campora</span>
             <span className="text-[#A1A1AA]">/</span>
             <span className="font-semibold text-[#09090B] capitalize">
               {activeTab === 'timetable'

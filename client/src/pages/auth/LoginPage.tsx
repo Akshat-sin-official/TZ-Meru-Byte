@@ -109,11 +109,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
         <div className="relative z-10">
           <div className="inline-flex items-center gap-3 group">
             <div className="p-1.5 bg-white/90 rounded-2xl border border-white/90 shadow-sm backdrop-blur-md flex items-center justify-center">
-              <img src="/logo.jpeg" alt="CIT CampusOS" className="w-12 h-12 object-cover rounded-xl shadow-2xs" />
+              <img src="/logo.jpeg" alt="Campora" className="w-12 h-12 object-cover rounded-xl shadow-2xs" />
             </div>
             <div className="flex flex-col">
               <span className="text-xl font-bold font-poppins tracking-tight text-ink/95 leading-none">
-                CampusOS
+                Campora
               </span>
               <span className="text-[10px] text-ink-soft/70 uppercase tracking-widest font-mono mt-0.5">
                 Chilika Institute of Technology
@@ -207,9 +207,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
             <div className="flex flex-col space-y-2 text-center lg:text-left">
               <div className="lg:hidden flex items-center justify-center gap-2.5 mb-2">
                 <div className="w-12 h-12 rounded-2xl bg-white border border-border/50 p-1 flex items-center justify-center shadow-xs overflow-hidden">
-                  <img src="/logo.jpeg" alt="CIT CampusOS" className="w-full h-full object-cover rounded-xl" />
+                  <img src="/logo.jpeg" alt="Campora" className="w-full h-full object-cover rounded-xl" />
                 </div>
-                <span className="text-xl font-bold font-poppins text-ink">CIT CampusOS</span>
+                <span className="text-xl font-bold font-poppins text-ink">Campora</span>
               </div>
               <h2 className="text-3xl font-extrabold font-poppins tracking-tight text-ink">Sign In</h2>
               <p className="text-sm text-ink-soft font-sans">
