@@ -201,6 +201,76 @@ def solve_timetable(data: dict, timeout_seconds: int = 120, seed: int = 42) -> d
         if (p + s["duration"] - 1) == LAST_TEACHING:
             objective_terms.append(1 * var)
 
+    # ── S4: Same course, same group, same day — 3 pts per extra lecture ──
+    # Build (group, day, course_id) -> list of lecture bool vars
+    gc_day_vars = defaultdict(list)
+    for (s_id, d, p, r_id), var in x.items():
+        s = sessions[s_id]
+        if s.get("kind") == "lecture" and not s.get("basket_slot"):
+            for g in s["groups"]:
+                gc_day_vars[(g, d, s["course_id"])].append(var)
+    for (g, d, c_id), var_list in gc_day_vars.items():
+        if len(var_list) > 1:
+            count_var = model.NewIntVar(0, len(var_list), f"s4cnt_{g}_{d}_{c_id}")
+            model.Add(count_var == sum(var_list))
+            excess = model.NewIntVar(0, len(var_list), f"s4ex_{g}_{d}_{c_id}")
+            model.AddMaxEquality(excess, [count_var - 1, model.NewConstant(0)])
+            objective_terms.append(3 * excess)
+
+    # ── S3: Group daily overload > 6 hrs — 3 pts per extra hour ──
+    gd_hour_terms: dict = defaultdict(list)  # (group, day) -> [(var, duration)]
+    for (s_id, d, p, r_id), var in x.items():
+        s = sessions[s_id]
+        dur = s["duration"]
+        for g in s["groups"]:
+            gd_hour_terms[(g, d)].append((var, dur))
+    for (g, d), terms in gd_hour_terms.items():
+        total_possible = sum(dur for _, dur in terms)
+        if total_possible <= 6:
+            continue  # can never exceed 6 hrs for this (group, day)
+        hours_var = model.NewIntVar(0, total_possible, f"s3h_{g}_{d}")
+        model.Add(hours_var == sum(v * dur for v, dur in terms))
+        excess = model.NewIntVar(0, total_possible, f"s3ex_{g}_{d}")
+        model.AddMaxEquality(excess, [hours_var - 6, model.NewConstant(0)])
+        objective_terms.append(3 * excess)
+
+    # ── S2: Group schedule gaps — 1 pt per idle period between first and last class ──
+    # Collect all unique groups from sessions
+    all_groups = {g for s in sessions.values() for g in s["groups"]}
+    for g_id in all_groups:
+        for d in days:
+            # Build period-level occupancy indicator for this (group, day)
+            period_occ: dict = {}
+            for pt in range(1, LAST_TEACHING + 1):
+                entries = grp_slots.get((g_id, d, pt), [])
+                if entries:
+                    occ = model.NewBoolVar(f"gocc_{g_id}_{d}_{pt}")
+                    # occ = 1 iff any session is scheduled in this (group, day, period)
+                    model.AddMaxEquality(occ, [var for (var, sid, is_b, bslot) in entries])
+                    period_occ[pt] = occ
+
+            if len(period_occ) < 2:
+                continue  # 0 or 1 period — no gap possible
+
+            all_pts = sorted(period_occ)
+            first_p = model.NewIntVar(all_pts[0], all_pts[-1], f"gfirst_{g_id}_{d}")
+            last_p  = model.NewIntVar(all_pts[0], all_pts[-1], f"glast_{g_id}_{d}")
+
+            # first_p must be <= every occupied period
+            for pt, occ_var in period_occ.items():
+                model.Add(first_p <= pt).OnlyEnforceIf(occ_var)
+            # last_p must be >= every occupied period
+            for pt, occ_var in period_occ.items():
+                model.Add(last_p >= pt).OnlyEnforceIf(occ_var)
+
+            span = model.NewIntVar(0, LAST_TEACHING, f"gspan_{g_id}_{d}")
+            model.Add(span == last_p - first_p + 1)
+            total_occ = model.NewIntVar(0, LAST_TEACHING, f"gtot_{g_id}_{d}")
+            model.Add(total_occ == sum(period_occ.values()))
+            gap = model.NewIntVar(0, LAST_TEACHING, f"ggap_{g_id}_{d}")
+            model.Add(gap == span - total_occ)
+            objective_terms.append(gap)  # 1 pt per idle period in span (S2)
+
     model.Minimize(sum(objective_terms))
 
     # ── Solver Configuration ──

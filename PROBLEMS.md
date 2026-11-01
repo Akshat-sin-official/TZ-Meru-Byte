@@ -1,75 +1,46 @@
 # CAMPORA — Known Problems & Gaps
 
-> Last updated: November 1, 2026
-> Based on: full code audit of `optimizer/`, `server/src/routes/`, `server/src/middleware/`,
-> `client/src/pages/`, `client/src/contexts/`, and `client/src/components/`.
->
+> Last updated: November 1, 2026  
+> Based on: full audit of `optimizer/`, `server/src/routes/`, `server/src/middleware/`,
+> `client/src/`, and the official starter pack (`cit_public.json`, `sample_disruption.json`,
+> `sample_requests.md`, `validator.py README`).  
 > Current exported validator result: `hard_violations: 0`, `soft_total: 290`, `booking_score: 66/70`.
 
-Each problem is classified by:
-- **Area** — which part of the system it affects
-- **Impact** — judging criterion and estimated mark loss
-- **Root cause** — exactly what is wrong in the code
-- **Fix** — what needs to change
+---
+
+## SECTION A — SOLVER & CORRECTNESS
 
 ---
 
-## SECTION A — SOLVER & CORRECTNESS PROBLEMS
+### A1 — S2, S3, S4 missing from the CP-SAT solver objective
 
----
+**File:** `optimizer/timetable_solver.py`  
+**Criterion:** Optimisation — **−3 to −5 marks**
 
-### Problem A1 — S2, S3, S4 missing from the CP-SAT solver objective
+The validator measures all six soft penalties correctly. The solver only minimises three of them.
 
-#### Area
-`optimizer/timetable_solver.py` — soft penalty objective function
-
-#### Impact
-**Optimisation criterion — estimated −3 to −5 marks**
-
-The optimisation criterion compares soft penalty scores across teams. Lower is better.
-The current exported score is **290**. Of that:
-
-| Penalty | Current value | Solver minimises it? |
+| Penalty | Current value | Solver minimises? |
 |---|:---:|:---:|
-| S1 — Faculty avoidance | 0 | ✅ Yes |
-| S2 — Group schedule gaps | 50 | ❌ No |
-| S3 — Group daily overload | 48 | ❌ No |
-| S4 — Same-course double lecture | 192 | ❌ No |
-| S5 — Poor room utilisation | 0 | ✅ Yes |
-| S6 — P9 sessions | 0 | ✅ Yes |
+| S1 Faculty avoidance | 0 | ✅ |
+| S2 Group schedule gaps | 50 | ❌ |
+| S3 Group daily overload | 48 | ❌ |
+| S4 Same-course double lecture | 192 | ❌ |
+| S5 Poor room utilisation | 0 | ✅ |
+| S6 P9 sessions | 0 | ✅ |
 
-S4 alone is 192 points — 66% of the total. Any team that includes S4 in their objective
-will eliminate most of those 64 instances and beat this score by a wide margin.
+S4 = 192 is 66% of the total 290. That is 64 instances of the same course taught to the same group twice in one day. The solver placed them there because it had no reason not to.
 
-#### Root cause
+**Root cause:** The `objective_terms` block only appends terms for S1, S5, and S6. There are no terms for S2, S3, or S4 before `model.Minimize(sum(objective_terms))`.
 
-`timetable_solver.py`, the `objective_terms` block (~line 160–185):
-
-```python
-# S1: Faculty avoided preferences — added ✅
-# S5: Room utilisation < 40%      — added ✅
-# S6: Late teaching in Period 9   — added ✅
-model.Minimize(sum(objective_terms))
-```
-
-There are no terms for S2 (gap counting), S3 (daily hour excess), or S4 (same-course repeats).
-The solver places sessions wherever is feasible with no preference for avoiding these patterns.
-
-#### Fix
-
-Add auxiliary integer variables and objective terms before `model.Minimize(...)`.
-**Recommended order: S4 first (biggest return, least complexity), then S3, then S2.**
-
-**S4 — Same-course double lecture (3 pts per extra lecture per group per day):**
+**Fix — S4 (highest return, add before `model.Minimize`):**
 ```python
 from collections import defaultdict
-gc_day_vars = defaultdict(list)  # (group, day, course_id) -> [bool_var, ...]
+gc_day_vars = defaultdict(list)
 for (s_id, d, p, r_id), var in x.items():
     s = sessions[s_id]
     if s.get("kind") == "lecture" and not s.get("basket_slot"):
         for g in s["groups"]:
             gc_day_vars[(g, d, s["course_id"])].append(var)
-
 for (g, d, c_id), var_list in gc_day_vars.items():
     if len(var_list) > 1:
         count_var = model.NewIntVar(0, len(var_list), f"s4_{g}_{d}_{c_id}")
@@ -79,14 +50,13 @@ for (g, d, c_id), var_list in gc_day_vars.items():
         objective_terms.append(3 * excess)
 ```
 
-**S3 — Group daily overload (3 pts per hour over 6):**
+**Fix — S3:**
 ```python
-gd_hour_terms = defaultdict(list)  # (group, day) -> [(var, duration), ...]
+gd_hour_terms = defaultdict(list)
 for (s_id, d, p, r_id), var in x.items():
     s = sessions[s_id]
     for g in s["groups"]:
         gd_hour_terms[(g, d)].append((var, s["duration"]))
-
 for (g, d), terms in gd_hour_terms.items():
     total_possible = sum(dur for _, dur in terms)
     if total_possible <= 6:
@@ -98,9 +68,7 @@ for (g, d), terms in gd_hour_terms.items():
     objective_terms.append(3 * excess)
 ```
 
-**S2 — Group schedule gaps (1 pt per idle period between first and last class):**
-This requires `first_period` and `last_period` integer variables per (group, day),
-constrained by period occupancy indicators. Most complex, but the pattern is:
+**Fix — S2 (most complex):**
 ```python
 for g_id in {g for s in sessions.values() for g in s["groups"]}:
     for d in days:
@@ -130,58 +98,136 @@ for g_id in {g for s in sessions.values() for g in s["groups"]}:
 
 ---
 
-## SECTION B — WORKFLOW & APPROVAL PROBLEMS
+### A2 — Sample disruption in the app does not match the official `sample_disruption.json`
+
+**File:** `client/src/pages/campus/DisruptionsView.tsx` — `sampleDisruption` constant  
+**Criterion:** Rescheduling — **direct judging risk**
+
+The judges explicitly say they will apply `examples/sample_disruption.json` in the app. The app hardcodes its own disruption payload that differs from the official file.
+
+**Official `sample_disruption.json`:**
+- `faculty_unavailable`: F07, MON, periods 1–9
+- `room_unavailable`: CR-102, MON–FRI, periods 1–9
+- `add_session`: CS202-T2 (tutorial, CSE-2, F06, size 80)
+
+**Hardcoded in `DisruptionsView.tsx`:**
+```typescript
+const sampleDisruption = {
+    changes: [
+        { type: 'faculty_unavailable', faculty_id: 'F07', days: ['MON'], periods: [1..9] },
+        { type: 'room_unavailable', room_id: 'CR-102', days: ['MON','TUE','WED','THU','FRI'], periods: [1..9] },
+        { type: 'add_session', session: { id: 'CS202-T2', ... faculty_id: 'F06', size: 80 ... } }
+    ]
+}
+```
+
+These happen to match — but the `description` field and wrapping `id`/`dataset` keys are missing, and the app doesn't read the file from the filesystem. The real risk is: **judges may upload their own change file** using the "Upload Change File" button. The custom upload path parses JSON and calls `handleRunRepair(parsed)` — but the `handleApplyRepair` button still does nothing (see B1). So even if the judge uploads the official file and repair runs correctly, approving it saves nothing.
+
+**Fix:** Resolve B1 first. Then also update the "Simulate Sample Disruption" default to read from the actual file path served via the API, rather than a hardcoded constant, so it always stays in sync with whatever `sample_disruption.json` is on disk.
 
 ---
 
-### Problem B1 — Disruption approval button does nothing
+### A3 — Exam sizes require multi-room allocation; solver must verify this works
 
-#### Area
-`client/src/pages/campus/DisruptionsView.tsx` — `handleApplyRepair` function
+**File:** `optimizer/exam_solver.py`  
+**Criterion:** Scheduling correctness — **potential −3 per violation**
 
-#### Impact
-**Rescheduling criterion — estimated −2 marks**
+From `cit_public.json`, several exams are very large:
+- `EX-MA101`: 360 students — needs AUD (500/2=250) + LH-1 (200/2=100) + LH-2 (200/2=100) = 450 seats minimum from 3 rooms
+- `EX-PH101`: 360 students — same situation  
+- `EX-CS101`: 360 students — same situation  
+- `EX-HS201`: 320 students across 5 departments — any single room fails
 
-The rubric awards 4 of the 15 rescheduling marks for "a clear view of the changes and a
-proper approval step." The approval button is visible and correctly styled, but clicking
-it makes no API call and commits nothing to the database.
+SH-1 and SH-2 have `allowed_uses: ["exam", "event"]` but capacities of 150 and 100. Labs have `allowed_uses: ["lab", "event"]` — no `"exam"` — so they cannot be used for exams.
 
-#### Root cause
+The exam solver correctly models multi-room allocation via `w[eid, slot, rid]` boolean variables. However, the half-capacity check:
+```python
+sum(w[(eid, slot, rid)] * (exam_rooms[rid]["capacity"] // 2) for rid in exam_rooms)
+>= needed_seats * z[(eid, slot)]
+```
+is a bilinear product `w * z` which CP-SAT cannot handle directly as written because both are decision variables. This should be linearised with `w[eid, slot, rid] <= z[eid, slot]` (already added) and the sum written only over rooms where `w` is 1 — which CP-SAT handles correctly via the linearisation. Verify the solve is returning `OPTIMAL` or `FEASIBLE` and that all 41 exams are scheduled in the output. The exported `validation_report.json` shows 0 exam violations so the solver is working, but this is worth double-checking if results change after a re-solve.
+
+---
+
+### A4 — BR-17 (Astronomy Club) requests period 13–14; period 14 does not exist
+
+**File:** `optimizer/booking_engine.py`  
+**Criterion:** Booking decisions — the engine must reject or handle this gracefully
+
+From `cit_public.json`, BR-17 (Astronomy Club "Night sky watch") requests:
+```json
+"windows": [{"day": "WED", "from_period": 13, "to_period": 14}]
+```
+The dataset only defines periods 1–13. Period 14 does not exist. `MAX_PERIOD = 13` in the booking engine. The engine's placement loop:
+```python
+for start_p in range(from_p, to_p - dur + 2):  # range(13, 14 - 2 + 2) = range(13, 14)
+    end_p = start_p + dur - 1  # 13 + 2 - 1 = 14
+    if end_p > MAX_PERIOD:     # 14 > 13 → skip
+        continue
+```
+This correctly skips the invalid window. But the fallback alternative search then looks for P10–P13 and may offer an alternative. That's the right outcome. Confirm the decision in the exported `spectra_allocations.json` for BR-17 is `rejected` with a reason like "window extends beyond P13" or `alternative_offered` — not `approved` at an impossible period.
+
+---
+
+### A5 — BR-14 requests room "LHC-5" which does not exist in the dataset
+
+**File:** `optimizer/booking_engine.py`  
+**Criterion:** Booking decisions — should not crash, should fall back to eligible rooms
+
+From `cit_public.json`, BR-14 (Literary Society "Open Mic") has:
+```json
+"requested_room": "LHC-5"
+```
+The dataset room IDs are: AUD, LH-1 through LH-6, CR-101 through CR-205, SH-1, SH-2, OAT, CS-LAB-1, CS-LAB-2, ELEC-LAB-1, ELEC-LAB-2, PHY-LAB, MECH-WS, CIVIL-LAB. There is no `LHC-5`.
+
+The booking engine prioritises the `pref_room` if it is in `candidate_rooms`:
+```python
+if pref_room in candidate_rooms:
+    candidate_rooms.remove(pref_room)
+    candidate_rooms.insert(0, pref_room)
+```
+Since `LHC-5` is not in `rooms`, it won't be in `candidate_rooms`, so the engine silently falls through to other eligible rooms. This is correct behaviour. But the reason string on the decision should acknowledge the invalid room was requested, so a judge checking decisions can see it was handled properly. Currently the reason just says category + "requested venue confirmed" without noting the room fallback.
+
+---
+
+## SECTION B — WORKFLOW & APPROVAL
+
+---
+
+### B1 — Disruption approval button does nothing
+
+**File:** `client/src/pages/campus/DisruptionsView.tsx` — `handleApplyRepair`  
+**Criterion:** Rescheduling — **−2 marks**
+
+The rubric gives 4 of 15 rescheduling marks for "a proper approval step." Clicking "Approve & Apply" sets a local boolean and toasts. No API call. The repaired schedule is never persisted.
 
 ```typescript
-// DisruptionsView.tsx
 const handleApplyRepair = () => {
-    setApprovedCommitted(true);   // sets a local boolean
+    setApprovedCommitted(true);   // local state only
     toast.success('Repaired timetable successfully approved...');
-    // NO API CALL — the repaired schedule is never persisted
+    // NO API CALL
 };
 ```
 
-`POST /api/disruptions/submit` runs the solver, stores a `DisruptionJob` record, and
-returns the diff — but it does NOT create a `ScheduleVersion` or activate the result.
-There is no commit endpoint for the general disruption flow.
+The `POST /api/disruptions/submit` route computes the diff and creates a `DisruptionJob` record but does not store the repaired assignments and has no commit endpoint.
 
-Note: The **faculty unavailability** flow (`POST /api/faculty/unavailability`) DOES work
-end-to-end — it creates a `pending_approval` `ScheduleVersion` that goes through the full
-proposal → approve pipeline. Only the general disruption path in `DisruptionsView` is broken.
+Note: The faculty unavailability flow (`POST /api/faculty/unavailability`) **does** work end-to-end — it creates a `pending_approval` ScheduleVersion through the full proposal → approve pipeline. Only the general disruption path in `DisruptionsView` is broken.
 
-#### Fix
+**Fix:**
 
-**Step 1** — `disruptions.ts`: Store repaired assignments in the `DisruptionJob` and add a
-commit endpoint:
+Step 1 — Store repaired assignments in `DisruptionJob` and add a commit route:
 ```typescript
-// In /api/disruptions/submit: add to job creation
-repairedAssignmentsJson: result.assignments  // store on the job record
+// In POST /api/disruptions/submit, add to prisma.disruptionJob.create:
+repairedAssignmentsJson: result.assignments
 
-// New endpoint:
+// New route:
 router.post('/commit/:jobId', authenticate, requireRole([Role.admin]), async (req, res) => {
     const job = await prisma.disruptionJob.findUnique({ where: { id: req.params.jobId } });
-    // Supersede current active version, create new active version from job.repairedAssignmentsJson
-    // (same atomic transaction pattern as schedules/proposals/:id/approve)
+    // Atomic: supersede current active, create new active version from job.repairedAssignmentsJson
 });
 ```
 
-**Step 2** — `DisruptionsView.tsx`: Replace the local state toggle with a real API call:
+Step 2 — Make the button call the API:
 ```typescript
 const handleApplyRepair = async () => {
     if (!repairResult?.jobId) return;
@@ -197,318 +243,269 @@ const handleApplyRepair = async () => {
 
 ---
 
-### Problem B2 — "No self-approval" rule is opt-in, not enforced
+### B2 — "No self-approval" rule gated behind an environment variable
 
-#### Area
-`server/src/routes/schedules.ts` — `POST /api/schedules/proposals/:id/approve`
-
-#### Impact
-**RBAC compliance — rule from problem statement: "nobody can approve their own request"**
-
-#### Root cause
+**File:** `server/src/routes/schedules.ts` line ~312  
+**Criterion:** RBAC compliance — problem statement says "nobody can approve their own request"
 
 ```typescript
-// schedules.ts line ~312
-if (process.env.STRICT_SEPARATION_OF_DUTIES === 'true' && proposal.createdById && ...) {
-    return res.status(403).json({ error: 'You cannot approve your own proposal.' });
+if (process.env.STRICT_SEPARATION_OF_DUTIES === 'true' && ...) {
+    return res.status(403).json({ ... });
 }
 ```
 
-The check is **gated behind an environment variable** `STRICT_SEPARATION_OF_DUTIES`.
-If that variable is not set to `"true"` in the deployment environment (which is not
-guaranteed), the rule is silently skipped. The problem statement says this is a hard
-requirement: "nobody can approve their own request." It should always be enforced.
+If `STRICT_SEPARATION_OF_DUTIES` is not `"true"` in the deployment env, this check never runs. It should always be enforced.
 
-#### Fix
-
-Remove the environment variable gate:
+**Fix:** Remove the env var gate:
 ```typescript
 // Before
 if (process.env.STRICT_SEPARATION_OF_DUTIES === 'true' && proposal.createdById && proposal.createdById === req.user?.id) {
-
-// After — always enforce
+// After
 if (proposal.createdById && proposal.createdById === req.user?.id) {
 ```
 
 ---
 
-## SECTION C — RBAC PROBLEMS
+## SECTION C — RBAC
 
 ---
 
-### Problem C1 — Department coordinator cannot approve lab bookings
+### C1 — Department coordinator cannot approve lab bookings
 
-#### Area
-`server/src/routes/bookings.ts` — `POST /api/bookings/solve`
+**File:** `server/src/routes/bookings.ts`  
+**Criterion:** RBAC compliance — missing coordinator capability
 
-#### Impact
-**RBAC compliance — missing coordinator capability from the problem statement**
+The problem statement says coordinators can "approve bookings of their department's labs." The only booking approval route is `POST /api/bookings/solve` which is `requireRole([Role.admin])` only. There is no endpoint that allows a coordinator to approve a booking for their department's lab. The coordinator can view scoped bookings but cannot act on them.
 
-The problem statement says: the coordinator can **"approve bookings of their department's
-labs."** No such endpoint or capability exists anywhere in the system.
+From the dataset: CSE has CS-LAB-1 and CS-LAB-2, ECE has ELEC-LAB-1 and ELEC-LAB-2, etc. A coordinator for CSE should be able to approve a booking request for CS-LAB-1 or CS-LAB-2.
 
-#### Root cause
-
-`POST /api/bookings/solve` is `requireRole([Role.admin])` only. There is no route that
-allows a coordinator to review or approve a booking request that involves their
-department's lab rooms. The coordinator can view bookings scoped to their department
-(the GET route filters by role), but cannot take any approval action on them.
-
-The concept of lab booking approval by a coordinator is also absent from the frontend —
-`SpectraBookingsView.tsx` shows decisions as read-only for non-admin roles.
-
-#### Fix
-
-Add a coordinator-accessible approval endpoint that gates on department ownership of the lab:
-```typescript
-// bookings.ts — new route
-router.post('/approve-lab/:requestId',
-    authenticate,
-    requireRole([Role.department_coordinator, Role.admin]),
-    async (req: AuthenticatedRequest, res) => {
-        const request = await prisma.bookingRequest.findUnique({ where: { externalId: req.params.requestId } });
-        // Verify the requested room is a lab belonging to the coordinator's department
-        const room = await prisma.room.findFirst({ where: { externalId: request.requestedRoom } });
-        const coordDept = req.user?.department;
-        if (req.user?.role !== Role.admin && !room?.externalId.toUpperCase().includes(coordDept)) {
-            return res.status(403).json({ error: 'You can only approve bookings for your department labs.' });
-        }
-        // Self-approval check
-        if (request.createdById === req.user?.id) {
-            return res.status(403).json({ error: 'You cannot approve your own request.' });
-        }
-        // Apply approval...
-    }
-);
-```
-
-On the frontend, show an "Approve Lab Booking" button in `SpectraBookingsView` when the
-logged-in role is `department_coordinator` and the request is for a lab room in their department.
+**Fix:** Add a coordinator-scoped approval endpoint that verifies the requested room belongs to the coordinator's department, and enforces the no-self-approval rule.
 
 ---
 
-### Problem C2 — Faculty cannot request extra or moved sessions through the UI
+### C2 — Faculty cannot request extra or moved sessions through the UI
 
-#### Area
-`client/src/pages/campus/TimetableDashboard.tsx`, `server/src/routes/faculty.ts`
+**File:** `client/src/pages/campus/TimetableDashboard.tsx`  
+**Criterion:** RBAC compliance — missing faculty capability
 
-#### Impact
-**RBAC compliance — missing faculty capability from the problem statement**
+The problem statement says faculty can "request extra or moved sessions." The `Mark Unavailability` flow is complete. Requesting a specific session move or a new session to be added is not implemented. The AI Copilot returns a `disruptionProposal` JSON for rescue/reschedule requests but doesn't submit it through the workflow — it just displays raw JSON for the user to read.
 
-The problem statement says faculty can **"request extra or moved sessions."**
-
-#### Root cause
-
-The faculty `Mark Unavailability` flow is well-implemented: faculty marks a slot as
-unavailable → the disruption solver re-schedules their sessions → an admin approval
-proposal is created.
-
-However, **requesting a new extra session** or **requesting a specific session be moved**
-to a different slot is not implemented. There is no UI element or API endpoint for
-faculty to submit a move/add request that gets routed to admin for approval.
-
-The AI Copilot partially covers this — a faculty member can type "move CS201 to
-Thursday afternoon" and get a `disruptionProposal` JSON back — but:
-1. The proposal is displayed as raw JSON for the user to copy-paste, not submitted
-   automatically through the workflow.
-2. The underlying route (`POST /api/faculty/unavailability`) only handles the
-   "unavailability" case, not "I want to move session X to slot Y."
-
-#### Fix
-
-Extend the timetable session detail drawer (already exists for admins) to show a
-"Request Move" button when the role is `faculty`. Submitting it creates a
-`FacultySessionMoveRequest` record in `pending_approval` state that shows up in the
-admin proposals queue — same flow as the unavailability proposal.
+**Fix:** Add a "Request Session Move" action in the timetable session detail drawer for faculty role, which creates a `FacultySessionMoveRequest` record in `pending_approval` state visible in the admin proposals queue.
 
 ---
 
-### Problem C3 — Client-side fallback auth bypasses server-side RBAC
+### C3 — Client-side fallback auth bypasses server RBAC silently
 
-#### Area
-`client/src/contexts/CampusAuthContext.tsx` — `login` function
+**File:** `client/src/contexts/CampusAuthContext.tsx`  
+**Criterion:** RBAC stability — judges may appear logged in but all API calls fail
 
-#### Impact
-**Security / RBAC integrity — judges can log in with a fake role if the server is down**
+When the backend returns 500 or is unreachable, the client logs in using hardcoded `DEMO_FALLBACK_USERS` with a `mock-token-*` string. This token is not signed with the server JWT secret, so every subsequent API call returns 401. The user appears authenticated on the frontend but sees empty data everywhere.
 
-#### Root cause
-
-```typescript
-// CampusAuthContext.tsx
-} catch (err: any) {
-    // Resilient client-side fallback if backend encounters 500 or network failure
-    const fallbackUser = DEMO_FALLBACK_USERS[cleanEmail];
-    if (fallbackUser) {
-        const mockToken = `mock-token-${fallbackUser.role}-${Date.now()}`;
-        localStorage.setItem('cit_token', mockToken);
-        setUser(fallbackUser);
-        return;  // logged in with a hardcoded role, no server involvement
-    }
-```
-
-When the backend is unreachable or throws a 500, the client logs the user in using a
-hardcoded `DEMO_FALLBACK_USERS` object and issues a `mock-token-*` JWT. This token is not
-signed with the server's `JWT_SECRET`, so any subsequent API call with it will fail
-`jwt.verify()` and return `401`. The user appears logged in on the frontend but all API
-calls will fail silently.
-
-Worse: a judge evaluating the live app with a slow network connection could appear to be
-logged in as Admin but see empty data everywhere — a very confusing experience.
-
-#### Fix
-
-Remove the client-side fallback auth entirely. If the server is down, show a clear error:
+**Fix:** Remove the client-side fallback. The server's `auth.ts` already has its own `DEMO_ACCOUNTS` fallback that works even when the DB is unreachable. Surface the real error:
 ```typescript
 } catch (err: any) {
-    // Do NOT fall back to hardcoded users. Surface the real error.
     throw new Error(err.response?.data?.error || 'Server unavailable. Please try again.');
 }
 ```
 
-The server already has its own demo account fallback (`DEMO_ACCOUNTS` in `auth.ts`) that
-works even when the database is unreachable, so the client fallback is redundant and
-harmful.
+---
+
+## SECTION D — DATA & OUTPUT
 
 ---
 
-## SECTION D — UX & OUTPUT PROBLEMS
+### D1 — Soft score discrepancy between README and validation_report.json
+
+**File:** `README.md` (~line 130)  
+**Criterion:** Documentation — credibility issue
+
+README states `soft score of 315.0`. `exports/validation_report.json` states `290`. One is from a different solver run. Run the validator against the committed `exports/schedule.json` and update the README to match.
 
 ---
 
-### Problem D1 — Soft score discrepancy between README and validation_report.json
+### D2 — AI Copilot uses wrong room IDs in hardcoded knowledge base
 
-#### Area
-`README.md` (~line 130), `exports/validation_report.json`
+**File:** `server/src/routes/assistant.ts` — `processPromptWithAI` system prompt  
+**Criterion:** Use of AI — wrong answers on capacity questions
 
-#### Impact
-**Code and documentation — credibility issue with judges**
-
-#### Root cause
-
-`README.md` states: `soft score of 315.0 for the published baseline`.
-`exports/validation_report.json` states: `"soft_total": 290`.
-
-These are inconsistent — one of them was generated from a different schedule version.
-Judges who notice the mismatch will question which number to trust.
-
-#### Fix
-
-Run the official validator against the currently committed `exports/schedule.json`:
-```bash
-python validator.py --data data/cit_public.json --schedule exports/schedule.json
+The Gemini system prompt hardcodes:
 ```
-Update the README table to the verified number from this run. The `validation_report.json`
-value (290) is more likely correct since it was generated programmatically.
+LH-1 (120), LH-2 (120), LH-3 (90), SH-1 (80, wheelchair accessible), SH-2 (80, upper floor WITHOUT elevator)
+```
+
+From `cit_public.json`, the actual values are:
+- LH-1: **200** seats (not 120)
+- LH-2: **200** seats (not 120)
+- LH-3: **120** seats (not 90)
+- LH-4: **120** seats — also exists
+- LH-5: **120** seats — also exists
+- LH-6: **120** seats — also exists
+- SH-1: **150** seats (not 80)
+- SH-2: **100** seats (not 80)
+- OAT: **800** seats (not mentioned)
+
+The fallback capacity response in the chat route also hardcodes:
+```typescript
+"Lecture Halls L1 & L2: 120 seats each"  // wrong — actual 200
+"Seminar Halls SH-1 & SH-2: 80 seats each"  // wrong — actual 150 and 100
+```
+
+If a judge asks "what is the capacity of LH-1" or "can 180 people fit in LH-1", the AI will say no (120 < 180) when the answer is yes (200 > 180). This directly fails the "explain its decisions" requirement.
+
+**Fix:** Update both the Gemini system prompt and the hardcoded fallback strings to match `cit_public.json`. Better still, load the rooms from the database and inject them into the prompt dynamically rather than hardcoding.
 
 ---
 
-### Problem D2 — P10–P13 event periods not rendered in the timetable grid
+### D3 — P10–P13 event periods not rendered in the timetable grid
 
-#### Area
-`client/src/pages/campus/TimetableDashboard.tsx` — grid rendering
+**File:** `client/src/pages/campus/TimetableDashboard.tsx`  
+**Criterion:** Usability — Spectra booking placements are invisible
 
-#### Impact
-**Usability — Spectra booking placements are invisible in the timetable view**
+The timetable grid renders P1–P9 only. Most Spectra bookings are in P10–P13 (18:00–22:00). A judge verifying that BR-01 (Spectra Inauguration, MON P4–P5) or BR-05a–e (Dance rehearsals, P11–P12 each day) were allocated correctly cannot see them in the timetable view.
 
-#### Root cause
-
-The timetable grid renders P1–P9 only. Approved Spectra bookings placed in P10–P13
-(18:00–22:00) by the booking engine have no visual representation anywhere in the
-timetable. A judge verifying that a booking was placed in an evening slot sees nothing.
-
-#### Fix
-
-Add a collapsed "Evening Events (P10–P13)" row per day in the timetable grid that
-expands to show any approved bookings in those periods. Booking decisions are already
-available from the active schedule data — they just need to be rendered.
+**Fix:** Add a collapsible "Evening Events (P10–P13)" section per day row showing approved bookings in those periods.
 
 ---
 
-### Problem D3 — Drag-and-drop is a form, not live drag-and-drop
+### D4 — Drag-and-drop is a drawer form, not live drag-and-drop
 
-#### Area
-`client/src/pages/campus/TimetableDashboard.tsx` — session card interaction
+**File:** `client/src/pages/campus/TimetableDashboard.tsx`  
+**Criterion:** UI/Design — described live feedback feature not present
 
-#### Impact
-**UI/Design — described live feedback feature not present**
+Session cards open a drawer with dropdowns. The Python service has `/internal/batch-validate-moves` specifically for live DnD feedback but the frontend never triggers drag events.
 
-#### Root cause
-
-Clicking a session card opens a detail drawer with dropdown selects for Target Day,
-Period, and Room. The user clicks "Validate Move" → "Apply Move." This is a manual
-move form. The Python service has a `/internal/batch-validate-moves` endpoint purpose-built
-for live drag-and-drop feedback, but the frontend never calls it during drag operations
-because there are no drag operations.
-
-#### Fix
-
-Use the HTML5 Drag and Drop API:
-1. Add `draggable={true}` and `onDragStart` to session cards (stores `session_id`).
-2. Add `onDragEnter` to grid cells — call `campusApi.batchValidateMoves` with the
-   hovered slot as a candidate.
-3. Apply `border-green-500 bg-green-50` or `border-red-500 bg-red-50` based on the result.
-4. On `onDrop`, call `applyMove` if valid.
-
-All required backend endpoints already exist. This is a frontend-only change.
+**Fix:** Add `draggable={true}` + `onDragStart/onDragEnter/onDrop` to session cards. On hover, call `campusApi.batchValidateMoves` and colour cells green/red. All backend endpoints already exist.
 
 ---
 
-### Problem D4 — Session cards show IDs only, not full names
+### D5 — Session cards show IDs only, not full names
 
-#### Area
-`client/src/pages/campus/TimetableDashboard.tsx` — `renderPeriodBlock`
+**File:** `client/src/pages/campus/TimetableDashboard.tsx`  
+**Criterion:** Usability — judges must mentally map IDs
 
-#### Impact
-**Usability — judges must mentally cross-reference IDs to verify constraints**
+Cards show `F07`, `CR-201`, not "Dr. Pooja Das", "Classroom B-201". `facultyMap` and `roomsMap` are already loaded in the component.
 
-#### Root cause
-
-Session cards show `CS201`, `LH-1`, `F07`. Full names (`facultyMap`, `roomsMap`) are
-already loaded in the component but not rendered in the card body.
-
-#### Fix
-
+**Fix:**
 ```tsx
-// Before
-<span className="truncate">{session.facultyId}</span>
-
-// After
-<span className="truncate">
-    {facultyMap.get(session.facultyId)?.name || session.facultyId}
-</span>
+// Replace
+<span>{session.facultyId}</span>
+// With
+<span>{facultyMap.get(session.facultyId)?.name || session.facultyId}</span>
 ```
 
-Same for room name. Optionally add a `♿` indicator when `room.accessible` and
-`session.needsAccessible` are both true.
+Also: `CR-201` is on the 2nd floor with no lift (`accessible: false`). ME-2 group `needs_accessible: true`. A visual `♿❌` warning on any assignment where `room.accessible === false && session.needsAccessible === true` would help judges verify H10 visually.
 
 ---
 
-## Summary Table
+## SECTION E — DATASET-SPECIFIC GAPS
 
-| # | Problem | Area | Criterion | Est. mark loss | Fix complexity |
+---
+
+### E1 — Booking engine alternative search only looks at P10–P13; BR-10 needs a daytime slot
+
+**File:** `optimizer/booking_engine.py` — alternative window search  
+**Criterion:** Booking decisions — BR-10 may be mishandled
+
+BR-10 (Photography Club photo exhibition) requests:
+```json
+"windows": [{"day": "FRI", "from_period": 1, "to_period": 9}]
+```
+Duration 9 periods — the entire teaching day. `room_types: ["seminar_hall"]`, `needs: ["accessible"]`.
+
+Only SH-1 is a `seminar_hall` that is `accessible: true`. If SH-1 is occupied on FRI during teaching hours (e.g. by an exam or another booking), the primary placement fails. The alternative search then looks only at P10–P13:
+```python
+for p_start in range(10, MAX_PERIOD - dur + 2):  # range(10, 13 - 9 + 2) = range(10, 6) → empty!
+```
+For `dur = 9`, `MAX_PERIOD - dur + 2 = 13 - 9 + 2 = 6`. `range(10, 6)` is empty — the loop never runs, no alternative is found, and BR-10 is rejected with no alternative offered even if a daytime slot is available.
+
+This is a latent bug for any request with a large duration. It only manifests when the primary window fails and the alternative search window arithmetic underflows.
+
+**Fix:**
+```python
+# Replace the alternative search range
+for p_start in range(1, MAX_PERIOD - dur + 2):  # search all periods, not just P10+
+    p_end = p_start + dur - 1
+    if p_end > MAX_PERIOD:
+        continue
+    # Also check this is not a teaching period if it's a teaching-only booking...
+```
+Alternatively, separate the alternative search into "try all remaining day/period combinations" rather than only evening slots.
+
+---
+
+### E2 — F26 `needs_accessible: true` — must only be assigned accessible rooms
+
+**File:** `optimizer/timetable_solver.py` — pre-filtering  
+**Criterion:** Scheduling correctness — H10 violation risk
+
+From `cit_public.json`, F26 (Dr. Abhishek Rout, ME) has `"needs_accessible": true`. This is the only faculty member with this flag. The solver pre-filters correctly:
+
+```python
+if needs_acc and not r.get("accessible"):
+    continue
+```
+
+But `needs_acc` is read from the **session** (`s.get("needs_accessible")`), not the **faculty**. If F26 teaches a session that has `"needs_accessible": false` in the session definition, the faculty accessibility requirement is ignored. The canonical validator also only checks session-level `needs_accessible`.
+
+From the dataset, F26 teaches ME lab sessions. Checking if those sessions carry `needs_accessible: true` is critical. If they do not, F26 could be assigned to MECH-WS which is `accessible: true` — fine. But if the solver puts one of his sessions in a non-accessible room because the session flag is false, that's a hard violation waiting to happen.
+
+The official `validator.py` checks `s.needs_accessible`, not `faculty.needs_accessible`. So the validator would not catch it as an H10 violation — but logically it is wrong. Cross-check that all sessions assigned to F26 either have `needs_accessible: true` in the session definition, or happen to only land in accessible rooms.
+
+---
+
+### E3 — `schedule_after.json` is a static file, not regenerated from the live schedule
+
+**File:** `server/src/routes/exports.ts` — `GET /schedule_after.json`  
+**Criterion:** Rescheduling — judges apply their own change file and expect the repaired export
+
+The route simply serves the static file:
+```typescript
+router.get('/schedule_after.json', ..., async (req, res) => {
+    const filePath = path.join(EXPORTS_DIR, 'schedule_after.json');
+    if (fs.existsSync(filePath)) {
+        return res.sendFile(filePath);
+    }
+});
+```
+
+When a judge applies a disruption in the app and clicks "Approve & Apply" (currently broken — see B1), the `schedule_after.json` is never written to disk. Even if B1 is fixed, the export route needs to regenerate the file from the newly active schedule version rather than serving a stale static copy.
+
+**Fix:** After committing a disruption repair, write the new schedule to `exports/schedule_after.json`. Add an explicit "Export Disruption Schedule" action in the UI that regenerates this file on demand.
+
+---
+
+## Full Summary Table
+
+| # | Problem | File | Criterion | Est. loss | Priority |
 |:---:|---|---|---|:---:|:---:|
-| A1 | S2, S3, S4 not in solver objective | `timetable_solver.py` | Optimisation | −3 to −5 | Medium |
-| B1 | Disruption approval button does nothing | `DisruptionsView.tsx` | Rescheduling | −2 | Medium |
-| B2 | Self-approval rule is opt-in via env var | `schedules.ts` | RBAC | −0.5 | Trivial |
-| C1 | Coordinator cannot approve lab bookings | `bookings.ts` | RBAC / Usability | −1 | Medium |
-| C2 | Faculty cannot request extra/moved sessions | `TimetableDashboard.tsx` | RBAC / Usability | −0.5 | Medium |
-| C3 | Client-side fallback auth bypasses server RBAC | `CampusAuthContext.tsx` | RBAC / Stability | −0.5 | Trivial |
-| D1 | Soft score discrepancy in README vs JSON | `README.md` | Documentation | −0.5 | Trivial |
-| D2 | P10–P13 not rendered in timetable grid | `TimetableDashboard.tsx` | Usability | −1 | Low |
-| D3 | Drag-and-drop is a form, not live DnD | `TimetableDashboard.tsx` | UI/Design | −1 | High |
-| D4 | Session cards show IDs not names | `TimetableDashboard.tsx` | Usability | −0.5 | Trivial |
+| A1 | S2/S3/S4 not in solver objective | `timetable_solver.py` | Optimisation | −3 to −5 | 🔴 High |
+| A2 | Sample disruption doesn't read the real file | `DisruptionsView.tsx` | Rescheduling | risk | 🟡 Medium |
+| A3 | Exam multi-room bilinear verify | `exam_solver.py` | Correctness | verify | 🟢 Low |
+| A4 | BR-17 window P13–14 (P14 invalid) | `booking_engine.py` | Booking | verify | 🟢 Low |
+| A5 | BR-14 requests non-existent room LHC-5 | `booking_engine.py` | Booking | −0.5 | 🟢 Low |
+| B1 | Disruption approve button does nothing | `DisruptionsView.tsx` | Rescheduling | −2 | 🔴 High |
+| B2 | Self-approval rule gated by env var | `schedules.ts` | RBAC | −0.5 | 🟢 Low |
+| C1 | Coordinator cannot approve lab bookings | `bookings.ts` | RBAC | −1 | 🟡 Medium |
+| C2 | Faculty cannot request extra/moved sessions | `TimetableDashboard.tsx` | RBAC | −0.5 | 🟡 Medium |
+| C3 | Client-side fallback auth bypasses RBAC | `CampusAuthContext.tsx` | RBAC/Stability | −0.5 | 🟡 Medium |
+| D1 | Soft score mismatch in README | `README.md` | Documentation | −0.5 | 🟢 Low |
+| D2 | AI Copilot has wrong room capacities | `assistant.ts` | Use of AI | −1 | 🔴 High |
+| D3 | P10–P13 not shown in timetable | `TimetableDashboard.tsx` | Usability | −1 | 🟡 Medium |
+| D4 | Drag-and-drop is a form, not live DnD | `TimetableDashboard.tsx` | UI/Design | −1 | 🟡 Medium |
+| D5 | Cards show IDs not names | `TimetableDashboard.tsx` | Usability | −0.5 | 🟢 Low |
+| E1 | BR-10 alternative search underflows for dur=9 | `booking_engine.py` | Booking | −1 | 🔴 High |
+| E2 | F26 needs_accessible on faculty not session | `timetable_solver.py` | Correctness | verify | 🟡 Medium |
+| E3 | schedule_after.json is static, never regenerated | `exports.ts` | Rescheduling | −1 | 🔴 High |
 
-**Total estimated mark loss if all 10 problems remain: −11 to −13 marks.**
-**Expected score with all fixes applied: ~83–87 / 90.**
+**Estimated total mark loss if all remain: −15 to −18.**  
+**Expected score with all fixes: ~83–87 / 90.**
 
----
+### Fix order recommendation
 
-## RBAC Quick Reference (from problem statement)
-
-| Role | Can do | Backend enforced? |
-|---|---|:---:|
-| Admin | Everything | ✅ All admin routes use `requireRole([Role.admin])` |
-| Coordinator | Dept timetable view, dept bookings, **approve dept lab bookings** | ⚠️ View scoped ✅ but lab approval missing ❌ |
-| Faculty | Own timetable view, mark unavailability, **request moved/extra sessions** | ⚠️ View + unavailability ✅ but session requests missing ❌ |
-| Club | Submit/cancel bookings, view own request status + reasons | ✅ Fully implemented |
-| All roles | Cannot approve own request | ⚠️ Implemented but gated behind env var (Problem B2) |
+1. **A1** — S4 objective term (single block of code, recovers ~150 soft penalty points)
+2. **B1 + E3** — disruption commit endpoint + regenerate schedule_after.json (same feature, do together)
+3. **D2** — fix hardcoded room capacities in AI assistant (5-minute text change, directly tested by judges)
+4. **E1** — fix booking alternative search underflow for large durations
+5. **B2** — remove env var gate from self-approval check (one-line change)
+6. **D3** — render P10–P13 bookings in timetable grid
+7. **A1 S3/S2** — add remaining soft penalty terms

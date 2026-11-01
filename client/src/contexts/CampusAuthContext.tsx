@@ -89,7 +89,6 @@ export const CampusAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }, []);
 
   const login = async (email: string, pass: string) => {
-    const cleanEmail = email.trim().toLowerCase();
     try {
       const res = await campusApi.login(email, pass);
       localStorage.setItem('cit_token', res.token);
@@ -97,22 +96,8 @@ export const CampusAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setToken(res.token);
       setUser(res.user);
     } catch (err: any) {
-      // Resilient client-side fallback if backend encounters 500 or network failure
-      const fallbackUser = DEMO_FALLBACK_USERS[cleanEmail] ||
-        (cleanEmail === 'admin' ? DEMO_FALLBACK_USERS['admin@cit.edu'] :
-         cleanEmail === 'coord' ? DEMO_FALLBACK_USERS['coord.cse@cit.edu'] :
-         cleanEmail === 'faculty' ? DEMO_FALLBACK_USERS['faculty.f19@cit.edu'] :
-         cleanEmail === 'club' ? DEMO_FALLBACK_USERS['dramatics@cit.edu'] : undefined);
-
-      if (fallbackUser) {
-        const mockToken = `mock-token-${fallbackUser.role}-${Date.now()}`;
-        localStorage.setItem('cit_token', mockToken);
-        localStorage.setItem('cit_user', JSON.stringify(fallbackUser));
-        setToken(mockToken);
-        setUser(fallbackUser);
-        return;
-      }
-      throw err;
+      const msg = err.response?.data?.error || err.message || 'Authentication failed. Please verify your credentials.';
+      throw new Error(msg);
     }
   };
 

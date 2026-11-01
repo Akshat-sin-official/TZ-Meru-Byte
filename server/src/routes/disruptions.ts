@@ -4,7 +4,7 @@ import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import { authenticate, requireRole, AuthenticatedRequest } from '../middleware/auth.js';
-import { emitNotification } from '../utils/notifications.js';
+import { emitNotification, recordAuditLog, getSafeUserId } from '../utils/notifications.js';
 
 const router = Router();
 const prisma = new PrismaClient();
