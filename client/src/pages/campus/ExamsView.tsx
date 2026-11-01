@@ -312,24 +312,25 @@ export const ExamsView: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Header and Controls */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#E5E7EB]">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <h2 className="text-xl font-bold font-poppins text-[#09090B] tracking-tight">
-              Midsem Examination Seating
-            </h2>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-[#F4F4F5] border border-[#E5E7EB] text-[#09090B]">
-              41 Exams Active
-            </span>
+    <div className="space-y-4 font-sans text-[#37352F] antialiased">
+      {/* 1. Header & Controls Card */}
+      <div className="bg-white border border-[#EBEBEA] rounded-xl p-4 sm:p-5 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-base sm:text-lg font-semibold text-[#37352F] tracking-tight">
+                Midsem Examination Seating Matrix
+              </h1>
+              <span className="text-[11px] font-mono font-medium text-[#787774] bg-[#F7F6F3] border border-[#EBEBEA] px-2 py-0.5 rounded-md">
+                41 Exams Active
+              </span>
+            </div>
+            <p className="text-xs text-[#787774] mt-0.5 font-sans">
+              Rule E1 Half-Capacity Seating Enforced · 0 Cohort Clashes · Double Seat Gap Buffer
+            </p>
           </div>
-          <p className="text-xs text-[#71717A] mt-0.5 font-poppins">
-            Half-capacity seating enforced (Rule E1) · 0 concurrent cohort clashes · Double seat gap buffer
-          </p>
-        </div>
 
-        <div className="flex items-center flex-wrap gap-2.5">
+          <div className="flex items-center flex-wrap gap-2">
           {/* Cohort Group Dropdown */}
           <div className="flex items-center gap-1.5 text-xs text-[#71717A]">
             <span className="font-semibold text-[#09090B]">Group:</span>
@@ -371,13 +372,14 @@ export const ExamsView: React.FC = () => {
           {user?.role === 'admin' && (
             <button
               onClick={handleStartSolve}
-              className="rounded-lg bg-[#09090B] hover:bg-[#27272A] text-white shadow-xs font-semibold px-3.5 py-1.5 text-xs flex items-center gap-1.5 cursor-pointer transition"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#09090B] text-white hover:bg-black rounded-md text-xs font-medium transition shadow-2xs cursor-pointer"
               title="Launch CP-SAT Midsem Exam Solver"
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-300" />
               <span>Re-Schedule (CP-SAT)</span>
             </button>
           )}
+          </div>
         </div>
       </div>
 
@@ -443,14 +445,14 @@ export const ExamsView: React.FC = () => {
           return (
             <div
               key={day}
-              className="rounded-xl border border-[#E5E7EB] bg-white p-4 space-y-3 shadow-xs hover:border-[#09090B]/30 transition"
+              className="rounded-xl border border-[#EBEBEA] bg-white p-4 space-y-3 shadow-xs hover:border-[#37352F]/40 transition"
             >
-              <div className="flex items-center justify-between pb-2 border-b border-[#E5E7EB]">
+              <div className="flex items-center justify-between pb-2.5 border-b border-[#EBEBEA]">
                 <div className="flex items-center gap-2">
-                  <span className="font-poppins font-bold text-xs text-[#09090B]">{day}</span>
-                  <span className="text-[10px] text-[#71717A]">Midsem Week</span>
+                  <span className="font-semibold text-xs text-[#37352F]">{day}</span>
+                  <span className="text-[10px] text-[#9B9A97]">Midsem Week</span>
                 </div>
-                <span className="text-[10px] font-bold font-poppins text-[#52525B] bg-[#FAF9F6] border border-[#E5E7EB] px-2 py-0.5 rounded-md">
+                <span className="text-[10px] font-mono font-medium text-[#787774] bg-[#F7F6F3] border border-[#EBEBEA] px-2 py-0.5 rounded-md">
                   {totalInDay} exams
                 </span>
               </div>
@@ -476,28 +478,28 @@ export const ExamsView: React.FC = () => {
                             <div
                               key={exItem.id}
                               onClick={() => setSelectedExam({ allocation: exItem, exam })}
-                              className="group p-2.5 rounded-xl border border-[#E5E7EB] bg-[#FAF9F6] hover:bg-white hover:border-[#09090B] cursor-pointer transition text-xs flex items-center justify-between shadow-2xs"
+                              className="group p-2.5 rounded-lg border border-[#EBEBEA] bg-[#FBFBFA] hover:bg-white hover:border-[#37352F] cursor-pointer transition text-xs flex items-center justify-between shadow-2xs select-none"
                             >
-                              <div className="min-w-0 pr-1">
-                                <div className="font-bold text-xs text-[#09090B] truncate font-poppins flex items-center gap-1.5">
+                              <div className="min-w-0 pr-2">
+                                <div className="font-semibold text-xs text-[#37352F] truncate flex items-center gap-1.5">
                                   <span>{exItem.examExternalId}</span>
                                   {exam?.courseIds && exam.courseIds.length > 0 && (
-                                    <span className="text-[10px] font-mono text-[#52525B] font-normal">
+                                    <span className="text-[10px] font-mono text-[#787774] font-normal">
                                       ({exam.courseIds.join(', ')})
                                     </span>
                                   )}
                                 </div>
-                                <div className="text-[11px] text-[#52525B] truncate mt-0.5">
+                                <div className="text-[11px] text-[#787774] truncate mt-0.5">
                                   {exItem.rooms.join(', ')} · {exam?.size || 0} students
                                 </div>
                                 {exam?.groups && (
-                                  <div className="text-[10px] font-mono text-[#71717A] truncate mt-0.5">
+                                  <div className="text-[10px] font-mono text-[#9B9A97] truncate mt-0.5">
                                     {exam.groups.join(', ')}
                                   </div>
                                 )}
                               </div>
-                              <span className="text-[9px] font-bold font-mono px-2 py-0.5 rounded-full bg-[#EBF5E7] text-[#225B1E] shrink-0 border border-[#D5EACD]">
-                                Half-Cap OK
+                              <span className="text-[9px] font-mono font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 shrink-0 border border-emerald-200">
+                                50% Cap OK
                               </span>
                             </div>
                           );
