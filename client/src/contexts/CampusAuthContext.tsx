@@ -53,30 +53,19 @@ export const CampusAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const initAuth = async () => {
       const savedToken = localStorage.getItem('cit_token');
       if (savedToken) {
-        // If it was a mock offline token, restore user directly from stored session
+        // Purge legacy mock tokens so user authenticates with genuine server JWT
         if (savedToken.startsWith('mock-token-')) {
-          const storedUser = localStorage.getItem('cit_user');
-          if (storedUser) {
-            try {
-              setUser(JSON.parse(storedUser));
-              setLoading(false);
-              return;
-            } catch {}
-          }
+          localStorage.removeItem('cit_token');
+          localStorage.removeItem('cit_user');
+          setToken(null);
+          setUser(null);
+          setLoading(false);
+          return;
         }
         try {
           const res = await campusApi.getMe();
           setUser(res.user);
         } catch {
-          // If network / DB down, try restoring stored user before clearing
-          const storedUser = localStorage.getItem('cit_user');
-          if (storedUser) {
-            try {
-              setUser(JSON.parse(storedUser));
-              setLoading(false);
-              return;
-            } catch {}
-          }
           localStorage.removeItem('cit_token');
           localStorage.removeItem('cit_user');
           setToken(null);

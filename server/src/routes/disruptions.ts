@@ -57,8 +57,34 @@ router.get('/latest', authenticate, async (req: AuthenticatedRequest, res: Respo
       }
     }
 
+    const dataset = await prisma.datasetVersion.findFirst({ where: { isCurrent: true } });
+    let latestJob = dataset ? await prisma.disruptionJob.findFirst({
+      where: { datasetVersionId: dataset.id, status: 'succeeded' },
+      orderBy: { createdAt: 'desc' },
+    }) : null;
+
+    if (!latestJob && dataset) {
+      const activeSchedule = await prisma.scheduleVersion.findFirst({
+        where: { datasetVersionId: dataset.id, status: ScheduleStatus.active },
+      });
+      if (activeSchedule) {
+        latestJob = await prisma.disruptionJob.create({
+          data: {
+            datasetVersionId: dataset.id,
+            baseScheduleId: activeSchedule.id,
+            status: 'succeeded',
+            changesJson: { assignments: afterSchedule.timetable || afterSchedule.sessions },
+            sessionsMoved: movedSessions.length,
+            timeChanged: movedSessions.filter((m) => m.type === 'time_changed').length,
+            roomOnlyChanged: movedSessions.filter((m) => m.type === 'room_only_changed').length,
+          },
+        });
+      }
+    }
+
     return res.json({
       available: true,
+      jobId: latestJob?.id || 'latest',
       summary: {
         totalMoved: movedSessions.length,
         timeChanged: movedSessions.filter((m) => m.type === 'time_changed').length,
@@ -181,7 +207,19 @@ router.post('/submit', authenticate, requireRole([Role.admin]), async (req: Auth
 router.post('/commit/:jobId', authenticate, requireRole([Role.admin]), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const jobId = String(req.params.jobId);
-    const job = await prisma.disruptionJob.findUnique({ where: { id: jobId } });
+    let job = null;
+    if (jobId === 'latest') {
+      const dataset = await prisma.datasetVersion.findFirst({ where: { isCurrent: true } });
+      if (dataset) {
+        job = await prisma.disruptionJob.findFirst({
+          where: { datasetVersionId: dataset.id, status: 'succeeded' },
+          orderBy: { createdAt: 'desc' },
+        });
+      }
+    } else {
+      job = await prisma.disruptionJob.findUnique({ where: { id: jobId } });
+    }
+
     if (!job) {
       return res.status(404).json({ error: 'Disruption job not found' });
     }

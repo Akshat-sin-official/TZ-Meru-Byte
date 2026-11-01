@@ -90,12 +90,9 @@ export const DisruptionsView: React.FC = () => {
   };
 
   const handleApplyRepair = async () => {
-    if (!repairResult?.jobId) {
-      toast.error('No disruption job identifier found to commit.');
-      return;
-    }
+    const targetJobId = repairResult?.jobId || 'latest';
     try {
-      await campusApi.commitDisruptionRepair(repairResult.jobId);
+      await campusApi.commitDisruptionRepair(targetJobId);
       setApprovedCommitted(true);
       toast.success('Repaired timetable successfully approved and committed to live operations.');
     } catch (err: any) {
