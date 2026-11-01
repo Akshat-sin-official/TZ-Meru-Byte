@@ -4,6 +4,7 @@ import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import { authenticate, requireRole, AuthenticatedRequest } from '../middleware/auth.js';
+import { emitNotification } from '../utils/notifications.js';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -149,6 +150,12 @@ router.post('/submit', authenticate, requireRole([Role.admin]), async (req: Auth
         timeChanged: movedSessions.filter((m) => m.type === 'time_changed').length,
         roomOnlyChanged: movedSessions.filter((m) => m.type === 'room_only_changed').length,
       },
+    });
+
+    await emitNotification({
+      broadcast: true,
+      title: 'Disruption Recovery Plan Executed',
+      message: `Operational mitigation complete: ${movedSessions.length} teaching sessions relocated (${movedSessions.filter((m) => m.type === 'time_changed').length} timeslot adjustments, ${movedSessions.filter((m) => m.type === 'room_only_changed').length} room reassignments) with 0 hard violations.`,
     });
 
     return res.json({

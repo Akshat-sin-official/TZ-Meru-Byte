@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import { PrismaClient, Role, ScheduleStatus, BookingDecisionStatus } from '@prisma/client';
 import axios from 'axios';
 import { authenticate, requireRole, AuthenticatedRequest } from '../middleware/auth.js';
+import { emitNotification } from '../utils/notifications.js';
 import {
   resolveRoomConflict,
   getEffectiveCategory,
@@ -262,6 +263,12 @@ router.post('/solve', authenticate, requireRole([Role.admin]), async (req: Authe
         })),
       });
     }
+
+    await emitNotification({
+      broadcast: true,
+      title: 'Spectra Fest Allocations Solved',
+      message: `CP-SAT solved ${result.bookings?.length || 0} event venue requests with priority satisfaction (${decisionsData.filter(d => d.status === BookingDecisionStatus.approved).length} approved, ${result.session_overrides?.length || 0} session overrides).`,
+    });
 
     return res.json({ success: true, count: result.bookings.length, overrides: result.session_overrides.length });
   } catch (err: any) {

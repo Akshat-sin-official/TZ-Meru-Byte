@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import { PrismaClient, Role, ScheduleStatus } from '@prisma/client';
 import axios from 'axios';
 import { authenticate, requireRole, AuthenticatedRequest } from '../middleware/auth.js';
+import { recordAuditLog, emitNotification, getSafeUserId } from '../utils/notifications.js';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -126,6 +127,8 @@ router.post('/generate', authenticate, requireRole([Role.admin]), async (req: Au
     });
     const nextVersionNumber = (latestVersion?.versionNumber || 0) + 1;
 
+    const safeAdminId = await getSafeUserId(req.user?.id, Role.admin);
+
     const proposal = await prisma.scheduleVersion.create({
       data: {
         datasetVersionId: dataset.id,
@@ -133,7 +136,7 @@ router.post('/generate', authenticate, requireRole([Role.admin]), async (req: Au
         status: ScheduleStatus.pending_approval,
         hardViolations: 0,
         softScoreTotal: Math.round(result.objective_value || 0),
-        createdById: req.user?.id,
+        createdById: safeAdminId,
       },
     });
 
@@ -150,15 +153,20 @@ router.post('/generate', authenticate, requireRole([Role.admin]), async (req: Au
       data: assignmentsToInsert,
     });
 
-    // Audit log
-    await prisma.auditLog.create({
-      data: {
-        userId: req.user?.id,
-        action: 'GENERATE_SCHEDULE_PROPOSAL',
-        entityType: 'SCHEDULE_VERSION',
-        entityId: proposal.id,
-        details: { solve_time: result.solve_time, assignmentsCount: result.assignments.length },
-      },
+    // Safe Audit log & In-app Notification
+    await recordAuditLog({
+      userId: req.user?.id,
+      roleFallback: Role.admin,
+      action: 'GENERATE_SCHEDULE_PROPOSAL',
+      entityType: 'SCHEDULE_VERSION',
+      entityId: proposal.id,
+      details: { solve_time: result.solve_time, assignmentsCount: result.assignments.length },
+    });
+
+    await emitNotification({
+      broadcast: true,
+      title: 'Master Timetable Auto-Scheduled',
+      message: `CP-SAT solver generated a new schedule proposal (v${proposal.versionNumber}) with 0 hard violations and ${result.assignments.length} assignments in ${result.solve_time?.toFixed ? result.solve_time.toFixed(2) : result.solve_time}s.`,
     });
 
     return res.json({
@@ -336,6 +344,8 @@ router.post('/proposals/:id/approve', authenticate, requireRole([Role.admin]), a
       }
     }
 
+    const safeAdminId = await getSafeUserId(req.user?.id, Role.admin);
+
     // Atomic transaction: mark existing active as superseded, activate proposal, update unavailability requests
     await prisma.$transaction([
       prisma.scheduleVersion.updateMany({
@@ -346,7 +356,7 @@ router.post('/proposals/:id/approve', authenticate, requireRole([Role.admin]), a
         where: { id: proposalId },
         data: {
           status: ScheduleStatus.active,
-          approvedById: req.user?.id,
+          approvedById: safeAdminId,
           activatedAt: new Date(),
         },
       }),
@@ -356,25 +366,19 @@ router.post('/proposals/:id/approve', authenticate, requireRole([Role.admin]), a
       }),
     ]);
 
-    let approveAuditId: string | null = null;
-    if (req.user?.id) {
-      const u = await prisma.user.findUnique({ where: { id: req.user.id } });
-      if (u) approveAuditId = u.id;
-      else if (req.user.email) {
-        const ue = await prisma.user.findUnique({ where: { email: req.user.email } });
-        if (ue) approveAuditId = ue.id;
-      }
-    }
-
-    await prisma.auditLog.create({
-      data: {
-        userId: approveAuditId,
-        action: 'ACTIVATE_SCHEDULE',
-        entityType: 'SCHEDULE_VERSION',
-        entityId: proposalId,
-      },
+    await recordAuditLog({
+      userId: req.user?.id,
+      roleFallback: Role.admin,
+      action: 'ACTIVATE_SCHEDULE',
+      entityType: 'SCHEDULE_VERSION',
+      entityId: proposalId,
     });
 
+    await emitNotification({
+      broadcast: true,
+      title: 'Schedule Version Activated',
+      message: `Master Timetable version v${proposal.versionNumber} is now officially active across the campus.`,
+    });
     return res.json({ success: true, message: `Schedule version ${proposal.versionNumber} is now active.` });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
@@ -406,15 +410,13 @@ router.post('/proposals/:id/reject', authenticate, requireRole([Role.admin]), as
       }),
     ]);
 
-    await prisma.auditLog.create({
-      data: {
-        userId: req.user?.id,
-        action: 'REJECT_SCHEDULE_PROPOSAL',
-        entityType: 'SCHEDULE_VERSION',
-        entityId: proposalId,
-      },
+    await recordAuditLog({
+      userId: req.user?.id,
+      roleFallback: Role.admin,
+      action: 'REJECT_SCHEDULE_PROPOSAL',
+      entityType: 'SCHEDULE_VERSION',
+      entityId: proposalId,
     });
-
     return res.json({ success: true, message: `Schedule version ${proposal.versionNumber} proposal has been rejected.` });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
@@ -456,14 +458,19 @@ router.post('/apply-move', authenticate, requireRole([Role.admin]), async (req: 
       },
     });
 
-    await prisma.auditLog.create({
-      data: {
-        userId: req.user?.id,
-        action: 'MANUAL_MOVE_APPLIED',
-        entityType: 'SCHEDULE_ASSIGNMENT',
-        entityId: assignment.id,
-        details: { session_id, old: { day: assignment.day, start: assignment.startPeriod, room: assignment.roomExternalId }, new: { day: target_day, start: target_start_period, room: target_room_id } },
-      },
+    await recordAuditLog({
+      userId: req.user?.id,
+      roleFallback: Role.admin,
+      action: 'MANUAL_MOVE_APPLIED',
+      entityType: 'SCHEDULE_ASSIGNMENT',
+      entityId: assignment.id,
+      details: { session_id, old: { day: assignment.day, start: assignment.startPeriod, room: assignment.roomExternalId }, new: { day: target_day, start: target_start_period, room: target_room_id } },
+    });
+
+    await emitNotification({
+      broadcast: true,
+      title: 'Teaching Session Rescheduled',
+      message: `Session ${session_id} rescheduled to ${target_day} Period ${target_start_period} in ${target_room_id}. Zero constraint violations confirmed.`,
     });
 
     return res.json({

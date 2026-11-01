@@ -53,6 +53,7 @@ export async function seedDatabase() {
   console.log('Seeding 4 standard demo accounts...');
   const users = [
     {
+      id: 'usr-cit-admin-001',
       email: 'admin@cit.edu',
       password: 'CitAdmin2027!',
       name: 'Prof. Dean Office (Admin)',
@@ -60,6 +61,7 @@ export async function seedDatabase() {
       facultyId: 'F37',
     },
     {
+      id: 'usr-cit-coord-002',
       email: 'coord.cse@cit.edu',
       password: 'CitCoord2027!',
       name: 'Dr. CSE Coordinator',
@@ -68,6 +70,7 @@ export async function seedDatabase() {
       facultyId: 'F01',
     },
     {
+      id: 'usr-cit-faculty-003',
       email: 'faculty.f19@cit.edu',
       password: 'CitFaculty2027!',
       name: 'Dr. S. Rath (Faculty F19)',
@@ -76,6 +79,7 @@ export async function seedDatabase() {
       facultyId: 'F19',
     },
     {
+      id: 'usr-cit-club-004',
       email: 'dramatics@cit.edu',
       password: 'CitClub2027!',
       name: 'Dramatics Society',
@@ -88,6 +92,7 @@ export async function seedDatabase() {
     const passwordHash = await bcrypt.hash(u.password, 10);
     await prisma.user.create({
       data: {
+        id: u.id,
         email: u.email,
         passwordHash,
         name: u.name,
@@ -334,6 +339,39 @@ export async function seedDatabase() {
     }
 
     console.log(`Active ScheduleVersion created (id: ${activeSchedule.id}) with 0 hard violations.`);
+  }
+
+  // 9. Seed Authentic Initial Notifications
+  console.log('Seeding initial campus notifications...');
+  const allUsers = await prisma.user.findMany({ select: { id: true } });
+  const initialNotifications = [
+    {
+      title: 'Disruption Handled: Room LH-1 Closure',
+      message: '3 teaching sessions rescheduled to LH-2 with 0 constraint violations. Verified by Dean Office.',
+    },
+    {
+      title: 'Spectra Fest Booking BR-04 Approved',
+      message: 'Auditorium-1 booked for Oct 22, 18:00–21:00 (Priority 3: Institute Event).',
+    },
+    {
+      title: 'Autumn 2027 Baseline Synchronized',
+      message: 'All 189 teaching sessions validated with continuous 13:00 lunch break.',
+    },
+  ];
+
+  const notifsToInsert: any[] = [];
+  for (const u of allUsers) {
+    for (const n of initialNotifications) {
+      notifsToInsert.push({
+        userId: u.id,
+        title: n.title,
+        message: n.message,
+        read: false,
+      });
+    }
+  }
+  if (notifsToInsert.length > 0) {
+    await prisma.notification.createMany({ data: notifsToInsert });
   }
 
   console.log('--- Campora Seeding Completed Successfully ---');

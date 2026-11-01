@@ -87,6 +87,15 @@ export const campusApi = {
     const res = await api.post('/exams/generate');
     return res.data;
   },
+  rescheduleExam: async (params: {
+    examExternalId: string;
+    newDay: string;
+    newSession: string;
+    newRooms?: string[];
+  }) => {
+    const res = await api.post('/exams/reschedule-exam', params);
+    return res.data;
+  },
 
   // Bookings
   getBookings: async () => {
@@ -201,6 +210,20 @@ export const campusApi = {
   },
   testSendWhatsApp: async (data: { phone: string; message?: string }) => {
     const res = await api.post('/whatsapp/test-send', data);
+    return res.data;
+  },
+
+  // Notifications
+  getNotifications: async () => {
+    const res = await api.get('/notifications');
+    return res.data;
+  },
+  markNotificationRead: async (id: string) => {
+    const res = await api.patch(`/notifications/${id}/read`);
+    return res.data;
+  },
+  markAllNotificationsRead: async () => {
+    const res = await api.post('/notifications/mark-all-read');
     return res.data;
   },
 };
