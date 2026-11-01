@@ -213,7 +213,7 @@ export const SpectraBookingsView: React.FC = () => {
     }
   };
 
-  const { requests = [], decisions = [] } = data || {};
+  const { requests = [], decisions = [], rooms = [] } = data || {};
 
   const decisionsMap = useMemo(() => {
     const map = new Map<string, any>();
