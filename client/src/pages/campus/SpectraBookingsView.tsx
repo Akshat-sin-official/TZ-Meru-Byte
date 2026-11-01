@@ -27,6 +27,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Info,
+  Plus,
 } from 'lucide-react';
 
 export const PRIORITY_HIERARCHY = [
@@ -97,6 +98,17 @@ export const SpectraBookingsView: React.FC = () => {
   const [arbitrationResult, setArbitrationResult] = useState<any | null>(null);
   const [evaluating, setEvaluating] = useState(false);
 
+  // Manual Booking Modal state
+  const [manualOpen, setManualOpen] = useState(false);
+  const [submittingManual, setSubmittingManual] = useState(false);
+  const [manualTitle, setManualTitle] = useState('');
+  const [manualAttendance, setManualAttendance] = useState(100);
+  const [manualDay, setManualDay] = useState('FRI');
+  const [manualFromPeriod, setManualFromPeriod] = useState(10);
+  const [manualToPeriod, setManualToPeriod] = useState(11);
+  const [manualCategory, setManualCategory] = useState('club_event');
+  const [manualRoom, setManualRoom] = useState('');
+
   const fetchBookings = async () => {
     setLoading(true);
     try {
@@ -127,8 +139,39 @@ export const SpectraBookingsView: React.FC = () => {
     }
   };
 
-  const handleTestConflict = async () => {
-    setEvaluating(true);
+  const handleCreateManualBooking = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!manualTitle.trim()) {
+      toast.error('Please enter an event title');
+      return;
+    }
+    if (manualFromPeriod >= manualToPeriod) {
+      toast.error('End period must be after start period');
+      return;
+    }
+    setSubmittingManual(true);
+    try {
+      const duration = manualToPeriod - manualFromPeriod + 1;
+      await campusApi.submitBookingRequest({
+        title: manualTitle,
+        attendance: Number(manualAttendance),
+        duration_periods: duration,
+        windows: [{ day: manualDay, from_period: Number(manualFromPeriod), to_period: Number(manualToPeriod) }],
+        requested_category: manualCategory,
+        requested_room: manualRoom || null,
+      });
+      toast.success('Event request submitted successfully via manual form!');
+      setManualOpen(false);
+      setManualTitle('');
+      await fetchBookings();
+    } catch (err: any) {
+      toast.error('Submission failed: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setSubmittingManual(false);
+    }
+  };
+
+  const handleTestConflict = async () => {    setEvaluating(true);
     try {
       const reqA = {
         id: 'REQ-A',
@@ -377,6 +420,148 @@ export const SpectraBookingsView: React.FC = () => {
                     </div>
                   )}
                 </div>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog open={manualOpen} onOpenChange={setManualOpen}>
+              <DialogTrigger asChild>
+                <button
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#09090B] text-white hover:bg-black rounded-md text-xs font-semibold transition shadow-xs cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>New Request Form</span>
+                </button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md bg-white border border-[#E5E7EB] rounded-2xl p-6 font-sans space-y-4">
+                <DialogHeader className="space-y-1">
+                  <DialogTitle className="text-base font-bold text-[#09090B] font-poppins flex items-center gap-2">
+                    <PartyPopper className="w-4 h-4 text-primary" />
+                    Manual Venue Booking Request
+                  </DialogTitle>
+                  <p className="text-xs text-[#71717A]">
+                    Direct submission form with priority category classification and capacity compliance.
+                  </p>
+                </DialogHeader>
+
+                <form onSubmit={handleCreateManualBooking} className="space-y-3.5 text-xs">
+                  <div>
+                    <label className="font-semibold text-[#09090B] block mb-1">Event Title</label>
+                    <Input
+                      placeholder="e.g. Robotics Workshop" 
+                      value={manualTitle}
+                      onChange={(e) => setManualTitle(e.target.value)}
+                      required
+                      className="h-8 text-xs"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="font-semibold text-[#09090B] block mb-1">Expected Attendees</label>
+                      <Input
+                        type="number"
+                        min={10}
+                        max={1200}
+                        value={manualAttendance}
+                        onChange={(e) => setManualAttendance(Number(e.target.value))}
+                        required
+                        className="h-8 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-semibold text-[#09090B] block mb-1">Category</label>
+                      <select
+                        value={manualCategory}
+                        onChange={(e) => setManualCategory(e.target.value)}
+                        className="w-full h-8 text-xs bg-white border border-[#E5E7EB] rounded-lg px-2 text-[#09090B] font-medium"
+                      >
+                        <option value="club_event">Club Event (Priority 6)</option>
+                        <option value="department_event">Dept Event (Priority 5)</option>
+                        <option value="guest_lecture">Guest Lecture (Priority 4)</option>
+                        {user?.role === "admin" && <option value="institute_event">Institute Event (Priority 3)</option>}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className="font-semibold text-[#09090B] block mb-1">Day</label>
+                      <select
+                        value={manualDay}
+                        onChange={(e) => setManualDay(e.target.value)}
+                        className="w-full h-8 text-xs bg-white border border-[#E5E7EB] rounded-lg px-2 text-[#09090B] font-medium"
+                      >
+                        <option value="MON">MON (Oct 18)</option>
+                        <option value="TUE">TUE (Oct 19)</option>
+                        <option value="WED">WED (Oct 20)</option>
+                        <option value="THU">THU (Oct 21)</option>
+                        <option value="FRI">FRI (Oct 22)</option>
+                        <option value="SAT">SAT (Oct 23)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="font-semibold text-[#09090B] block mb-1">Start Period</label>
+                      <select
+                        value={manualFromPeriod}
+                        onChange={(e) => setManualFromPeriod(Number(e.target.value))}
+                        className="w-full h-8 text-xs bg-white border border-[#E5E7EB] rounded-lg px-2 text-[#09090B] font-medium"
+                      >
+                        <option value={10}>P10 (18:00)</option>
+                        <option value={11}>P11 (19:00)</option>
+                        <option value={12}>P12 (20:00)</option>
+                        <option value={6}>P6 (14:00 Day)</option>
+                        <option value={8}>P8 (16:00 Day)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="font-semibold text-[#09090B] block mb-1">End Period</label>
+                      <select
+                        value={manualToPeriod}
+                        onChange={(e) => setManualToPeriod(Number(e.target.value))}
+                        className="w-full h-8 text-xs bg-white border border-[#E5E7EB] rounded-lg px-2 text-[#09090B] font-medium"
+                      >
+                        <option value={11}>P11 (20:00)</option>
+                        <option value={12}>P12 (21:00)</option>
+                        <option value={13}>P13 (22:00)</option>
+                        <option value={7}>P7 (16:00 Day)</option>
+                        <option value={9}>P9 (18:00 Day)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="font-semibold text-[#09090B] block mb-1">Preferred Venue (Optional)</label>
+                    <select
+                      value={manualRoom}
+                      onChange={(e) => setManualRoom(e.target.value)}
+                      className="w-full h-8 text-xs bg-white border border-[#E5E7EB] rounded-lg px-2 text-[#09090B] font-medium"
+                    >
+                      <option value="">Auto-allocate optimal capacity room</option>
+                      {(rooms || []).map((r: any) => (
+                        <option key={r.externalId} value={r.externalId}>
+                          {r.name || r.externalId} ({r.externalId}) — Cap: {r.capacity} pax
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="pt-2 border-t border-[#E5E7EB] flex items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setManualOpen(false)}
+                      className="px-3 py-1.5 border border-[#E5E7EB] hover:bg-[#F4F4F5] rounded-md text-xs font-medium text-[#71717A] cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={submittingManual}
+                      className="px-4 py-1.5 bg-[#09090B] hover:bg-[#27272A] text-white rounded-md text-xs font-semibold cursor-pointer shadow-xs disabled:opacity-50"
+                    >
+                      {submittingManual ? "Submitting..." : "Submit Request"}
+                    </button>
+                  </div>
+                </form>
               </DialogContent>
             </Dialog>
 
