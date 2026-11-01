@@ -1,0 +1,328 @@
+{
+  "info": {
+    "name": "CIT CampusOS — AI Workflow Integrations (Axios + n8n)",
+    "description": "Production Postman test suite for TechZephyr AI workflows (WF01 Booking Intake, WF02 Schedule Change, WF03 Decision Explainer).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "conversationId",
+      "value": "conv-demo-multiturn-01",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Auth - Obtain or Use Bearer Token",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@cit.edu\",\n  \"password\": \"CitAdmin2027!\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        },
+        "description": "Login to obtain a JWT token and set the {{authToken}} environment variable."
+      }
+    },
+    {
+      "name": "1. WF01 — Booking Intake (Single-Turn Natural Language)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"message\": \"kal shaam 6 baje seminar hall chahiye 100 students ke liye 2 ghante\",\n  \"timezone\": \"Asia/Kolkata\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/ai/booking-intake",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "ai",
+            "booking-intake"
+          ]
+        },
+        "description": "Sends a Hinglish booking request. Returns structured draft without auto-creating or approving."
+      }
+    },
+    {
+      "name": "2. WF01 — Booking Intake (Multi-Turn Accumulation)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"message\": \"wheelchair accessibility chahiye aur projector bhi\",\n  \"conversation_id\": \"{{conversationId}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/ai/booking-intake",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "ai",
+            "booking-intake"
+          ]
+        },
+        "description": "Sends follow-up details to an existing conversation. Demonstrates draft merging in memory/MySQL."
+      }
+    },
+    {
+      "name": "3. WF02 — Schedule Change Request",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"message\": \"Prof F07 is on medical leave next Monday, please shift his morning classes\",\n  \"timezone\": \"Asia/Kolkata\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/ai/schedule-change",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "ai",
+            "schedule-change"
+          ]
+        },
+        "description": "Extracts structured disruption intent and evaluates impact with CP-SAT solver. AI never modifies database directly."
+      }
+    },
+    {
+      "name": "4. WF03 — Decision Explainer (Rejected Booking BR-09)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"backend_result\": {\n    \"status\": \"rejected\",\n    \"reason_codes\": [\"CAPACITY_EXCEEDED\", \"MAX_CAMPUS_CAPACITY_500\"],\n    \"request_id\": \"BR-09\",\n    \"venue\": \"Campus Auditorium\",\n    \"attendance\": 600\n  },\n  \"language\": \"English\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/ai/decision-explainer",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "ai",
+            "decision-explainer"
+          ]
+        },
+        "description": "Grounded plain-language explanation of a deterministic scheduling engine decision. Strictly preserves reason codes."
+      }
+    },
+    {
+      "name": "5. WF03 — Decision Explainer (Alternative Offered - Hinglish)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"backend_result\": {\n    \"status\": \"alternative_offered\",\n    \"reason_codes\": [\"VENUE_OCCUPIED_BY_HIGHER_PRIORITY\"],\n    \"request_id\": \"BR-07\",\n    \"requested_room\": \"SH-2\",\n    \"allocated_room\": \"SH-1\"\n  },\n  \"language\": \"Hinglish\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/ai/decision-explainer",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "ai",
+            "decision-explainer"
+          ]
+        },
+        "description": "Tests multi-lingual explanation in Hinglish."
+      }
+    },
+    {
+      "name": "6. Error Handling — Unauthorized (401)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"message\": \"Need room\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/ai/booking-intake",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "ai",
+            "booking-intake"
+          ]
+        },
+        "description": "Verifies that all AI endpoints reject requests without a valid JWT token."
+      }
+    },
+    {
+      "name": "7. Error Handling — Invalid Input (400)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"message\": \"   \"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/ai/booking-intake",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "ai",
+            "booking-intake"
+          ]
+        },
+        "description": "Verifies input validation triggers 400 Bad Request for whitespace or empty messages."
+      }
+    },
+    {
+      "name": "8. Conversation Memory — Retrieve Previous Draft",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/ai/conversations/{{conversationId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "ai",
+            "conversations",
+            "{{conversationId}}"
+          ]
+        },
+        "description": "Retrieves the conversation message history and currently accumulated draft."
+      }
+    },
+    {
+      "name": "9. Legacy Route Compatibility — POST /api/assistant/explain-decision",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"request_id\": \"BR-09\",\n  \"status\": \"rejected\",\n  \"reason\": \"Auditorium max capacity is 500 but request had 600 attendees\",\n  \"room_id\": \"AUDITORIUM\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/assistant/explain-decision",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "assistant",
+            "explain-decision"
+          ]
+        },
+        "description": "Verifies backward compatibility with the existing React AICopilotDrawer frontend."
+      }
+    }
+  ]
+}
+

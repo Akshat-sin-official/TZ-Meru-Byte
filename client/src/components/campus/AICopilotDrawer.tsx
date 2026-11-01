@@ -16,6 +16,9 @@ import {
   Users,
   MapPin,
   Mic,
+  MicOff,
+  Volume2,
+  VolumeX,
   Video,
   Accessibility,
   ArrowRight,
@@ -35,6 +38,8 @@ interface ChatMessage {
   type?: 'explanation' | 'booking_extraction' | 'reschedule_proposal' | 'information' | 'error';
   extracted?: any;
   disruptionProposal?: any;
+  comparison?: any;
+  ai_engine?: string;
   timestamp: string;
 }
 
@@ -52,7 +57,14 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
   const { user } = useCampusAuth();
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(false);
+  const [aiMode, setAiMode] = useState<string>('unified');
   const [submittingBooking, setSubmittingBooking] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [isSilenceDetected, setIsSilenceDetected] = useState(false);
+  const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
+  const recognitionRef = useRef<any>(null);
+  const voiceTimeoutRef = useRef<any>(null);
+  const voiceTranscriptRef = useRef<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const storageKey = `cit_copilot_history_${user?.id || user?.role || 'default'}`;
@@ -135,8 +147,157 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
   useEffect(() => {
     if (open) {
       setTimeout(scrollToBottom, 100);
+    } else {
+      if (recognitionRef.current) {
+        try { recognitionRef.current.abort(); } catch {}
+      }
+      setIsListening(false);
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      setSpeakingMessageId(null);
     }
   }, [open, messages]);
+
+  const toggleSpeechRecognition = () => {
+    if (isListening) {
+      stopSpeechRecognition();
+      return;
+    }
+
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      toast.error('Voice recognition is not supported in this browser. Please use Chrome or Edge.');
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true; // Keep listening through natural breathing pauses
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+      voiceTranscriptRef.current = '';
+      setIsSilenceDetected(false);
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        setIsSilenceDetected(false);
+        toast.info('🎙️ Listening... Speak naturally at your own pace');
+      };
+
+      recognition.onresult = (event: any) => {
+        let fullTranscript = '';
+        for (let i = 0; i < event.results.length; i++) {
+          fullTranscript += event.results[i][0].transcript + ' ';
+        }
+        const cleaned = fullTranscript.trim();
+        if (cleaned) {
+          setInputText(cleaned);
+          voiceTranscriptRef.current = cleaned;
+          setIsSilenceDetected(false);
+
+          // Modern conversational pause threshold: 2.5s sustained silence before final submission
+          if (voiceTimeoutRef.current) {
+            clearTimeout(voiceTimeoutRef.current);
+          }
+          voiceTimeoutRef.current = setTimeout(() => {
+            setIsSilenceDetected(true);
+            if (recognitionRef.current) {
+              try { recognitionRef.current.stop(); } catch {}
+            }
+          }, 2500);
+        }
+      };
+
+      recognition.onerror = (event: any) => {
+        console.warn('Speech recognition error:', event.error);
+        setIsListening(false);
+        setIsSilenceDetected(false);
+        if (voiceTimeoutRef.current) clearTimeout(voiceTimeoutRef.current);
+        if (event.error === 'not-allowed') {
+          toast.error('Microphone access denied. Please allow microphone permissions in browser.');
+        } else if (event.error !== 'no-speech') {
+          toast.error(`Microphone error: ${event.error}`);
+        }
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+        setIsSilenceDetected(false);
+        if (voiceTimeoutRef.current) clearTimeout(voiceTimeoutRef.current);
+        const spoken = voiceTranscriptRef.current.trim();
+        if (spoken) {
+          voiceTranscriptRef.current = '';
+          toast.success('🎙️ Spoken query complete — sending automatically!');
+          handleSendMessage(spoken);
+        }
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (err: any) {
+      console.error('Failed to start voice recognition:', err);
+      setIsListening(false);
+      setIsSilenceDetected(false);
+      toast.error('Could not activate microphone');
+    }
+  };
+
+  const stopSpeechRecognition = () => {
+    if (voiceTimeoutRef.current) clearTimeout(voiceTimeoutRef.current);
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch {}
+    }
+    setIsListening(false);
+    setIsSilenceDetected(false);
+    const spoken = voiceTranscriptRef.current.trim() || inputText.trim();
+    if (spoken) {
+      voiceTranscriptRef.current = '';
+      toast.success('🎙️ Spoken query complete — sending automatically!');
+      handleSendMessage(spoken);
+    }
+  };
+
+  const toggleReadAloud = (msgId: string, text: string) => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      toast.error('Text-to-speech audio is not supported in this browser.');
+      return;
+    }
+
+    if (speakingMessageId === msgId) {
+      window.speechSynthesis.cancel();
+      setSpeakingMessageId(null);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+
+    const cleanText = text
+      .replace(/```[\s\S]*?```/g, 'Code block omitted.')
+      .replace(/`([^`]+)`/g, '$1')
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/\*([^*]+)\*/g, '$1')
+      .replace(/#{1,6}\s?/g, '')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .trim();
+
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.rate = 1.05;
+    utterance.pitch = 1.0;
+
+    utterance.onend = () => {
+      setSpeakingMessageId(null);
+    };
+
+    utterance.onerror = () => {
+      setSpeakingMessageId(null);
+    };
+
+    setSpeakingMessageId(msgId);
+    window.speechSynthesis.speak(utterance);
+  };
 
   const handleSendMessage = async (customPrompt?: string) => {
     const textToSend = customPrompt || inputText;
@@ -155,7 +316,7 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
     setLoading(true);
 
     try {
-      const response = await campusApi.chatWithAssistant(textToSend, user?.role || 'admin');
+      const response = await campusApi.chatWithAssistant(textToSend, user?.role || 'admin', aiMode);
 
       const botMsgId = `bot-${Date.now()}`;
       const botMsg: ChatMessage = {
@@ -165,18 +326,26 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
         type: response.type || 'information',
         extracted: response.extracted || null,
         disruptionProposal: response.disruptionProposal || null,
+        comparison: response.comparison || null,
+        ai_engine: response.ai_engine || null,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
 
       setMessages((prev) => [...prev, botMsg]);
     } catch (err: any) {
-      toast.error('Copilot service encountered a temporary error');
+      console.error('Copilot request failed:', err);
+      const isNetworkError = !err?.response || err.code === 'ERR_NETWORK';
+      const errMsg = isNetworkError
+        ? '⚠️ Cannot connect to backend server at http://localhost:5000. Please ensure run_server.bat is actively running in your terminal.'
+        : (err.response?.data?.error || 'Copilot service encountered a temporary error. Please try again or switch engine mode above.');
+
+      toast.error(isNetworkError ? 'Backend server unreachable (port 5000)' : 'Copilot request error');
       setMessages((prev) => [
         ...prev,
         {
           id: `bot-err-${Date.now()}`,
           sender: 'assistant',
-          text: 'I could not process that request. Please verify your query or try one of the prompt templates below.',
+          text: errMsg,
           type: 'error',
           timestamp: 'Just now',
         },
@@ -270,6 +439,20 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
           </div>
         </SheetHeader>
 
+        {/* Unified Dual-Engine Active Status */}
+        <div className="px-4 py-2 bg-gradient-to-r from-slate-50 via-purple-50/20 to-blue-50/20 border-b border-[#E5E7EB] flex items-center justify-between gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-700 font-poppins">
+            <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+            <span>AI Brain:</span>
+          </div>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-purple-200/80 shadow-2xs">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[11px] font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent font-poppins">
+              ⚡ n8n Workflows + 🧠 Google Gemini
+            </span>
+          </div>
+        </div>
+
         {/* Scrollable Message List */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 bg-[#F9F9FB]">
           {messages.map((msg) => (
@@ -289,6 +472,24 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
                     <span className="font-bold text-primary">CIT Copilot</span>
                     <span>·</span>
                     <span>{msg.timestamp}</span>
+                    <button
+                      type="button"
+                      onClick={() => toggleReadAloud(msg.id, msg.text)}
+                      className="ml-2 inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary transition cursor-pointer px-1.5 py-0.5 rounded-md hover:bg-slate-100 border border-transparent hover:border-slate-200"
+                      title={speakingMessageId === msg.id ? "Stop reading" : "Read aloud"}
+                    >
+                      {speakingMessageId === msg.id ? (
+                        <>
+                          <VolumeX className="w-3 h-3 text-rose-500 animate-pulse" />
+                          <span className="text-rose-600 font-bold">Stop Audio</span>
+                        </>
+                      ) : (
+                        <>
+                          <Volume2 className="w-3 h-3 text-slate-500" />
+                          <span>Listen</span>
+                        </>
+                      )}
+                    </button>
                   </>
                 )}
               </div>
@@ -305,6 +506,42 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
                 <div className="whitespace-pre-wrap font-sans">
                   {msg.text}
                 </div>
+
+                {/* Side-by-Side Model Comparison Benchmark Card */}
+                {msg.comparison && (
+                  <div className="p-3.5 rounded-xl border border-indigo-200 bg-gradient-to-br from-indigo-50/70 to-purple-50/70 space-y-2 mt-2 text-xs">
+                    <div className="flex items-center justify-between border-b border-indigo-200/80 pb-2">
+                      <span className="font-bold font-poppins text-xs text-indigo-950 flex items-center gap-1.5">
+                        <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                        <span>Evaluation Benchmark</span>
+                      </span>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold border border-emerald-300">
+                        Faster: {msg.comparison.faster}
+                      </span>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-[11px] border-collapse">
+                        <thead>
+                          <tr className="border-b border-indigo-200/60 text-slate-500 text-left">
+                            <th className="py-1 px-1 font-semibold">Evaluation Metric</th>
+                            <th className="py-1 px-1 font-semibold text-purple-700">Gemini Direct</th>
+                            <th className="py-1 px-1 font-semibold text-blue-700">n8n Workflow</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-indigo-100/80 font-sans">
+                          {msg.comparison.metrics?.map((m: any, idx: number) => (
+                            <tr key={idx} className="hover:bg-white/40">
+                              <td className="py-1.5 px-1 font-medium text-slate-700">{m.metric}</td>
+                              <td className="py-1.5 px-1 font-mono text-purple-900 font-medium">{m.gemini}</td>
+                              <td className="py-1.5 px-1 font-mono text-blue-900 font-medium">{m.n8n}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
 
                 {/* Extracted Booking Card Widget */}
                 {msg.extracted && (
@@ -427,9 +664,56 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
           </div>
         </div>
 
+        {/* Active Speech Recognition Banner */}
+        {isListening && (
+          <div className="px-4 py-2.5 bg-rose-50 border-t border-rose-200 flex items-center justify-between text-xs text-rose-800 transition-all">
+            <div className="flex items-center gap-2">
+              <span className={`w-2.5 h-2.5 rounded-full ${isSilenceDetected ? 'bg-amber-500 animate-ping' : 'bg-rose-500 animate-ping'}`} />
+              <span className="font-semibold font-poppins">
+                {isSilenceDetected
+                  ? '⏱️ Finished speaking... Submitting query now...'
+                  : '🎙️ Listening... (Take your time, natural pauses allowed)'}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={stopSpeechRecognition}
+              className="text-[11px] font-bold text-rose-700 hover:text-rose-900 bg-white border border-rose-200 px-2.5 py-1 rounded-md shadow-2xs cursor-pointer hover:bg-rose-50"
+              title="Click to submit immediately without waiting"
+            >
+              Send Now
+            </button>
+          </div>
+        )}
+
         {/* Input Bar */}
         <div className="p-4 border-t border-[#E5E7EB] bg-white shrink-0">
           <div className="flex items-center gap-2">
+            {/* Microphone Voice Assistant Button */}
+            <button
+              type="button"
+              onClick={toggleSpeechRecognition}
+              disabled={loading}
+              title={isListening ? "Stop voice recording" : "Speak via microphone"}
+              className={`h-10 px-3 rounded-xl border flex items-center justify-center gap-1.5 transition cursor-pointer shrink-0 ${
+                isListening
+                  ? 'bg-rose-500 text-white border-rose-600 animate-pulse shadow-md shadow-rose-200'
+                  : 'bg-[#FAF9F6] hover:bg-slate-100 text-slate-700 border-[#E5E7EB]'
+              }`}
+            >
+              {isListening ? (
+                <>
+                  <MicOff className="w-4 h-4 text-white" />
+                  <span className="text-[11px] font-bold hidden sm:inline text-white">Listening...</span>
+                </>
+              ) : (
+                <>
+                  <Mic className="w-4 h-4 text-slate-700" />
+                  <span className="text-[11px] font-semibold hidden sm:inline text-slate-600">Voice</span>
+                </>
+              )}
+            </button>
+
             <Input
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
@@ -439,8 +723,10 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
                   handleSendMessage();
                 }
               }}
-              placeholder="Ask Copilot anything (e.g. 'seminar hall kal shaam 6 baje' or 'Why was BR-09 rejected?')..."
-              className="flex-1 h-10 text-xs bg-[#FAF9F6] border-[#E5E7EB] focus:bg-white rounded-xl font-sans"
+              placeholder={isListening ? "Listening to your voice..." : "Ask Copilot or use mic (e.g. 'seminar hall kal shaam 6 baje')..."}
+              className={`flex-1 h-10 text-xs bg-[#FAF9F6] border-[#E5E7EB] focus:bg-white rounded-xl font-sans ${
+                isListening ? 'border-rose-400 bg-rose-50/40 ring-1 ring-rose-300' : ''
+              }`}
             />
 
             <button

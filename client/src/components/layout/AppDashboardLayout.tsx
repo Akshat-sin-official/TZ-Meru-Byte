@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useCampusAuth } from '@/contexts/CampusAuthContext';
 import {
   LayoutDashboard,
+  Database,
   Calendar,
   CalendarDays,
   FileSpreadsheet,
@@ -27,7 +28,7 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 import { campusApi } from '@/services/api';
 import { toast } from 'sonner';
 
-export type CampusTab = 'dashboard' | 'timetable' | 'exams' | 'bookings' | 'disruptions' | 'whatsapp';
+export type CampusTab = 'dashboard' | 'timetable' | 'exams' | 'bookings' | 'disruptions' | 'datahub' | 'whatsapp';
 
 interface AppDashboardLayoutProps {
   activeTab: CampusTab;
@@ -692,6 +693,53 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
                     </div>
                     <span className="text-[11px] font-mono font-medium text-[#52525B] bg-[#F4F4F5] px-1.5 py-0.5 rounded shrink-0">
                       0 Clashes
+                    </span>
+                  </button>
+                )
+              )}
+
+              {/* Data & Validator Hub Channel (PS §2 #9) */}
+              {user?.role === 'admin' && (
+                sidebarCollapsed ? (
+                  <Tooltip delayDuration={80}>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => setActiveTab('datahub')}
+                        className={`w-10 h-10 mx-auto rounded-lg flex items-center justify-center transition-all cursor-pointer relative ${
+                          activeTab === 'datahub'
+                            ? 'bg-white text-[#09090B] border border-[#E5E7EB] shadow-2xs font-semibold'
+                            : 'text-[#52525B] hover:text-[#09090B] hover:bg-[#F4F4F5] border border-transparent'
+                        }`}
+                      >
+                        {activeTab === 'datahub' && (
+                          <span className="absolute -left-1.5 top-2.5 bottom-2.5 w-1 rounded-r bg-[#09090B]" />
+                        )}
+                        <Database className={`h-4 w-4 shrink-0 ${activeTab === 'datahub' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" sideOffset={12} className="flex items-center gap-2 bg-[#09090B] text-white border-0 py-1.5 px-3 shadow-lg">
+                      <span className="text-xs font-medium">Data Hub & Validator</span>
+                      <span className="text-[10px] font-mono bg-emerald-950 text-emerald-400 px-1.5 py-0.2 rounded font-medium">
+                        PS §2 #9
+                      </span>
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <button
+                    onClick={() => setActiveTab('datahub')}
+                    className={`w-full flex items-center justify-between px-3 py-2 text-[13.5px] rounded-lg transition cursor-pointer ${
+                      activeTab === 'datahub'
+                        ? 'bg-white font-semibold text-[#09090B] border border-[#E5E7EB] shadow-2xs'
+                        : 'text-[#3F3F46] hover:text-[#09090B] hover:bg-[#F4F4F5] border border-transparent font-medium'
+                    }`}
+                    title="Dataset & Official Validator Hub"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <Database className={`h-4 w-4 shrink-0 ${activeTab === 'datahub' ? 'text-[#09090B]' : 'text-[#71717A]'}`} />
+                      <span className="whitespace-nowrap">Data Hub & Validator</span>
+                    </div>
+                    <span className="text-[11px] font-mono font-medium text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-1.5 py-0.5 rounded shrink-0">
+                      PS §2 #9
                     </span>
                   </button>
                 )

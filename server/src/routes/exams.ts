@@ -30,6 +30,22 @@ router.get('/active', authenticate, async (req: AuthenticatedRequest, res: Respo
     let examsMeta = await prisma.midsemExam.findMany({ where: { datasetVersionId: dataset.id } });
     let allocations = activeSchedule?.examAllocations || [];
 
+    // Fallback: If current active ScheduleVersion has no exam allocations (e.g. generated separately or superseded),
+    // inherit the most recent valid allocations from any version or baseline
+    if (allocations.length === 0) {
+      const versionWithExams = await prisma.scheduleVersion.findFirst({
+        where: {
+          datasetVersionId: dataset.id,
+          examAllocations: { some: {} },
+        },
+        orderBy: { versionNumber: 'desc' },
+        include: { examAllocations: true },
+      });
+      if (versionWithExams && versionWithExams.examAllocations.length > 0) {
+        allocations = versionWithExams.examAllocations;
+      }
+    }
+
     if (userRole === Role.department_coordinator && userDept) {
       examsMeta = examsMeta.filter((e) =>
         ((e.groups as string[]) || []).some((g) => g.startsWith(userDept))
