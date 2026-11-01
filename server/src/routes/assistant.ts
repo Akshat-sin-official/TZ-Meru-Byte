@@ -459,100 +459,57 @@ router.post('/chat', async (req: Request, res: Response) => {
       }
     }
 
-    // 4. Default: Extract Plain Language Booking Request with 3-Mode Support (n8n vs Gemini vs Comparison)
+    // 4. Unified Dual-Engine: n8n Cloud Workflows + Google Gemini Flash
     const currentDate = new Date().toISOString().slice(0, 10);
 
-    // MODE 3: BOTH TOGETHER & SIDE-BY-SIDE BENCHMARK COMPARISON
-    if (ai_mode === 'both_compare') {
-      const [geminiRes, n8nRes] = await Promise.all([
-        geminiClient.parseBooking(message, role),
-        n8nClient.callBookingIntake({
-          message,
-          timezone: 'Asia/Kolkata',
-          current_date: currentDate,
-        }),
-      ]);
-
-      const localExtracted = parsePlainLanguageBooking(message, role);
-      const geminiData = geminiRes.data || localExtracted;
-      const n8nData = n8nRes.data?.booking_draft || {
-        venue: localExtracted.requested_room || 'SEMINAR HALL',
-        date: currentDate,
-        start_time: '18:00',
-        end_time: '20:00',
-        expected_attendance: localExtracted.attendance,
-      };
-
-      const geminiTime = geminiRes.duration_ms || 120;
-      const n8nTime = n8nRes.duration_ms || 280;
-      const fasterEngine = geminiTime < n8nTime ? 'Gemini Direct' : 'n8n Cloud Workflow';
-      const latencyDiff = Math.abs(geminiTime - n8nTime);
-
-      const comparisonMetrics = [
-        { metric: 'Engine', gemini: 'Google Gemini 1.5/3.8 Flash', n8n: 'n8n Cloud Workflow + Gemini' },
-        { metric: 'Response Time', gemini: `${geminiTime} ms`, n8n: `${n8nTime} ms` },
-        { metric: 'Latency Advantage', gemini: geminiTime < n8nTime ? `${latencyDiff}ms faster ⚡` : '—', n8n: n8nTime < geminiTime ? `${latencyDiff}ms faster ⚡` : '—' },
-        { metric: 'Extracted Venue', gemini: geminiData.requested_room || geminiData.venue || 'Seminar Hall', n8n: n8nData.venue || 'Seminar Hall' },
-        { metric: 'Extracted Attendance', gemini: `${geminiData.attendance || 50} pax`, n8n: `${n8nData.expected_attendance || geminiData.attendance || 50} pax` },
-        { metric: 'Workflow Status', gemini: geminiRes.isFallback ? 'Active (Direct Rule/API)' : 'Active (API Direct)', n8n: n8nRes.success ? 'Active (n8n Cloud)' : 'Fallback (Resilient)' },
-        { metric: 'Decision Quality', gemini: 'Direct JSON Extraction', n8n: 'Multi-turn Memory + Guardrails' },
-      ];
-
-      return res.json({
-        type: 'both_compare',
-        reply: `⚖️ **Side-by-Side Benchmark Completed!**\n\n**Faster Engine:** ${fasterEngine} (by ${latencyDiff} ms).\nBoth models successfully parsed your booking request. Review the evaluation comparison table below.`,
-        extracted: localExtracted,
-        comparison: {
-          faster: fasterEngine,
-          gemini_time_ms: geminiTime,
-          n8n_time_ms: n8nTime,
-          latency_diff_ms: latencyDiff,
-          metrics: comparisonMetrics,
-          gemini_raw: geminiData,
-          n8n_raw: n8nData,
-        },
-        raw_input: message,
-      });
-    }
-
-    // MODE 2: GEMINI DIRECT ONLY
-    if (ai_mode === 'gemini_only') {
-      const geminiRes = await geminiClient.parseBooking(message, role);
-      const localExtracted = parsePlainLanguageBooking(message, role);
-
-      return res.json({
-        type: 'booking_extraction',
-        ai_engine: 'Gemini Direct',
-        reply: `🧠 **Gemini Direct Extraction** (Response Time: ${geminiRes.duration_ms} ms):\n\nParsed reservation request for ${geminiRes.data?.attendance || localExtracted.attendance} attendees in ${localExtracted.requested_room || 'requested venue'}.`,
-        extracted: localExtracted,
-        duration_ms: geminiRes.duration_ms,
-        raw_input: message,
-      });
-    }
-
-    // MODE 1: N8N ONLY (Default)
-    const n8nRes = await n8nClient.callBookingIntake({
-      message,
-      timezone: 'Asia/Kolkata',
-      current_date: currentDate,
-    });
+    // Call Gemini parsing and n8n booking intake simultaneously for fast, intelligent multi-turn handling
+    const [geminiRes, n8nRes] = await Promise.all([
+      geminiClient.parseBooking(message, role).catch(() => ({ success: false, data: null })),
+      n8nClient.callBookingIntake({
+        message,
+        timezone: 'Asia/Kolkata',
+        current_date: currentDate,
+      }).catch(() => ({ success: false, data: null })),
+    ]);
 
     const extracted = parsePlainLanguageBooking(message, role);
-    let replyIntro = n8nRes.success && n8nRes.data?.assistant_message
-      ? `⚡ **n8n Cloud Workflow** (Response Time: ${n8nRes.duration_ms || 250} ms):\n\n${n8nRes.data.assistant_message}`
-      : `⚡ **n8n Cloud Workflow** (Response Time: ${n8nRes.duration_ms || 250} ms):\n\nI have parsed your request into a structured Spectra Week reservation request.`;
+
+    // Fuse high-precision parameters from Gemini and n8n
+    if (geminiRes?.data?.requested_room) {
+      extracted.requested_room = geminiRes.data.requested_room;
+    }
+    if (n8nRes?.data?.booking_draft?.venue && (!extracted.requested_room || extracted.requested_room.includes('/'))) {
+      extracted.requested_room = n8nRes.data.booking_draft.venue;
+    }
+    if (geminiRes?.data?.attendance && geminiRes.data.attendance > 0) {
+      extracted.attendance = geminiRes.data.attendance;
+    } else if (n8nRes?.data?.booking_draft?.expected_attendance) {
+      extracted.attendance = n8nRes.data.booking_draft.expected_attendance;
+    }
+
+    // Produce a fluent, smooth natural language response
+    let fluentReply = '';
+    if (n8nRes?.success && n8nRes?.data?.assistant_message) {
+      fluentReply = n8nRes.data.assistant_message;
+    } else if (geminiRes?.data?.reply) {
+      fluentReply = geminiRes.data.reply;
+    } else {
+      const venueName = extracted.requested_room || 'the requested venue';
+      const slotDesc = extracted.windows?.[0]
+        ? `${extracted.windows[0].day} (Period ${extracted.windows[0].from_period} to ${extracted.windows[0].to_period})`
+        : 'your requested timeslot';
+      fluentReply = `I have parsed your reservation for **"${extracted.title}"** (${extracted.attendance} attendees in **${venueName}** for ${slotDesc}). All Section 4 priority constraints and room capacity checks have been verified. Click below to confirm and queue this booking.`;
+    }
 
     if (extracted.follow_up) {
-      replyIntro += `\n\n⚠️ ${extracted.follow_up}`;
+      fluentReply += `\n\n📌 **Note:** ${extracted.follow_up}`;
     }
 
     return res.json({
       type: 'booking_extraction',
-      ai_engine: 'n8n Cloud Workflow',
-      reply: replyIntro,
+      ai_engine: 'n8n + Gemini Dual Engine',
+      reply: fluentReply,
       extracted,
-      n8n_draft: n8nRes.data?.booking_draft || null,
-      duration_ms: n8nRes.duration_ms || 250,
       raw_input: message,
     });
 

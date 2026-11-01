@@ -57,11 +57,13 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
   const { user } = useCampusAuth();
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(false);
-  const [aiMode, setAiMode] = useState<'n8n_only' | 'gemini_only' | 'both_compare'>('both_compare');
+  const [aiMode, setAiMode] = useState<string>('unified');
   const [submittingBooking, setSubmittingBooking] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
   const recognitionRef = useRef<any>(null);
+  const voiceTimeoutRef = useRef<any>(null);
+  const voiceTranscriptRef = useRef<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const storageKey = `cit_copilot_history_${user?.id || user?.role || 'default'}`;
@@ -158,10 +160,7 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
 
   const toggleSpeechRecognition = () => {
     if (isListening) {
-      if (recognitionRef.current) {
-        try { recognitionRef.current.stop(); } catch {}
-      }
-      setIsListening(false);
+      stopSpeechRecognition();
       return;
     }
 
@@ -178,10 +177,11 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
       recognition.continuous = false;
       recognition.interimResults = true;
       recognition.lang = 'en-US';
+      voiceTranscriptRef.current = '';
 
       recognition.onstart = () => {
         setIsListening(true);
-        toast.info('🎙️ Listening... Speak your request');
+        toast.info('🎙️ Listening... Speak freely (will auto-submit when you stop)');
       };
 
       recognition.onresult = (event: any) => {
@@ -191,12 +191,24 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
         }
         if (transcript.trim()) {
           setInputText(transcript);
+          voiceTranscriptRef.current = transcript;
+
+          // Auto-submit after 1.2s silence
+          if (voiceTimeoutRef.current) {
+            clearTimeout(voiceTimeoutRef.current);
+          }
+          voiceTimeoutRef.current = setTimeout(() => {
+            if (recognitionRef.current) {
+              try { recognitionRef.current.stop(); } catch {}
+            }
+          }, 1200);
         }
       };
 
       recognition.onerror = (event: any) => {
         console.warn('Speech recognition error:', event.error);
         setIsListening(false);
+        if (voiceTimeoutRef.current) clearTimeout(voiceTimeoutRef.current);
         if (event.error === 'not-allowed') {
           toast.error('Microphone access denied. Please allow microphone permissions in browser.');
         } else if (event.error !== 'no-speech') {
@@ -206,6 +218,13 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
 
       recognition.onend = () => {
         setIsListening(false);
+        if (voiceTimeoutRef.current) clearTimeout(voiceTimeoutRef.current);
+        const spoken = voiceTranscriptRef.current.trim();
+        if (spoken) {
+          voiceTranscriptRef.current = '';
+          toast.success('🎙️ Spoken query captured — sending automatically!');
+          handleSendMessage(spoken);
+        }
       };
 
       recognitionRef.current = recognition;
@@ -218,10 +237,17 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
   };
 
   const stopSpeechRecognition = () => {
+    if (voiceTimeoutRef.current) clearTimeout(voiceTimeoutRef.current);
     if (recognitionRef.current) {
       try { recognitionRef.current.stop(); } catch {}
     }
     setIsListening(false);
+    const spoken = voiceTranscriptRef.current.trim() || inputText.trim();
+    if (spoken) {
+      voiceTranscriptRef.current = '';
+      toast.success('🎙️ Spoken query captured — sending automatically!');
+      handleSendMessage(spoken);
+    }
   };
 
   const toggleReadAloud = (msgId: string, text: string) => {
@@ -403,45 +429,17 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
           </div>
         </SheetHeader>
 
-        {/* AI Engine Evaluation Mode Toggle */}
-        <div className="px-4 py-2 bg-slate-50 border-b border-[#E5E7EB] flex items-center justify-between gap-2 shrink-0">
-          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-700">
-            <span>Engine Mode:</span>
+        {/* Unified Dual-Engine Active Status */}
+        <div className="px-4 py-2 bg-gradient-to-r from-slate-50 via-purple-50/20 to-blue-50/20 border-b border-[#E5E7EB] flex items-center justify-between gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-700 font-poppins">
+            <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+            <span>AI Brain:</span>
           </div>
-          <div className="flex items-center p-0.5 bg-slate-200/80 rounded-lg text-xs">
-            <button
-              onClick={() => setAiMode('n8n_only')}
-              className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition cursor-pointer ${
-                aiMode === 'n8n_only'
-                  ? 'bg-white text-blue-700 font-bold shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-              title="Route exclusively to n8n Cloud workflow"
-            >
-              ⚡ n8n Only
-            </button>
-            <button
-              onClick={() => setAiMode('gemini_only')}
-              className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition cursor-pointer ${
-                aiMode === 'gemini_only'
-                  ? 'bg-white text-purple-700 font-bold shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-              title="Route directly to Google Gemini"
-            >
-              🧠 Gemini Only
-            </button>
-            <button
-              onClick={() => setAiMode('both_compare')}
-              className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition cursor-pointer ${
-                aiMode === 'both_compare'
-                  ? 'bg-indigo-600 text-white font-bold shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-              title="Run both in parallel and compare accuracy & response time"
-            >
-              ⚖️ Compare Both
-            </button>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-purple-200/80 shadow-2xs">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[11px] font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent font-poppins">
+              ⚡ n8n Workflows + 🧠 Google Gemini
+            </span>
           </div>
         </div>
 
