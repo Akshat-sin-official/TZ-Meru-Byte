@@ -15,7 +15,7 @@
 [![Orchestration](https://img.shields.io/badge/Orchestrations-n8n%20Cloud-ea580c?style=flat-square&logo=n8n&logoColor=white)](https://techzephyr.app.n8n.cloud)
 [![AI Engine](https://img.shields.io/badge/Copilot-Gemini%202.5-7c3aed?style=flat-square&logo=google-gemini&logoColor=white)](docs/architecture/features.md)
 
-[Live Platform](https://cit.saubhagyalabs.tech/) · [Demo Walkthrough Script](docs/guides/PRESENTATION_VIDEO_SCRIPT.md) · [AI Declaration](docs/declarations/AI_USAGE.md) · [Third-Party Disclosures](docs/declarations/THIRD_PARTY.md) · [Documentation Index](#documentation-and-scripts-directory)
+[Live Platform](https://cit.saubhagyalabs.tech/) · [Demo Walkthrough Script](docs/guides/PRESENTATION_VIDEO_SCRIPT.md) · [AI Declaration](AI_USAGE.md) · [Third-Party Disclosures](THIRD_PARTY.md) · [Documentation Index](#documentation-and-scripts-directory)
 
 </div>
 
@@ -84,6 +84,20 @@ Results validated directly against the official `validator.py` on the canonical 
 | **Disruption Recovery (Sample Disruption)** | Minimal Moves | **11 Sessions Moved** (2 time, 9 room-only) | Verified |
 | **Disruption Solve Latency** | Instant Response | **0.07 Seconds** *(Warm-Start CP-SAT)* | Verified |
 | **Timetable Generation Latency** | Instant Response | **0.11 Seconds** *(Warm-Start CP-SAT)* | Verified |
+
+---
+
+## Tech Stack
+
+| Layer | Technologies | Role & Implementation |
+| :--- | :--- | :--- |
+| **Frontend UI** | **React 18, Vite 6, Tailwind CSS, Lucide React, Axios** | Responsive web platform with multi-view timetable grids, explainability drawers, and disruption audit diffs. |
+| **API Gateway** | **Node.js v20, Express.js, Prisma ORM, JWT, Bcrypt** | REST API gateway, RBAC authorization, delegation routing, and audit telemetry. |
+| **Discrete Optimization** | **Python 3.11, Google OR-Tools (CP-SAT), FastAPI, Uvicorn** | Discrete constraint optimization for timetables, stability-penalized disruption repair, and 50% capacity exam seating. |
+| **AI Copilot & Workflows** | **Google Gemini 2.5 Flash / Pro, n8n Cloud** | English & Hinglish intent parsing, automated venue up-tiering, and plain-language decision explanations. |
+| **WhatsApp Messaging** | **Evolution-Go Gateway, Baileys Web Protocol** | Standalone high-concurrency WhatsApp engine running on port 8080 paired with CIT hotline `+91 7985013913`. |
+| **Database** | **MySQL 8.0 Server** | Persistent storage for dataset versions, active schedules, booking drafts, and immutable audit logs. |
+| **Reverse Proxy & SSL** | **Caddy Server (Alpine)** | Automatic HTTPS, reverse proxying, and static web distribution. |
 
 ---
 
@@ -249,13 +263,33 @@ graph TD
 
 ---
 
-## Role-Based Access Control (RBAC) Matrix
+## Demo Accounts for All 4 Roles
 
-| Platform Role | Demo Credentials | Operational Scope |
-| :--- | :--- | :--- |
-| **System Admin** | `admin@cit.ac.in`<br/>Password: `admin123` | **Direct Commit Authority:** Master schedule generation, disruption repair execution, override approvals, official validator execution. Changes commit without intermediary approval. |
-| **Academic Coordinator** | `f1@cit.ac.in`<br/>Password: `faculty123` | **Department Scope:** Timetable and room inspection, leave requests, session movement submissions. Requests route to Admin. |
-| **Club Representative** | `robotics@cit.ac.in`<br/>Password: `club123` | **Event Booking Scope:** Venue booking submissions via Web UI or Evolution-Go WhatsApp. Strictly isolated from academic modification permissions. |
+All four roles required by Section 4 are fully provisioned, functional on the live deployment, and accessible via manual credentials or the **1-click quick login buttons** on the login screen:
+
+| Role (Section 4) | Email Login | Password | Quick-Login Preset | Permissions & Scope |
+| :--- | :--- | :--- | :--- | :--- |
+| **1. Admin (Dean's Office)** | `admin@cit.ac.in`<br/>*(or `admin@cit.edu`)* | `admin123`<br/>*(or `CitAdmin2027!`)* | **Admin** (F37) | **Direct Commit Authority:** Generates timetable, approves/rejects all change requests, overrides priorities, commits disruptions without secondary signoff. |
+| **2. Department Coordinator** | `coord.cse@cit.edu` | `coord123`<br/>*(or `CitCoord2027!`)* | **Coordinator** (F01) | **Department Scope:** Requests session moves, books department halls, approves departmental lab reservations. |
+| **3. Faculty** | `faculty.f19@cit.edu`<br/>*(or `f1@cit.ac.in`)* | `faculty123`<br/>*(or `CitFaculty2027!`)* | **Faculty** (F19) | **Teaching View:** Inspects assigned schedule, flags unavailability, submits reschedule requests (routed to coordinator/admin). |
+| **4. Club Representative** | `dramatics@cit.edu`<br/>*(or `robotics@cit.ac.in`)* | `club123`<br/>*(or `CitClub2027!`)* | **Club** (Dramatics) | **Venue Requests:** Submits festival and workshop bookings via Web UI and WhatsApp. Zero access to modify academic teaching hours. |
+
+### Reset Demo Data Button for Judges
+To allow judges to return to a clean baseline at any point during testing, a **Reset Button** is available:
+- **Header Bar:** Click the **"Reset"** button with circular arrows located at the top-right header when logged in as Admin.
+- **Authority Hub (`/datahub`):** Click the **"Reset to Baseline"** button.
+- Both trigger `POST /api/exports/reset-demo`, which restores the original canonical `cit-public-v1` schedule and resets all booking requests.
+
+---
+
+## Known Limitations
+
+In accordance with Section 7 of the problem statement, the following operational boundaries are documented:
+
+1. **In-Memory CP-SAT Instance Scaling:** The optimization solver is configured for single-campus institutions (up to ~10,000 students and ~1,000 sessions). Multi-campus multi-tier university federations would require hierarchical distributed decomposition.
+2. **Evolution-Go Gateway Network Dependency:** The WhatsApp Copilot requires active network reachability to the droplet's Evolution-Go service (port 8080) and an active paired device session. If WhatsApp Web disconnects, the Web UI copilot remains 100% available.
+3. **Manual Drag-and-Drop Scope:** When an Admin manually drags a session on the timetable grid, the system runs pre-flight validation against all **Hard Constraints (H1–H10)**. Soft constraint penalties (S1–S6) are recalculated post-move rather than preventing the manual placement.
+4. **Deterministic LLM Fallback:** If the Gemini API reaches its rate limit or is unreachable, the system automatically falls back to the deterministic regex/keyword parser in `server/src/routes/assistant.ts` with zero disruption to manual forms.
 
 ---
 
@@ -303,8 +337,8 @@ Technical specifications, declarations, and testing scripts are organized into d
 | Resource | Description | Redirect Link |
 | :--- | :--- | :--- |
 | **Presentation Video Script** | Word-for-word 5-minute recording script and demonstration walkthrough | [docs/guides/PRESENTATION_VIDEO_SCRIPT.md](docs/guides/PRESENTATION_VIDEO_SCRIPT.md) |
-| **AI Usage Declaration** | Mandatory hackathon AI disclosures and model declarations | [docs/declarations/AI_USAGE.md](docs/declarations/AI_USAGE.md) |
-| **Third-Party Disclosures** | Open-source libraries, frameworks, and licensing declarations | [docs/declarations/THIRD_PARTY.md](docs/declarations/THIRD_PARTY.md) |
+| **AI Usage Declaration** | Mandatory hackathon AI disclosures and model declarations | [AI_USAGE.md](AI_USAGE.md) *(also in [docs/declarations/AI_USAGE.md](docs/declarations/AI_USAGE.md))* |
+| **Third-Party Disclosures** | Open-source libraries, frameworks, and licensing declarations | [THIRD_PARTY.md](THIRD_PARTY.md) *(also in [docs/declarations/THIRD_PARTY.md](docs/declarations/THIRD_PARTY.md))* |
 | **System Feature Architecture** | In-depth engineering specifications for every Campora engine module | [docs/architecture/features.md](docs/architecture/features.md) |
 | **Audit & Verification Log** | Problems analyzed, corrected, and verified across testing phases | [docs/audit/PROBLEMS.md](docs/audit/PROBLEMS.md) |
 | **Hackathon Task Division** | Team engineering split and delivery verification log | [docs/audit/TASK_DIVISION.md](docs/audit/TASK_DIVISION.md) |
