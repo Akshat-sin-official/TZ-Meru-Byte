@@ -6,6 +6,7 @@ Solves the 189 sessions across 27 rooms with 0 hard violations and minimized sof
 """
 
 from collections import defaultdict
+import os
 import time
 from ortools.sat.python import cp_model
 
@@ -277,7 +278,7 @@ def solve_timetable(data: dict, timeout_seconds: int = 120, seed: int = 42) -> d
     solver = cp_model.CpSolver()
     solver.parameters.max_time_in_seconds = float(timeout_seconds)
     solver.parameters.random_seed = seed
-    solver.parameters.num_workers = 8
+    solver.parameters.num_workers = min(4, max(1, os.cpu_count() or 2))
 
     status_code = solver.Solve(model)
     solve_duration = time.time() - start_time

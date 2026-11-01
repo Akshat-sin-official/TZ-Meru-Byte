@@ -7,6 +7,7 @@ Solves the disrupted schedule while minimizing moved sessions (time changed >> r
 
 from collections import defaultdict
 import copy
+import os
 import time
 from ortools.sat.python import cp_model
 
@@ -121,6 +122,12 @@ def solve_disruption_repair(mutated_data: dict, baseline_schedule: dict, timeout
                     x[(s_id, d, p, r_id)] = var
                     session_slots[s_id].append((d, p, r_id, var))
 
+                    # Warm start hint from baseline schedule
+                    if s_id in baseline_map:
+                        b_day, b_start, b_room = baseline_map[s_id]
+                        if d == b_day and p == b_start and r_id == b_room:
+                            model.AddHint(var, 1)
+
                     for pt in per:
                         slot_sessions[(r_id, d, pt)].append(var)
                         fac_slots[(f_id, d, pt)].append(var)
@@ -190,7 +197,7 @@ def solve_disruption_repair(mutated_data: dict, baseline_schedule: dict, timeout
     solver = cp_model.CpSolver()
     solver.parameters.max_time_in_seconds = float(timeout_seconds)
     solver.parameters.random_seed = seed
-    solver.parameters.num_workers = 8
+    solver.parameters.num_workers = min(4, max(1, os.cpu_count() or 2))
 
     status_code = solver.Solve(model)
     solve_duration = time.time() - start_time
