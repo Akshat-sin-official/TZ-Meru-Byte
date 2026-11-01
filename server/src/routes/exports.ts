@@ -172,56 +172,43 @@ router.post('/verify', authenticate, requireRole([Role.admin]), async (req: Auth
   try {
     const dataset = await prisma.datasetVersion.findFirst({ where: { isCurrent: true } });
     const schedPath = path.join(EXPORTS_DIR, 'schedule.json');
+    const reportPath = path.join(EXPORTS_DIR, 'validation_report.json');
+
     if (!fs.existsSync(schedPath)) {
       return res.status(400).json({ error: 'exports/schedule.json does not exist. Please generate timetable first.' });
     }
 
-    const schedData = JSON.parse(fs.readFileSync(schedPath, 'utf-8'));
-
-    // 1. First attempt: call internal Python optimizer service (always available in Docker)
-    if (dataset && dataset.rawJson) {
-      try {
-        const valRes = await axios.post(`${OPTIMIZER_URL}/internal/validate`, {
-          dataset: dataset.rawJson,
-          schedule: schedData,
-        });
-
-        const report = valRes.data;
-        const outLines = [
-          '=== CANONICAL VALIDATOR REPORT ===',
-          `Dataset: ${dataset.datasetId}`,
-          `Hard Violations: ${report.total_hard_violations}`,
-          `Soft Score: ${report.soft_total}`,
-          report.total_hard_violations === 0 ? 'VALIDATION PASSED (Zero Hard Violations)' : 'VALIDATION FAILED',
-        ];
-
-        return res.json({
-          verified: report.total_hard_violations === 0,
-          output: outLines.join('\n'),
-          errors: report.total_hard_violations > 0 ? report.violations : null,
-          details: report,
-        });
-      } catch (svcErr: any) {
-        console.warn('Optimizer internal validation fallback to CLI:', svcErr.message);
-      }
-    }
-
-    // 2. Fallback: local CLI python invocation
+    // Direct official validator execution with --json output
     const { stdout, stderr } = await execFileAsync('python', [
       VALIDATOR_PATH,
       '--data', DATA_PATH,
       '--schedule', schedPath,
+      '--json', reportPath,
     ]);
+
+    let fullReport: any = null;
+    if (fs.existsSync(reportPath)) {
+      try {
+        fullReport = JSON.parse(fs.readFileSync(reportPath, 'utf-8'));
+      } catch (e) {
+        console.warn('Could not read validation_report.json:', e);
+      }
+    }
 
     return res.json({
       verified: true,
       output: stdout,
       errors: stderr || null,
+      report: fullReport,
     });
   } catch (err: any) {
-    return res.status(500).json({ error: `Verification failed: ${err.message}`, stdout: err.stdout, stderr: err.stderr });
+    console.error('Validator execution error:', err);
+    return res.status(500).json({
+      error: `Verification failed: ${err.message}`,
+      stdout: err.stdout,
+      stderr: err.stderr,
+    });
   }
 });
 
 export default router;
-

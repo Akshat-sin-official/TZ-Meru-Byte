@@ -7,6 +7,7 @@ import { TimetableDashboard } from '@/pages/campus/TimetableDashboard';
 import { ExamsView } from '@/pages/campus/ExamsView';
 import { SpectraBookingsView } from '@/pages/campus/SpectraBookingsView';
 import { DisruptionsView } from '@/pages/campus/DisruptionsView';
+import { DataHubView } from '@/pages/campus/DataHubView';
 import { WhatsAppBotSection } from '@/components/campus/WhatsAppBotSection';
 import { AICopilotDrawer } from '@/components/campus/AICopilotDrawer';
 import { Toaster as Sonner } from '@/components/ui/sonner';
@@ -114,6 +115,7 @@ export const AppContent: React.FC = () => {
         {activeTab === 'exams' && <ExamsView />}
         {activeTab === 'bookings' && <SpectraBookingsView />}
         {activeTab === 'disruptions' && <DisruptionsView />}
+        {activeTab === 'datahub' && <DataHubView />}
         {activeTab === 'whatsapp' && (
           user?.role === 'admin' ? (
             <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-4">

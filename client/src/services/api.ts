@@ -156,6 +156,12 @@ export const campusApi = {
     return res.data;
   },
 
+  // Explain Scheduling Decision (PS §2 #8)
+  explainSession: async (sessionId: string) => {
+    const res = await api.get(`/schedules/explain/${sessionId}`);
+    return res.data;
+  },
+
   // Faculty Unavailability & Rescheduling
   submitFacultyUnavailability: async (data: {
     facultyId?: string;

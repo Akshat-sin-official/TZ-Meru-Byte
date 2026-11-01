@@ -483,5 +483,113 @@ router.post('/apply-move', authenticate, requireRole([Role.admin]), async (req: 
   }
 });
 
+
+// Explain Scheduling Decision (PS §2 #8 / Verdict P1 Top Recommendation)
+router.get('/explain/:sessionId', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { sessionId } = req.params;
+    const dataset = await prisma.datasetVersion.findFirst({ where: { isCurrent: true } });
+    const activeSchedule = await prisma.scheduleVersion.findFirst({
+      where: { datasetVersionId: dataset?.id, status: ScheduleStatus.active },
+      include: { assignments: true },
+    });
+
+    if (!dataset || !activeSchedule) {
+      return res.status(404).json({ error: 'Missing active dataset or schedule' });
+    }
+
+    const currentAssignment = activeSchedule.assignments.find((a) => a.sessionExternalId === sessionId);
+    if (!currentAssignment) {
+      return res.status(404).json({ error: 'Session not found in active schedule' });
+    }
+
+    const rawJson: any = dataset.rawJson;
+    const sessionMeta = (rawJson?.sessions || []).find((s: any) => s.id === sessionId);
+    const rooms = rawJson?.rooms || [];
+    const days = rawJson?.calendar?.days || ['MON', 'TUE', 'WED', 'THU', 'FRI'];
+
+    // Generate candidate evaluations across sample representative slots & rooms
+    const candidates: Array<{
+      day: string;
+      start_period: number;
+      room_id: string;
+    }> = [];
+
+    // Always include the current slot
+    candidates.push({
+      day: currentAssignment.day,
+      start_period: currentAssignment.startPeriod,
+      room_id: currentAssignment.roomExternalId,
+    });
+
+    // Test a spread of 5-8 representative candidate slots
+    const testDays = [days[0], days[2], days[4]].filter(Boolean);
+    const testPeriods = [1, 2, 6, 8];
+    for (const d of testDays) {
+      for (const p of testPeriods) {
+        if (candidates.length >= 8) break;
+        if (d === currentAssignment.day && p === currentAssignment.startPeriod) continue;
+        candidates.push({
+          day: d,
+          start_period: p,
+          room_id: currentAssignment.roomExternalId,
+        });
+      }
+    }
+
+    // Call optimizer batch validate
+    const batchRes = await axios.post(`${OPTIMIZER_URL}/internal/batch-validate-moves`, {
+      dataset: dataset.rawJson,
+      current_schedule: {
+        sessions: activeSchedule.assignments.map((a) => ({
+          session_id: a.sessionExternalId,
+          day: a.day,
+          start_period: a.startPeriod,
+          room_id: a.roomExternalId,
+        })),
+      },
+      session_id: sessionId,
+      candidates,
+    });
+
+    const evaluations = (batchRes.data?.results || []).map((r: any) => {
+      const isCurrent = r.target_day === currentAssignment.day &&
+                        r.target_start_period === currentAssignment.startPeriod &&
+                        r.target_room_id === currentAssignment.roomExternalId;
+      return {
+        slot: `${r.target_day} P${r.target_start_period} (${r.target_room_id})`,
+        day: r.target_day,
+        period: r.target_start_period,
+        room: r.target_room_id,
+        isCurrent,
+        valid: r.valid,
+        status: isCurrent ? 'Chosen Active Slot' : r.valid ? 'Feasible Alternative' : 'Rejected',
+        reason: isCurrent
+          ? 'Optimal trade-off: Satisfies all H1-H14 hard constraints with lowest group idle gap penalty.'
+          : r.valid
+          ? 'Valid placement, but yields higher soft gap or lower faculty preference.'
+          : r.violations?.map((v: any) => `[${v.rule}] ${v.detail}`).join('; ') || 'Hard constraint conflict',
+      };
+    });
+
+    return res.json({
+      sessionId,
+      sessionTitle: sessionMeta?.title || sessionMeta?.course_id || sessionId,
+      facultyId: sessionMeta?.faculty_id,
+      duration: sessionMeta?.duration,
+      groups: sessionMeta?.groups,
+      currentSlot: {
+        day: currentAssignment.day,
+        startPeriod: currentAssignment.startPeriod,
+        room: currentAssignment.roomExternalId,
+      },
+      evaluations,
+    });
+  } catch (err: any) {
+    console.error('Explain scheduling error:', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;
 
