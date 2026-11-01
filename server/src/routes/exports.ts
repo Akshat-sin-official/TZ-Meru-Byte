@@ -11,9 +11,18 @@ const execFileAsync = promisify(execFile);
 const router = Router();
 const prisma = new PrismaClient();
 
-const DATA_PATH = path.resolve(__dirname, '../../../docs/PS/CrunchWeek_StarterPack (1)/CrunchWeek_StarterPack/data/cit_public.json');
-const VALIDATOR_PATH = path.resolve(__dirname, '../../../docs/PS/CrunchWeek_StarterPack (1)/CrunchWeek_StarterPack/validator.py');
-const EXPORTS_DIR = path.resolve(__dirname, '../../../exports');
+const DATA_PATH = fs.existsSync('/docs/PS/CrunchWeek_StarterPack (1)/CrunchWeek_StarterPack/data/cit_public.json')
+  ? '/docs/PS/CrunchWeek_StarterPack (1)/CrunchWeek_StarterPack/data/cit_public.json'
+  : path.resolve(__dirname, '../../../docs/PS/CrunchWeek_StarterPack (1)/CrunchWeek_StarterPack/data/cit_public.json');
+
+const VALIDATOR_PATH = fs.existsSync('/docs/PS/CrunchWeek_StarterPack (1)/CrunchWeek_StarterPack/validator.py')
+  ? '/docs/PS/CrunchWeek_StarterPack (1)/CrunchWeek_StarterPack/validator.py'
+  : path.resolve(__dirname, '../../../docs/PS/CrunchWeek_StarterPack (1)/CrunchWeek_StarterPack/validator.py');
+
+const EXPORTS_DIR = fs.existsSync('/exports/schedule.json')
+  ? '/exports'
+  : path.resolve(__dirname, '../../../exports');
+
 const OPTIMIZER_URL = process.env.OPTIMIZER_URL || 'http://127.0.0.1:8001';
 
 // GET schedule.json (Admin Only per RBAC in ini.md)
