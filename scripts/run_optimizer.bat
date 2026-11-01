@@ -8,3 +8,4 @@ if exist optimizer\venv\Scripts\python.exe (
     python -m optimizer.main
 )
 pause
+

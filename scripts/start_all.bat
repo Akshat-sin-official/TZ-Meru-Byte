@@ -20,3 +20,4 @@ echo Server:    http://localhost:5000
 echo UI:        http://localhost:5173
 echo.
 pause
+

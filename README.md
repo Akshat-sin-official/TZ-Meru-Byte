@@ -1,283 +1,320 @@
 <div align="center">
 
-<img src="client/public/logo.png" alt="CAMPORA logo" width="130" />
+<img src="client/public/logo.png" alt="CAMPORA logo" width="120" />
 
 # CAMPORA
 ### by MERUBYTE
 **Autonomous Campus Scheduling, Disruption Recovery & Venue Orchestration Platform**  
-*Built for Chilika Institute of Technology (CIT) · Crunch Week Hackathon*
+*Chilika Institute of Technology (CIT) · Tech Zephyr 4 Hackathon*
 
-[![Live Application](https://img.shields.io/badge/Live_Application-cit.saubhagyalabs.tech-2563EB?style=for-the-badge)](https://cit.saubhagyalabs.tech/)
-[![Official Validator](https://img.shields.io/badge/Official_Validator-0_Hard_Violations-15803D?style=for-the-badge)](https://cit.saubhagyalabs.tech/api/exports/verify)
-[![Soft Penalty](https://img.shields.io/badge/Soft_Penalty-274_Optimized-059669?style=for-the-badge)](https://cit.saubhagyalabs.tech/api/exports/verify)
-[![Disruption Minimal Shift](https://img.shields.io/badge/Disruption_Shift-11_Moved_Sessions-6366F1?style=for-the-badge)](https://cit.saubhagyalabs.tech/api/exports/schedule_after.json)
-[![WhatsApp Bot](https://img.shields.io/badge/WhatsApp_Copilot-+91_7985013913-22C55E?style=for-the-badge)](https://wa.me/917985013913)
+[![Production](https://img.shields.io/badge/Production-cit.saubhagyalabs.tech-0f172a?style=flat-square&logo=google-cloud&logoColor=white)](https://cit.saubhagyalabs.tech/)
+[![Validator Status](https://img.shields.io/badge/Official%20Validator-0%20Hard%20Violations-059669?style=flat-square&logo=checkmarx&logoColor=white)](https://cit.saubhagyalabs.tech/api/exports/verify)
+[![Soft Penalty](https://img.shields.io/badge/Soft%20Penalty-274%20Optimized-2563eb?style=flat-square)](https://cit.saubhagyalabs.tech/api/exports/verify)
+[![Disruption Recovery](https://img.shields.io/badge/Disruption%20Shift-11%20Sessions%20Moved-4f46e5?style=flat-square)](https://cit.saubhagyalabs.tech/api/exports/schedule_after.json)
+[![Gateway](https://img.shields.io/badge/Gateway-Evolution--Go-10b981?style=flat-square&logo=whatsapp&logoColor=white)](https://wa.me/917985013913)
+[![Orchestration](https://img.shields.io/badge/Orchestrations-n8n%20Cloud-ea580c?style=flat-square&logo=n8n&logoColor=white)](https://techzephyr.app.n8n.cloud)
+[![AI Engine](https://img.shields.io/badge/Copilot-Gemini%202.5-7c3aed?style=flat-square&logo=google-gemini&logoColor=white)](docs/architecture/features.md)
 
-**[🌐 Open Live Platform](https://cit.saubhagyalabs.tech/)** ·
-**[🎬 Video Demo Script](docs/guides/PRESENTATION_VIDEO_SCRIPT.md)** ·
-**[🤖 AI Declaration](docs/declarations/AI_USAGE.md)** ·
-**[📜 Third-Party Disclosures](docs/declarations/THIRD_PARTY.md)** ·
-**[📂 Full Documentation Index](#-documentation-and-scripts-directory)**
+[Live Platform](https://cit.saubhagyalabs.tech/) · [Demo Walkthrough Script](docs/guides/PRESENTATION_VIDEO_SCRIPT.md) · [AI Declaration](docs/declarations/AI_USAGE.md) · [Third-Party Disclosures](docs/declarations/THIRD_PARTY.md) · [Documentation Index](#documentation-and-scripts-directory)
 
 </div>
 
 ---
 
-## 🧭 Executive Summary
+## Executive Overview
 
-CAMPORA solves the NP-hard challenge of university operations during CIT's **Crunch Week (Week 7)** by coupling **Google OR-Tools CP-SAT discrete optimization** with a **Gemini-powered Natural Language & WhatsApp Copilot**.
+CAMPORA resolves complex university scheduling and resource allocation challenges for Chilika Institute of Technology during Week 7 (Crunch Week). It pairs **Google OR-Tools CP-SAT discrete optimization** with a **Gemini-powered Natural Language Copilot** integrated across web and **Evolution-Go WhatsApp** channels.
 
-> **Core Tenet:** *AI interprets intent and explains decisions; deterministic CP-SAT constraints govern every assignment.*
+> **Design Axiom:** *AI models interpret intent and explain decisions; deterministic constraint solvers govern every schedule and booking commit.*
 
 ```mermaid
 graph LR
-    subgraph INTAKE["1. Dual-Channel Intake"]
-        A1["Web UI / Dashboard"] 
-        A2["WhatsApp Bot (+91 7985013913)"]
-        A3["Disruption Change Files"]
+    subgraph Intake["1. Inbound Requests"]
+        I1["Web Application"]
+        I2["Evolution-Go WhatsApp (+91 7985013913)"]
+        I3["Disruption Events (JSON)"]
     end
 
-    subgraph ENGINE["2. Campora Core Engine"]
-        B1["Gemini Intent & Equipment Parser"]
-        B2["CP-SAT Discrete Optimizer (H1-H10)"]
-        B3["Stability Solver (Minimal Shift)"]
-        B4["6-Tier Priority Adjudicator"]
+    subgraph Core["2. Orchestration & Solving Engine"]
+        C1["n8n & Gemini AI Parser"]
+        C2["CP-SAT Timetable Solver (H1–H10)"]
+        C3["CP-SAT Stability Engine (Minimal Moves)"]
+        C4["6-Tier Priority Adjudicator"]
     end
 
-    subgraph OUTPUT["3. Deterministic Governance"]
-        C1["Clash-Free Master Timetable"]
-        C2["50% Cap Midsem Exam Seating"]
-        C3["Admin Approval & One-Click Commit"]
-        C4["Official schedule.json Export"]
+    subgraph Operations["3. Operational Governance"]
+        O1["Clash-Free Master Timetable"]
+        O2["50% Cap Midsem Exam Seating"]
+        O3["Admin Direct Commit / Subordinate Routing"]
+        O4["Canonical schedule.json Export"]
     end
 
-    A1 --> B1 & B2
-    A2 --> B1
-    A3 --> B3
-    B1 --> B2 & B4
-    B2 --> C1 & C2
-    B3 --> C3
-    B4 --> C1
-    C1 --> C4
-    C3 --> C1
+    I1 --> C1 & C2
+    I2 --> C1
+    I3 --> C3
+    C1 --> C2 & C4
+    C2 --> O1 & O2
+    C3 --> O3
+    C4 --> O1
+    O1 --> O4
+    O3 --> O1
 
-    classDef blue fill:#2563EB,stroke:#1D4ED8,color:#fff;
-    classDef teal fill:#0D9488,stroke:#0F766E,color:#fff;
-    classDef purple fill:#7C3AED,stroke:#6D28D9,color:#fff;
-    class A1,A2,A3 blue;
-    class B1,B2,B3,B4 teal;
-    class C1,C2,C3,C4 purple;
+    classDef darkBox fill:#1e293b,stroke:#334155,color:#f8fafc;
+    classDef blueBox fill:#1e3a8a,stroke:#2563eb,color:#f8fafc;
+    classDef emeraldBox fill:#064e3b,stroke:#059669,color:#f8fafc;
+    class I1,I2,I3 darkBox;
+    class C1,C2,C3,C4 blueBox;
+    class O1,O2,O3,O4 emeraldBox;
 ```
 
 ---
 
-## 📊 Canonical Benchmark Results
+## Canonical Benchmark Verification
 
-Evaluated directly with the hackathon starter pack's official `validator.py`:
+Results validated directly against the official `validator.py` on the canonical `cit-public-v1` dataset:
 
-| Evaluation Metric | Canonical Benchmark | Campora Verified Result | Status |
+| Criterion | Target Metric | Campora Evaluated Result | Outcome |
 | :--- | :---: | :---: | :---: |
-| **Hard Constraint Violations (H1–H10)** | `0` | **0** | Pass ✅ |
-| **Weekly Regular Sessions Scheduled** | `189` | **189 / 189 (100%)** | Pass ✅ |
-| **Weekly Teaching Hours** | `243` | **243 hrs** | Pass ✅ |
-| **Soft Penalty Score (S1–S6)** | Lower is better | **274** *(S1:0, S2:49, S3:60, S4:165, S5:0, S6:0)* | Pass ✅ |
-| **Spectra Week Bookings Adjudicated** | `25` | **25 / 25 Evaluated** (66.0 / 70.0 Score) | Pass ✅ |
-| **Midsem Course Examinations** | `41` | **41 Scheduled** (50% Room Anti-Cheating Split) | Pass ✅ |
-| **Disruption Recovery (sample_disruption)** | Minimal Moves | **Only 11 Sessions Moved** (2 time, 9 room-only) | Pass ✅ |
-| **Solver Generation Latency** | Fast Response | **< 0.2 seconds** *(Warm-start CP-SAT)* | Pass ✅ |
+| **Hard Constraint Violations (H1–H10)** | `0` | **0** | Verified |
+| **Weekly Regular Teaching Sessions** | `189` | **189 / 189 (100%)** | Verified |
+| **Weekly Scheduled Teaching Hours** | `243` | **243 Hours** | Verified |
+| **Soft Penalty Score (S1–S6)** | Minimized | **274** *(S1:0, S2:49, S3:60, S4:165, S5:0, S6:0)* | Verified |
+| **Spectra Week Bookings Adjudicated** | `25` | **25 / 25 Evaluated** (Score: 66.0 / 70.0) | Verified |
+| **Midsem Course Examinations** | `41` | **41 Scheduled** (50% Room Anti-Cheating Split) | Verified |
+| **Disruption Recovery (Sample Disruption)** | Minimal Moves | **11 Sessions Moved** (2 time, 9 room-only) | Verified |
+| **Disruption Solve Latency** | Instant Response | **0.07 Seconds** *(Warm-Start CP-SAT)* | Verified |
+| **Timetable Generation Latency** | Instant Response | **0.11 Seconds** *(Warm-Start CP-SAT)* | Verified |
 
 ---
 
-## 🏛️ System Architecture
+## System Architecture
 
 ```mermaid
 flowchart TD
-    subgraph CLIENT["Frontend Layer (React 18 + Vite + Tailwind CSS)"]
-        UI1["Timetable Multi-Grid (Cohort / Faculty / Room)"]
-        UI2["Spectra Priority Adjudicator & Explainability"]
-        UI3["Disruption Stability Diff & Commit Modal"]
-        UI4["AI Assistant Chat Interface"]
+    subgraph UI["Frontend Presentation Layer (React 18, Vite, Tailwind CSS)"]
+        direction TB
+        V1["Multi-Perspective Timetable Grid (Cohort / Faculty / Room)"]
+        V2["Spectra Priority Adjudicator & Explainability Modals"]
+        V3["Disruption Stability Diff & Commit Controls"]
+        V4["Interactive AI Assistant & Natural Language Booking Cards"]
     end
 
-    subgraph GATEWAY["API & Orchestration Layer (Node.js + Express + Prisma)"]
-        GW1["JWT Authentication & RBAC Guard"]
-        GW2["Approval & Delegation Controller"]
-        GW3["WhatsApp Webhook Controller"]
-        GW4["Export & Official Validator Service"]
+    subgraph API["Backend API Gateway (Node.js, Express, Prisma ORM)"]
+        direction TB
+        A1["JWT Auth & Role-Based Access Control (RBAC)"]
+        A2["Approval Workflow & Delegation Controller"]
+        A3["Evolution-Go Inbound Webhook Listener"]
+        A4["Official schedule.json Exporter & Validator Runner"]
     end
 
-    subgraph OPTIMIZER["Optimization Microservice (Python FastAPI + OR-Tools)"]
-        CP1["timetable_solver.py (CP-SAT Regular Sessions)"]
-        CP2["disruption_solver.py (Stability Minimizer)"]
-        CP3["exam_solver.py (50% Split Seating)"]
-        CP4["canonical_validator.py (H1-H10 & S1-S6 Checker)"]
+    subgraph Solver["Discrete Optimization Microservice (Python FastAPI, OR-Tools)"]
+        direction TB
+        S1["timetable_solver.py: Regular Weekly Scheduling (H1-H10)"]
+        S2["disruption_solver.py: Minimal-Shift Stability Optimizer"]
+        S3["exam_solver.py: Synchronized 50% Capacity Split Seating"]
+        S4["canonical_validator.py: Deterministic Ground-Truth Verifier"]
     end
 
-    subgraph INTEGRATIONS["External & Gateway Services"]
-        WA["Evolution-Go WhatsApp Gateway (:8080)"]
-        AI["Google Gemini 2.5 Flash / Pro API"]
-        DB[("MySQL 8.0 Primary Storage")]
+    subgraph Integrations["Integration & Auxiliary Services"]
+        direction TB
+        W1["Evolution-Go Gateway (:8080, WhatsApp Protocol Engine)"]
+        W2["n8n Cloud Workflows (Gemini 2.5 Structured NLP Pipelines)"]
+        W3[("MySQL 8.0 Primary Relational Database")]
     end
 
-    CLIENT <-->|REST API + Bearer Token| GATEWAY
-    GATEWAY <-->|Internal HTTP /:8001| OPTIMIZER
-    GATEWAY <-->|Prisma ORM| DB
-    GATEWAY <-->|Webhooks| WA
-    GATEWAY <-->|Generative SDK| AI
+    UI <-->|REST API + Bearer Token| API
+    API <-->|Internal HTTP /:8001| Solver
+    API <-->|Prisma Client| W3
+    API <-->|Inbound / Outbound Webhooks| W1
+    API <-->|Agentic Webhook Triggers| W2
+
+    classDef surface fill:#0f172a,stroke:#334155,color:#cbd5e1;
+    classDef nodeBox fill:#1e293b,stroke:#475569,color:#f8fafc;
+    class UI,API,Solver,Integrations surface;
+    class V1,V2,V3,V4,A1,A2,A3,A4,S1,S2,S3,S4,W1,W2,W3 nodeBox;
 ```
 
 ---
 
-## 🔄 Core Workflows & Logic
+## WhatsApp & n8n AI Workflows
 
-### 1. Dual-Channel Intake & Approval Hierarchy
-*Admin changes commit immediately; subordinates route requests to their manager.*
+CAMPORA pairs the high-performance **Evolution-Go Gateway** with **n8n Cloud Workflows** to handle unstructured natural language requests in English and Hinglish.
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as Subordinate (Faculty / Club)
-    actor Admin as Admin / Operations Head
-    participant Sys as Campora API Gateway
-    participant AI as Gemini & CP-SAT Engine
-    participant WA as WhatsApp Bot (+91 7985013913)
+    actor User as Campus Member (Student / Faculty)
+    participant Evo as Evolution-Go Gateway (:8080)
+    participant Server as Campora API Gateway (:5000)
+    participant N8N as n8n Cloud (Gemini 2.5)
+    participant Solver as CP-SAT Engine (:8001)
 
-    alt Web UI Submission
-        User->>Sys: Submit plain English or Hinglish venue request
-    else WhatsApp Intake
-        User->>WA: Text: "Kal Seminar Hall chahiye 2 ghante ke liye"
-        WA->>Sys: Forward Inbound Webhook
-    end
+    User->>Evo: WhatsApp message ("Mujhe kal Seminar Hall chahiye 2 ghante ke liye, 900 log aayenge")
+    Evo->>Server: Inbound Webhook Event (RemoteJID, Text)
+    Server->>N8N: Trigger WF01 Booking Intake Webhook
+    N8N-->>Server: Extracted Entity JSON (Venue: Auditorium, 900 pax, 2 hrs, Needs: AV)
+    Server->>Solver: Validate Capacity & Overlap Constraints
+    Solver-->>Server: Feasibility: Feasible (Upgraded to Auditorium)
+    Server->>Evo: Dispatch Confirmation Draft ("Reply YES to submit")
+    Evo->>User: Formatted WhatsApp Message
+    User->>Evo: Reply "YES"
+    Evo->>Server: Confirm Draft & Commit to Campora DB
+    Server->>Evo: Dispatch Notification ("Booking Request BR-xx Staged")
+```
 
-    Sys->>AI: Parse Intent, Equipments & Attendees
-    AI-->>Sys: Structured Booking Proposal (Capacity checked)
+### WF01 — AI Booking Intake Pipeline
+Accepts free-form English, Hindi, and Hinglish venue requests, extracts required attendees, timings, and technical equipment, and auto-upgrades venue tiers when capacity thresholds are exceeded.
+
+![WF01 - AI Booking Intake](docs/N8N/WF01_CIT_AI_BOOKING_INTAKE.png)
+
+### WF02 — AI Schedule Change & Disruption Processing
+Parses faculty leave notices and room maintenance windows, structuring disruption payloads for the CP-SAT stability solver while preserving untouched sessions.
+
+![WF02 - AI Schedule Change](docs/N8N/WF02_CIT_AI_SCHEDULE_CHANGE.png)
+
+### WF03 — Decision Explainer & Transparent Reasoning
+Generates human-readable, auditable mathematical justifications for approved, alternative, or rejected requests based on constraint telemetry and priority ranking.
+
+![WF03 - Decision Explainer](docs/N8N/WF03_CIT_AI_DECISION_EXPLAINER.png)
+
+---
+
+## Operational Workflows
+
+### 1. Approval Governance & Separation of Duties
+*Admins commit changes directly; academic coordinators and student clubs submit drafts that route to their managers for review.*
+
+```mermaid
+flowchart TD
+    Req["Request Initiated<br/>(Schedule Move / Disruption / Venue Booking)"] --> CheckRole{"Requester Role?"}
     
-    alt User is Admin
-        Sys->>Sys: Auto-validate constraints & Commit directly
-        Sys-->>User: Booking Confirmed (Zero Pending State)
-    else User is Subordinate
-        Sys->>Sys: Stage in 'pending_approval' & Route to Manager
-        Sys-->>Admin: Dispatch In-App Notification & Review Diff
-        Admin->>Sys: Approve / Suggest Alternative
-        Sys->>Sys: Commit to Live Timetable
-        Sys-->>User: Notify Approval & Slot Allocation
-    end
+    CheckRole -- "Admin" --> DirectCommit["Auto-Run Constraint Check<br/>& Commit Directly to Live Database"]
+    DirectCommit --> NotifyAll["Broadcast Live Timetable Update Notification"]
+
+    CheckRole -- "Subordinate (Faculty / Club)" --> RouteMgr["Stage in 'pending_approval'<br/>Generate Diff Audit Preview"]
+    RouteMgr --> AlertMgr["Dispatch Notification to Operations Manager / Admin"]
+    AlertMgr --> Review{"Manager Review Decision"}
+    Review -- "Approved" --> CommitSub["Commit Repaired Schedule to Live Database"]
+    Review -- "Rejected / Alt" --> Explainer["Gemini Explainer Generates Reason & Notifies Subordinate"]
 ```
 
 ---
 
 ### 2. Disruption Recovery (Minimal-Movement Stability)
-*When faculty falls sick or a room leaks, preserve campus routine with minimum disruption.*
+*Preserves campus stability by penalizing session rescheduling.*
 
 ```mermaid
 flowchart TD
-    D1["Incoming Disruption Event<br/>(e.g., F07 absent Mon, CR-102 flooded)"] --> D2["Load Baseline Schedule Version"]
-    D2 --> D3["Filter Hard Constraints (H1, H2, H3, H4, H11, H12)"]
-    D3 --> D4["CP-SAT Stability Objective:<br/>Minimize: 100 × ΔTime + 10 × ΔRoom"]
-    D4 --> D5["Warm-Start Hint Injection from Baseline"]
-    D5 --> D6{"Feasible Solution Found?"}
-    D6 -- Yes --> D7["Generate Minimal-Shift Diff<br/>(Only 11 of 189 sessions moved)"]
-    D6 -- No --> D8["Explain Infeasible Constraint Conflict"]
-    D7 --> D9["Admin Reviews Diff Table"]
-    D9 --> D10["Click 'Commit Timetable Changes'"]
-    D10 --> D11["New Live Schedule Version Activated"]
+    Evt["Disruption Event Injected<br/>(e.g., F07 absent Mon, CR-102 closed)"] --> Load["Load Baseline Active Schedule (Version N)"]
+    Load --> Constraints["Apply Strict Hard Constraints (H1, H2, H3, H4, H11, H12)"]
+    Constraints --> WarmStart["Inject Warm-Start Variable Hints from Baseline"]
+    WarmStart --> Minimize["CP-SAT Minimize Stability Function:<br/>Cost = 100 × (Time Changed) + 10 × (Room Only Changed)"]
+    Minimize --> Solve{"Feasible Solution?"}
+    Solve -- "Yes" --> Diff["Compute Minimal-Shift Diff Table<br/>(11 moved: 2 time shifts, 9 room reallocations)"]
+    Solve -- "No" --> Infeas["Identify and Report Conflicting Constraints"]
+    Diff --> AdminAction["Admin Reviews Diff on /disruptions"]
+    AdminAction --> FinalCommit["Click 'Commit Timetable Changes' (Version N+1)"]
 ```
 
 ---
 
 ### 3. Spectra Week 6-Tier Priority Adjudication
-*Deterministic conflict resolution under heavy demand.*
+*Deterministic hierarchy enforced during festival congestion.*
 
 ```mermaid
 graph TD
-    P1["Tier 1: Academic Examinations (Weight: 100)"] --> P2["Tier 2: Department Academic Events (Weight: 80)"]
-    P2 --> P3["Tier 3: Student Fest Flagship Programs (Weight: 60)"]
-    P3 --> P4["Tier 4: Club Activities & Workshops (Weight: 40)"]
-    P4 --> P5["Tier 5: Study Sessions & Informal Gatherings (Weight: 20)"]
-    P5 --> P6["Tier 6: External Bookings & Rentals (Weight: 10)"]
+    T1["Tier 1: Academic Midsem Examinations (Weight: 100)"]
+    T2["Tier 2: Department Academic Events & Colloquia (Weight: 80)"]
+    T3["Tier 3: Student Fest Flagship Programs (Weight: 60)"]
+    T4["Tier 4: Registered Student Club Activities (Weight: 40)"]
+    T5["Tier 5: Informal Study Sessions & Ad-hoc Gatherings (Weight: 20)"]
+    T6["Tier 6: External Bookings & Commercial Rentals (Weight: 10)"]
 
-    classDef t1 fill:#EF4444,stroke:#B91C1C,color:#fff;
-    classDef t2 fill:#F97316,stroke:#C2410C,color:#fff;
-    classDef t3 fill:#F59E0B,stroke:#D97706,color:#fff;
-    classDef t4 fill:#10B981,stroke:#047857,color:#fff;
-    classDef t5 fill:#3B82F6,stroke:#1D4ED8,color:#fff;
-    classDef t6 fill:#6B7280,stroke:#374151,color:#fff;
+    T1 --> T2 --> T3 --> T4 --> T5 --> T6
 
-    class P1 t1;
-    class P2 t2;
-    class P3 t3;
-    class P4 t4;
-    class P5 t5;
-    class P6 t6;
+    classDef t1 fill:#7f1d1d,stroke:#b91c1c,color:#fef2f2;
+    classDef t2 fill:#7c2d12,stroke:#c2410c,color:#fff7ed;
+    classDef t3 fill:#78350f,stroke:#d97706,color:#fffbeb;
+    classDef t4 fill:#064e3b,stroke:#047857,color:#ecfdf5;
+    classDef t5 fill:#1e3a8a,stroke:#1d4ed8,color:#eff6ff;
+    classDef t6 fill:#1f2937,stroke:#374151,color:#f9fafb;
+
+    class T1 t1;
+    class T2 t2;
+    class T3 t3;
+    class T4 t4;
+    class T5 t5;
+    class T6 t6;
 ```
 
 ---
 
-## 👥 Role-Based Access Control (RBAC)
+## Role-Based Access Control (RBAC) Matrix
 
-| Role | Default Account | Permissions & Workflow |
+| Platform Role | Demo Credentials | Operational Scope |
 | :--- | :--- | :--- |
-| **System Admin** | `admin@cit.ac.in`<br/>*(Pass: `admin123`)* | **Unrestricted Commit Authority**: Generates master schedule, approves/rejects all subordinate requests, applies disruptions directly without secondary approval, executes official validator. |
-| **Academic Coordinator** | `f1@cit.ac.in`<br/>*(Pass: `faculty123`)* | **Department Operations**: Views department timetable, requests schedule moves, leaves, and venue bookings. Changes are routed to Admin for final commit. |
-| **Club Representative** | `robotics@cit.ac.in`<br/>*(Pass: `club123`)* | **Venue Booking**: Submits natural language or WhatsApp booking requests for fest/workshops. Cannot modify academic sessions or approve disruptions. |
+| **System Admin** | `admin@cit.ac.in`<br/>Password: `admin123` | **Direct Commit Authority:** Master schedule generation, disruption repair execution, override approvals, official validator execution. Changes commit without intermediary approval. |
+| **Academic Coordinator** | `f1@cit.ac.in`<br/>Password: `faculty123` | **Department Scope:** Timetable and room inspection, leave requests, session movement submissions. Requests route to Admin. |
+| **Club Representative** | `robotics@cit.ac.in`<br/>Password: `club123` | **Event Booking Scope:** Venue booking submissions via Web UI or Evolution-Go WhatsApp. Strictly isolated from academic modification permissions. |
 
 ---
 
-## 🚀 Quick Start Guide
+## Setup & Deployment Guide
 
-### Option A: Run via Docker (Recommended)
+### Option 1: Docker Compose (Production & Staging)
 
 ```bash
 # 1. Clone repository
 git clone https://github.com/Akshat-sin-official/TZ-Meru-Byte.git
 cd TZ-Meru-Byte
 
-# 2. Launch full stack with Docker Compose
+# 2. Launch container stack
 docker compose up -d
 
 # 3. Seed canonical dataset
 docker exec cit_server npm run seed
 
-# 4. Access the platform
-# Web Application: http://localhost:5173 (or https://cit.saubhagyalabs.tech)
-# API Gateway:     http://localhost:5000
-# Optimizer:       http://localhost:8001
+# 4. Access live endpoints
+# UI:          http://localhost:5173
+# API Gateway: http://localhost:5000
+# Optimizer:   http://localhost:8001
 ```
 
-### Option B: Local Windows Development via Scripts
+### Option 2: Local Windows Development via Internal Scripts
 
-All startup scripts are organized inside the [`scripts/`](scripts/) folder:
+All launcher scripts are centrally located in [`scripts/`](scripts/):
 
 ```cmd
-:: Launch all services simultaneously in dedicated terminal windows
+:: Launch all platform microservices simultaneously
 scripts\start_all.bat
 ```
 
-*Individual service launchers:*
-- Frontend: `scripts\run_client.bat`
-- Backend API: `scripts\run_server.bat`
-- Optimizer: `scripts\run_optimizer.bat`
+*Individual service scripts:*
+- UI Server: `scripts\run_client.bat`
+- Node.js API: `scripts\run_server.bat`
+- Python Optimizer: `scripts\run_optimizer.bat`
 
 ---
 
-## 📂 Documentation and Scripts Directory
+## Documentation and Scripts Directory
 
-All detailed technical specifications, logs, and executable utilities have been organized into dedicated directories:
+Technical specifications, declarations, and testing scripts are organized into dedicated directories:
 
-| Directory / File | Description | Redirect Link |
+| Resource | Description | Redirect Link |
 | :--- | :--- | :--- |
-| 🎬 **Presentation Video Script** | Complete word-for-word 5-minute demo script and screen walkthrough | [docs/guides/PRESENTATION_VIDEO_SCRIPT.md](docs/guides/PRESENTATION_VIDEO_SCRIPT.md) |
-| 🤖 **AI Usage Declaration** | Mandatory hackathon declaration of AI models, prompts, and tooling | [docs/declarations/AI_USAGE.md](docs/declarations/AI_USAGE.md) |
-| 📜 **Third-Party Disclosures** | Open-source libraries, licenses, and external dependencies | [docs/declarations/THIRD_PARTY.md](docs/declarations/THIRD_PARTY.md) |
-| 🏗️ **Feature Architecture** | Detailed module breakdown and technical specifications | [docs/architecture/features.md](docs/architecture/features.md) |
-| 🔍 **Audit & Verification Log** | Complete checklist of problems analyzed and solved | [docs/audit/PROBLEMS.md](docs/audit/PROBLEMS.md) |
-| 👥 **Task Division** | Hackathon engineering division and execution log | [docs/audit/TASK_DIVISION.md](docs/audit/TASK_DIVISION.md) |
-| 🛠️ **Internal Scripts** | Launchers, droplet deployment, and test harnesses | [`scripts/`](scripts/) |
-| 📦 **Canonical Exports** | Official `schedule.json`, `schedule_after.json`, and reports | [`exports/`](exports/) |
+| **Presentation Video Script** | Word-for-word 5-minute recording script and demonstration walkthrough | [docs/guides/PRESENTATION_VIDEO_SCRIPT.md](docs/guides/PRESENTATION_VIDEO_SCRIPT.md) |
+| **AI Usage Declaration** | Mandatory hackathon AI disclosures and model declarations | [docs/declarations/AI_USAGE.md](docs/declarations/AI_USAGE.md) |
+| **Third-Party Disclosures** | Open-source libraries, frameworks, and licensing declarations | [docs/declarations/THIRD_PARTY.md](docs/declarations/THIRD_PARTY.md) |
+| **System Feature Architecture** | In-depth engineering specifications for every Campora engine module | [docs/architecture/features.md](docs/architecture/features.md) |
+| **Audit & Verification Log** | Problems analyzed, corrected, and verified across testing phases | [docs/audit/PROBLEMS.md](docs/audit/PROBLEMS.md) |
+| **Hackathon Task Division** | Team engineering split and delivery verification log | [docs/audit/TASK_DIVISION.md](docs/audit/TASK_DIVISION.md) |
+| **n8n Workflow Specifications** | Webhook contracts, payload structures, and workflow architecture | [docs/N8N/n8n.md](docs/N8N/n8n.md) |
+| **Internal Scripts** | Launchers, droplet deployment tools, and latency benchmarks | [`scripts/`](scripts/) |
+| **Canonical Exports** | Verified `schedule.json`, `schedule_after.json`, and validator reports | [`exports/`](exports/) |
 
 ---
 
 <div align="center">
 <b>Campora · Chilika Institute of Technology Operations Engine</b><br/>
-Crafted with precision by <b>MERUBYTE</b> for Crunch Week 2026.
+Engineered by <b>MERUBYTE</b> for Tech Zephyr 4.
 </div>
