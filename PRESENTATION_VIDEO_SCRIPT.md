@@ -148,3 +148,4 @@ To demonstrate the WhatsApp Bot during the video or to judges:
 | **Admin** | `admin@cit.ac.in` | `admin123` |
 | **Academic Coordinator** | `f1@cit.ac.in` | `faculty123` |
 | **Club President** | `robotics@cit.ac.in` | `club123` |
+
