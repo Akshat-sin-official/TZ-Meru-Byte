@@ -89,9 +89,18 @@ export const DisruptionsView: React.FC = () => {
     }
   };
 
-  const handleApplyRepair = () => {
-    setApprovedCommitted(true);
-    toast.success('Repaired timetable successfully approved and committed to live operations.');
+  const handleApplyRepair = async () => {
+    if (!repairResult?.jobId) {
+      toast.error('No disruption job identifier found to commit.');
+      return;
+    }
+    try {
+      await campusApi.commitDisruptionRepair(repairResult.jobId);
+      setApprovedCommitted(true);
+      toast.success('Repaired timetable successfully approved and committed to live operations.');
+    } catch (err: any) {
+      toast.error('Failed to commit repaired timetable: ' + (err.response?.data?.error || err.message));
+    }
   };
 
   const movedList = repairResult?.movedSessions || [];

@@ -197,6 +197,26 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
   const [targetRoom, setTargetRoom] = useState('LH-1');
   const [validatingMove, setValidatingMove] = useState(false);
   const [applyingMove, setApplyingMove] = useState(false);
+  const [requestingMove, setRequestingMove] = useState(false);
+
+  const handleRequestMove = async () => {
+    if (!selectedSessionDetail || !moveValidationResult?.valid) return;
+    setRequestingMove(true);
+    try {
+      await campusApi.requestMove({
+        session_id: selectedSessionDetail.session.externalId,
+        target_day: targetDay,
+        target_start_period: targetPeriod,
+        target_room_id: targetRoom,
+      });
+      toast.success('Session move request submitted for Admin review.');
+      setSelectedSessionDetail(null);
+    } catch (err: any) {
+      toast.error('Failed to submit move request: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setRequestingMove(false);
+    }
+  };
   const [moveValidationResult, setMoveValidationResult] = useState<any | null>(null);
 
   const fetchTimetable = async () => {
@@ -222,7 +242,7 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
     setSolving(true);
     try {
       const res = await campusApi.generateTimetable();
-      if (res.proposalId) {
+      if (res.proposalId && res.status === 'pending_approval') {
         await campusApi.approveProposal(res.proposalId);
       }
       toast.success('Master timetable auto-scheduled with 0 hard violations!');
@@ -462,12 +482,19 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
                 <span className="font-semibold text-xs tracking-tight truncate">
                   {session.courseId}
                 </span>
-                <span className={`text-[10px] font-mono px-1 rounded border ${badgeBg}`}>
-                  {assignment.roomExternalId}
-                </span>
+                <div className="flex items-center gap-1">
+                  {session.needsAccessible && (
+                    <span title="Accessible venue required" className="text-[10px]">♿</span>
+                  )}
+                  <span className={`text-[10px] font-mono px-1 rounded border ${badgeBg}`} title={roomsMap.get(assignment.roomExternalId)?.name || assignment.roomExternalId}>
+                    {assignment.roomExternalId}
+                  </span>
+                </div>
               </div>
               <div className="flex items-center justify-between text-[11px] text-[#787774] mt-1 print:mt-0.5">
-                <span className="truncate">{session.facultyId}</span>
+                <span className="truncate font-medium" title={facultyMap.get(session.facultyId)?.name || session.facultyId}>
+                  {facultyMap.get(session.facultyId)?.name || session.facultyId}
+                </span>
                 <span className="text-[9px] font-medium opacity-85">{typeBadge}</span>
               </div>
             </div>
@@ -1156,6 +1183,17 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
                     >
                       {applyingMove ? <RotateCw className="w-3.5 h-3.5 animate-spin" /> : <ArrowRight className="w-3.5 h-3.5" />}
                       <span>Apply Move to Active Timetable</span>
+                    </button>
+                  )}
+
+                  {moveValidationResult.valid && user?.role !== 'admin' && (
+                    <button
+                      onClick={handleRequestMove}
+                      disabled={requestingMove}
+                      className="w-full mt-2 py-1 px-2 bg-primary hover:bg-primary/90 text-white rounded text-xs font-medium transition cursor-pointer flex items-center justify-center gap-1 disabled:opacity-50 shadow-xs"
+                    >
+                      {requestingMove ? <RotateCw className="w-3.5 h-3.5 animate-spin" /> : <ArrowRight className="w-3.5 h-3.5" />}
+                      <span>Submit Move Request for Admin Review (PS §4)</span>
                     </button>
                   )}
                 </div>

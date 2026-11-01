@@ -2,7 +2,7 @@ import { Router, Response } from 'express';
 import { PrismaClient, Role, ScheduleStatus, BookingDecisionStatus } from '@prisma/client';
 import axios from 'axios';
 import { authenticate, requireRole, AuthenticatedRequest } from '../middleware/auth.js';
-import { emitNotification } from '../utils/notifications.js';
+import { emitNotification, recordAuditLog } from '../utils/notifications.js';
 import {
   resolveRoomConflict,
   getEffectiveCategory,
@@ -272,6 +272,106 @@ router.post('/solve', authenticate, requireRole([Role.admin]), async (req: Authe
 
     return res.json({ success: true, count: result.bookings.length, overrides: result.session_overrides.length });
   } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+
+// Department Coordinator Lab Booking Approval (PS Section 4)
+router.post('/approve-lab/:requestId', authenticate, requireRole([Role.department_coordinator, Role.admin]), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const requestId = String(req.params.requestId);
+    const bookingReq = await prisma.bookingRequest.findFirst({
+      where: {
+        OR: [{ id: requestId }, { externalId: requestId }],
+      },
+    });
+
+    if (!bookingReq) {
+      return res.status(404).json({ error: 'Booking request not found' });
+    }
+
+    const coordDept = (req.user?.department || '').toUpperCase();
+    const isDeptLab = 
+      (bookingReq.requestedRoom && (
+        (coordDept.includes('CSE') && bookingReq.requestedRoom.includes('CS-LAB')) ||
+        (coordDept.includes('ECE') && bookingReq.requestedRoom.includes('ELEC-LAB')) ||
+        (coordDept.includes('MECH') && bookingReq.requestedRoom.includes('MECH-WS')) ||
+        (coordDept.includes('CIVIL') && bookingReq.requestedRoom.includes('CIVIL-LAB')) ||
+        (coordDept.includes('PHY') && bookingReq.requestedRoom.includes('PHY-LAB'))
+      )) ||
+      (Array.isArray(bookingReq.roomTypes) && (
+        (bookingReq.roomTypes as string[]).some(rt => rt.toLowerCase().includes('lab') || rt.toLowerCase().includes('workshop'))
+      ));
+
+    if (req.user?.role !== Role.admin && !isDeptLab) {
+      return res.status(403).json({
+        error: `Forbidden: As ${req.user?.department} Coordinator, you can only approve bookings for your department's specialized laboratories.`,
+      });
+    }
+
+    // RBAC: Separation of duties check
+    if (bookingReq.requester && req.user?.name && bookingReq.requester.toLowerCase().includes(req.user.name.toLowerCase()) && req.user?.role !== Role.admin) {
+      return res.status(403).json({
+        error: 'Forbidden: You cannot approve your own booking request. Separation of duties requires independent review.',
+      });
+    }
+
+    const activeSchedule = await prisma.scheduleVersion.findFirst({
+      where: { datasetVersionId: bookingReq.datasetVersionId, status: ScheduleStatus.active },
+    });
+
+    if (!activeSchedule) {
+      return res.status(404).json({ error: 'No active schedule version found to attach booking decision' });
+    }
+
+    const windows = bookingReq.windows as any[];
+    const firstWin = (windows && windows.length > 0) ? windows[0] : null;
+    const allocDay = firstWin?.day || 'FRI';
+    const allocStart = firstWin?.start_period || 10;
+    const allocEnd = firstWin?.end_period || (allocStart + bookingReq.durationPeriods - 1);
+    const allocRoom = bookingReq.requestedRoom || (coordDept.includes('CSE') ? 'CS-LAB-1' : 'CS-LAB-2');
+
+    const decision = await prisma.bookingDecision.upsert({
+      where: {
+        scheduleVersionId_requestId: {
+          scheduleVersionId: activeSchedule.id,
+          requestId: bookingReq.id,
+        },
+      },
+      create: {
+        scheduleVersionId: activeSchedule.id,
+        requestId: bookingReq.id,
+        status: BookingDecisionStatus.approved,
+        day: allocDay,
+        startPeriod: allocStart,
+        endPeriod: allocEnd,
+        roomExternalId: allocRoom,
+        reason: `Approved by Department Coordinator (${req.user?.name || coordDept}) under departmental laboratory booking authority.`,
+      },
+      update: {
+        status: BookingDecisionStatus.approved,
+        day: allocDay,
+        startPeriod: allocStart,
+        endPeriod: allocEnd,
+        roomExternalId: allocRoom,
+        reason: `Approved by Department Coordinator (${req.user?.name || coordDept}) under departmental laboratory booking authority.`,
+      },
+    });
+
+    await emitNotification({
+      broadcast: true,
+      title: 'Lab Booking Approved',
+      message: `Booking request for ${bookingReq.title} approved by ${req.user?.name} for ${allocRoom} (${allocDay} P${allocStart}–P${allocEnd}).`,
+    });
+
+    return res.json({
+      success: true,
+      decision,
+      message: `Successfully approved lab booking for ${bookingReq.title}.`,
+    });
+  } catch (err: any) {
+    console.error('Approve lab error:', err);
     return res.status(500).json({ error: err.message });
   }
 });

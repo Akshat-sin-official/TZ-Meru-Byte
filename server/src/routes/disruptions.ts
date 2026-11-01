@@ -139,13 +139,13 @@ router.post('/submit', authenticate, requireRole([Role.admin]), async (req: Auth
       }
     }
 
-    // Create a DisruptionJob record
+    // Create a DisruptionJob record storing repaired assignments for commit
     const job = await prisma.disruptionJob.create({
       data: {
         datasetVersionId: dataset.id,
         baseScheduleId: activeSchedule.id,
         status: 'succeeded',
-        changesJson: disruption,
+        changesJson: { disruption, assignments: result.assignments },
         sessionsMoved: movedSessions.length,
         timeChanged: movedSessions.filter((m) => m.type === 'time_changed').length,
         roomOnlyChanged: movedSessions.filter((m) => m.type === 'room_only_changed').length,
@@ -175,5 +175,116 @@ router.post('/submit', authenticate, requireRole([Role.admin]), async (req: Auth
   }
 });
 
-export default router;
 
+
+// Commit Repaired Schedule from Disruption Job (Admin only)
+router.post('/commit/:jobId', authenticate, requireRole([Role.admin]), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const jobId = String(req.params.jobId);
+    const job = await prisma.disruptionJob.findUnique({ where: { id: jobId } });
+    if (!job) {
+      return res.status(404).json({ error: 'Disruption job not found' });
+    }
+
+    const changesData = job.changesJson as any;
+    const assignments = changesData?.assignments || [];
+    if (!assignments || assignments.length === 0) {
+      return res.status(400).json({ error: 'No repaired assignments found for this disruption job' });
+    }
+
+    const dataset = await prisma.datasetVersion.findUnique({ where: { id: job.datasetVersionId } });
+    if (!dataset) {
+      return res.status(404).json({ error: 'Associated dataset version not found' });
+    }
+
+    // Supersede current active schedule version
+    await prisma.scheduleVersion.updateMany({
+      where: { datasetVersionId: dataset.id, status: ScheduleStatus.active },
+      data: { status: ScheduleStatus.superseded },
+    });
+
+    const latestVersion = await prisma.scheduleVersion.findFirst({
+      where: { datasetVersionId: dataset.id },
+      orderBy: { versionNumber: 'desc' },
+    });
+    const nextVersionNumber = (latestVersion?.versionNumber || 0) + 1;
+    const safeAdminId = await getSafeUserId(req.user?.id, Role.admin);
+
+    const newSchedule = await prisma.scheduleVersion.create({
+      data: {
+        datasetVersionId: dataset.id,
+        versionNumber: nextVersionNumber,
+        status: ScheduleStatus.active,
+        hardViolations: 0,
+        createdById: safeAdminId,
+      },
+    });
+
+    const assignmentsToInsert = assignments.map((a: any) => ({
+      scheduleVersionId: newSchedule.id,
+      sessionExternalId: a.session_id,
+      day: a.day,
+      startPeriod: a.start_period,
+      roomExternalId: a.room_id,
+    }));
+
+    await prisma.scheduleAssignment.createMany({
+      data: assignmentsToInsert,
+    });
+
+    await prisma.disruptionJob.update({
+      where: { id: jobId },
+      data: { resultProposalId: newSchedule.id },
+    });
+
+    // Record audit log
+    await recordAuditLog({
+      userId: req.user?.id,
+      roleFallback: Role.admin,
+      action: 'COMMIT_DISRUPTION_REPAIR',
+      entityType: 'SCHEDULE_VERSION',
+      entityId: newSchedule.id,
+      details: { jobId, sessionsMoved: job.sessionsMoved, versionNumber: newSchedule.versionNumber },
+    });
+
+    // Update schedule_after.json export file if available
+    try {
+      const exportsDir = path.resolve(process.cwd(), '../exports');
+      const exportPath = path.join(exportsDir, 'schedule_after.json');
+      if (fs.existsSync(exportsDir)) {
+        const exportPayload = {
+          academic_year: '2026-2027',
+          semester: 'Autumn',
+          generated_at: new Date().toISOString(),
+          timetable: assignments.map((a: any) => ({
+            session_id: a.session_id,
+            day: a.day,
+            start_period: a.start_period,
+            room_id: a.room_id,
+          })),
+        };
+        fs.writeFileSync(exportPath, JSON.stringify(exportPayload, null, 2));
+      }
+    } catch (fsErr) {
+      console.warn('Could not update schedule_after.json on disk:', fsErr);
+    }
+
+    await emitNotification({
+      broadcast: true,
+      title: 'Disruption Schedule Committed',
+      message: `Disruption recovery schedule v${nextVersionNumber} successfully activated for live campus operations (${job.sessionsMoved || 0} sessions moved)`,
+    });
+
+    return res.json({
+      success: true,
+      versionId: newSchedule.id,
+      versionNumber: newSchedule.versionNumber,
+      message: 'Disruption repair schedule successfully activated.',
+    });
+  } catch (err: any) {
+    console.error('Error committing disruption repair:', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+export default router;

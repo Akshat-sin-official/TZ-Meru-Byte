@@ -106,6 +106,10 @@ export const campusApi = {
     const res = await api.post('/bookings/solve');
     return res.data;
   },
+  approveLabBooking: async (requestId: string) => {
+    const res = await api.post(`/bookings/approve-lab/${requestId}`);
+    return res.data;
+  },
   submitBookingRequest: async (data: any) => {
     const res = await api.post('/bookings/requests', data);
     return res.data;
@@ -122,6 +126,10 @@ export const campusApi = {
   },
   submitDisruption: async (disruptionPayload: any) => {
     const res = await api.post('/disruptions/submit', disruptionPayload);
+    return res.data;
+  },
+  commitDisruptionRepair: async (jobId: string) => {
+    const res = await api.post(`/disruptions/commit/${jobId}`);
     return res.data;
   },
 
@@ -173,6 +181,16 @@ export const campusApi = {
     target_room_id: string;
   }) => {
     const res = await api.post('/schedules/apply-move', params);
+    return res.data;
+  },
+  requestMove: async (params: {
+    session_id: string;
+    target_day: string;
+    target_start_period: number;
+    target_room_id: string;
+    reason?: string;
+  }) => {
+    const res = await api.post('/schedules/request-move', params);
     return res.data;
   },
 

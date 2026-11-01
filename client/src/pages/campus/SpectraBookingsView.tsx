@@ -90,6 +90,21 @@ export const SpectraBookingsView: React.FC = () => {
   const [scope, setScope] = useState<'all' | 'mine'>(user?.role === 'admin' ? 'all' : 'mine');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
+  const [approvingLab, setApprovingLab] = useState(false);
+
+  const handleApproveLabBooking = async (requestId: string) => {
+    setApprovingLab(true);
+    try {
+      await campusApi.approveLabBooking(requestId);
+      toast.success('Department lab booking successfully approved.');
+      await fetchBookings();
+      setSelectedRequest(null);
+    } catch (err: any) {
+      toast.error('Approval failed: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setApprovingLab(false);
+    }
+  };
 
   // Arbiter test dialog state
   const [arbiterOpen, setArbiterOpen] = useState(false);
@@ -975,6 +990,28 @@ export const SpectraBookingsView: React.FC = () => {
                   </div>
                 </div>
               </div>
+
+              {(user?.role === 'department_coordinator' || user?.role === 'admin') && (
+                <div className="p-4 rounded-xl border border-emerald-200 bg-emerald-50/50 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-emerald-900 font-poppins uppercase tracking-wider">
+                      Department Lab Authority
+                    </span>
+                    <span className="text-[10px] text-emerald-700 font-medium font-poppins">PS §4 Coordinator Rule</span>
+                  </div>
+                  <p className="text-[11px] text-emerald-800 leading-relaxed font-poppins">
+                    Authorize access to departmental laboratories (CS-LAB, ELEC-LAB, PHY-LAB, MECH-WS, CIVIL-LAB).
+                  </p>
+                  <button
+                    onClick={() => handleApproveLabBooking(selectedRequest.request.id)}
+                    disabled={approvingLab || selectedRequest.decision?.status === 'approved'}
+                    className="w-full py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold font-poppins text-xs flex items-center justify-center gap-1.5 transition disabled:opacity-50 cursor-pointer shadow-xs"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>{selectedRequest.decision?.status === 'approved' ? 'Lab Booking Approved' : approvingLab ? 'Approving Lab...' : 'Approve Lab Booking'}</span>
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </SheetContent>

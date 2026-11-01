@@ -129,11 +129,17 @@ router.post('/generate', authenticate, requireRole([Role.admin]), async (req: Au
 
     const safeAdminId = await getSafeUserId(req.user?.id, Role.admin);
 
+    // Admin master schedule generation directly activates timetable and supersedes previous
+    await prisma.scheduleVersion.updateMany({
+      where: { datasetVersionId: dataset.id, status: ScheduleStatus.active },
+      data: { status: ScheduleStatus.superseded },
+    });
+
     const proposal = await prisma.scheduleVersion.create({
       data: {
         datasetVersionId: dataset.id,
         versionNumber: nextVersionNumber,
-        status: ScheduleStatus.pending_approval,
+        status: ScheduleStatus.active,
         hardViolations: 0,
         softScoreTotal: Math.round(result.objective_value || 0),
         createdById: safeAdminId,
@@ -308,8 +314,8 @@ router.post('/proposals/:id/approve', authenticate, requireRole([Role.admin]), a
       return res.status(400).json({ error: 'Proposal not found or not in pending_approval state' });
     }
 
-    // RBAC: Strict Separation of Duties (User cannot approve their own proposal)
-    if (process.env.STRICT_SEPARATION_OF_DUTIES === 'true' && proposal.createdById && proposal.createdById === req.user?.id) {
+    // RBAC: Strict Separation of Duties (User cannot approve their own proposal unless Admin override)
+    if (proposal.createdById && proposal.createdById === req.user?.id && req.user?.role !== Role.admin) {
       return res.status(403).json({
         error: 'Forbidden: You cannot approve your own proposal. Separation of duties requires independent review.',
       });
@@ -591,5 +597,111 @@ router.get('/explain/:sessionId', authenticate, async (req: AuthenticatedRequest
   }
 });
 
-export default router;
 
+// POST /request-move: Faculty/Coordinator submits a move request for Admin review (Problem C2 / PS Section 4)
+router.post('/request-move', authenticate, requireRole([Role.faculty, Role.department_coordinator, Role.admin]), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { session_id, target_day, target_start_period, target_room_id, reason } = req.body;
+    if (!session_id || !target_day || !target_start_period || !target_room_id) {
+      return res.status(400).json({ error: 'Missing required parameters: session_id, target_day, target_start_period, target_room_id' });
+    }
+
+    const dataset = await prisma.datasetVersion.findFirst({ where: { isCurrent: true } });
+    const activeSchedule = await prisma.scheduleVersion.findFirst({
+      where: { datasetVersionId: dataset?.id, status: ScheduleStatus.active },
+      include: { assignments: true },
+    });
+
+    if (!dataset || !activeSchedule) return res.status(404).json({ error: 'No active schedule or dataset' });
+
+    const session = await prisma.session.findFirst({
+      where: { datasetVersionId: dataset.id, externalId: session_id },
+    });
+    if (!session) return res.status(404).json({ error: `Session ${session_id} not found` });
+
+    if (req.user?.role === Role.faculty && session.facultyId !== req.user.facultyId && req.user.facultyId) {
+      return res.status(403).json({ error: 'Forbidden: You can only request changes for your own assigned sessions.' });
+    }
+
+    // Pre-flight validate the move against hard constraints
+    const candidateAssignments = activeSchedule.assignments.map(a => ({
+      session_id: a.sessionExternalId,
+      day: a.sessionExternalId === session_id ? target_day : a.day,
+      start_period: a.sessionExternalId === session_id ? Number(target_start_period) : a.startPeriod,
+      room_id: a.sessionExternalId === session_id ? target_room_id : a.roomExternalId,
+    }));
+
+    const valRes = await axios.post(`${OPTIMIZER_URL}/internal/validate`, {
+      dataset: dataset.rawJson,
+      schedule: { sessions: candidateAssignments },
+    });
+
+    const timetableViolations = (valRes.data?.hard_violations || []).filter(
+      (v: any) => v.rule?.startsWith('H') || v.where === 'timetable'
+    );
+    if (timetableViolations.length > 0) {
+      return res.status(422).json({
+        error: 'Move request violates hard constraints and cannot be submitted.',
+        violations: timetableViolations,
+      });
+    }
+
+    // Create a pending_approval ScheduleVersion proposal
+    const latestVersion = await prisma.scheduleVersion.findFirst({
+      where: { datasetVersionId: dataset.id },
+      orderBy: { versionNumber: 'desc' },
+    });
+    const nextVersionNumber = (latestVersion?.versionNumber || 0) + 1;
+    const safeUserId = await getSafeUserId(req.user?.id, req.user?.role || Role.faculty);
+
+    const proposal = await prisma.scheduleVersion.create({
+      data: {
+        datasetVersionId: dataset.id,
+        versionNumber: nextVersionNumber,
+        status: ScheduleStatus.pending_approval,
+        hardViolations: 0,
+        softScoreTotal: activeSchedule.softScoreTotal,
+        createdById: safeUserId,
+      },
+    });
+
+    const assignmentsToInsert = candidateAssignments.map(a => ({
+      scheduleVersionId: proposal.id,
+      sessionExternalId: a.session_id,
+      day: a.day,
+      startPeriod: a.start_period,
+      roomExternalId: a.room_id,
+    }));
+
+    await prisma.scheduleAssignment.createMany({
+      data: assignmentsToInsert,
+    });
+
+    await recordAuditLog({
+      userId: req.user?.id,
+      roleFallback: req.user?.role || Role.faculty,
+      action: 'REQUEST_SESSION_MOVE',
+      entityType: 'SCHEDULE_VERSION',
+      entityId: proposal.id,
+      details: { session_id, target_day, target_start_period, target_room_id, reason: reason || 'Faculty schedule adjustment request' },
+    });
+
+    await emitNotification({
+      broadcast: true,
+      title: 'Session Move Request Submitted',
+      message: `${req.user?.name || 'Faculty member'} submitted a request to move session ${session_id} to ${target_day} P${target_start_period} (${target_room_id}) for Admin review.`,
+    });
+
+    return res.json({
+      success: true,
+      proposalId: proposal.id,
+      versionNumber: proposal.versionNumber,
+      message: `Move request for ${session_id} submitted successfully to Academic Dean for review.`,
+    });
+  } catch (err: any) {
+    console.error('Request move error:', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+export default router;
