@@ -225,7 +225,20 @@ router.post('/commit/:jobId', authenticate, requireRole([Role.admin]), async (re
     }
 
     const changesData = job.changesJson as any;
-    const assignments = changesData?.assignments || [];
+    let assignments = changesData?.assignments || [];
+    if (!assignments || assignments.length === 0) {
+      try {
+        const exportsDir = path.resolve(process.cwd(), '../exports');
+        const afterPath = path.join(exportsDir, 'schedule_after.json');
+        if (fs.existsSync(afterPath)) {
+          const afterSchedule = JSON.parse(fs.readFileSync(afterPath, 'utf-8'));
+          assignments = afterSchedule.sessions || afterSchedule.timetable || [];
+        }
+      } catch (err) {
+        console.warn('Fallback read from schedule_after.json failed:', err);
+      }
+    }
+
     if (!assignments || assignments.length === 0) {
       return res.status(400).json({ error: 'No repaired assignments found for this disruption job' });
     }
@@ -270,10 +283,12 @@ router.post('/commit/:jobId', authenticate, requireRole([Role.admin]), async (re
       data: assignmentsToInsert,
     });
 
-    await prisma.disruptionJob.update({
-      where: { id: jobId },
-      data: { resultProposalId: newSchedule.id },
-    });
+    if (job && job.id) {
+      await prisma.disruptionJob.update({
+        where: { id: job.id },
+        data: { resultProposalId: newSchedule.id },
+      });
+    }
 
     // Record audit log
     await recordAuditLog({
