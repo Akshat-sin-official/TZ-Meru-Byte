@@ -219,6 +219,80 @@ router.post('/unavailability', authenticate, async (req: AuthenticatedRequest, r
       }
     }
 
+    // If Admin is submitting, directly commit & activate the schedule without requiring a proposal step
+    if (userRole === Role.admin) {
+      await prisma.scheduleVersion.updateMany({
+        where: { datasetVersionId: dataset.id, status: ScheduleStatus.active },
+        data: { status: ScheduleStatus.superseded },
+      });
+
+      const directVersion = await prisma.scheduleVersion.create({
+        data: {
+          datasetVersionId: dataset.id,
+          versionNumber: nextVersionNumber,
+          status: ScheduleStatus.active,
+          hardViolations: 0,
+          softScoreTotal: Math.round(solverResult.objective_value || 0),
+          createdById: auditUserId || req.user?.id || null,
+        },
+      });
+
+      for (const a of solverResult.assignments) {
+        await prisma.scheduleAssignment.create({
+          data: {
+            scheduleVersionId: directVersion.id,
+            sessionExternalId: a.session_id,
+            day: a.day,
+            startPeriod: a.start_period,
+            roomExternalId: a.room_id,
+          },
+        });
+      }
+
+      const unavailRequest = await prisma.facultyUnavailabilityRequest.create({
+        data: {
+          facultyId,
+          facultyName,
+          days,
+          periods: numPeriods,
+          reason: reason || null,
+          status: 'approved',
+          affectedSessions,
+          proposalId: directVersion.id,
+          createdById: req.user?.id || 'anonymous',
+        },
+      });
+
+      await prisma.auditLog.create({
+        data: {
+          userId: auditUserId,
+          action: 'ADMIN_DIRECT_SCHEDULE_COMMIT',
+          entityType: 'FACULTY_UNAVAILABILITY',
+          entityId: unavailRequest.id,
+          details: {
+            facultyId,
+            days,
+            periods: numPeriods,
+            affectedSessionsCount: affectedSessions.length,
+            movedSessionsCount: movedSessions.length,
+            scheduleVersionId: directVersion.id,
+          },
+        },
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: 'Admin direct change committed and active timetable updated instantly.',
+        unavailabilityId: unavailRequest.id,
+        scheduleVersionId: directVersion.id,
+        status: 'active',
+        affectedSessions,
+        movedSessions,
+        totalAffected: affectedSessions.length,
+        totalMoved: movedSessions.length,
+      });
+    }
+
     const proposal = await prisma.scheduleVersion.create({
       data: {
         datasetVersionId: dataset.id,
