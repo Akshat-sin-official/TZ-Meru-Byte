@@ -60,6 +60,7 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
   const [aiMode, setAiMode] = useState<string>('unified');
   const [submittingBooking, setSubmittingBooking] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [isSilenceDetected, setIsSilenceDetected] = useState(false);
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
   const recognitionRef = useRef<any>(null);
   const voiceTimeoutRef = useRef<any>(null);
@@ -174,40 +175,46 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
 
     try {
       const recognition = new SpeechRecognition();
-      recognition.continuous = false;
+      recognition.continuous = true; // Keep listening through natural breathing pauses
       recognition.interimResults = true;
       recognition.lang = 'en-US';
       voiceTranscriptRef.current = '';
+      setIsSilenceDetected(false);
 
       recognition.onstart = () => {
         setIsListening(true);
-        toast.info('🎙️ Listening... Speak freely (will auto-submit when you stop)');
+        setIsSilenceDetected(false);
+        toast.info('🎙️ Listening... Speak naturally at your own pace');
       };
 
       recognition.onresult = (event: any) => {
-        let transcript = '';
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          transcript += event.results[i][0].transcript;
+        let fullTranscript = '';
+        for (let i = 0; i < event.results.length; i++) {
+          fullTranscript += event.results[i][0].transcript + ' ';
         }
-        if (transcript.trim()) {
-          setInputText(transcript);
-          voiceTranscriptRef.current = transcript;
+        const cleaned = fullTranscript.trim();
+        if (cleaned) {
+          setInputText(cleaned);
+          voiceTranscriptRef.current = cleaned;
+          setIsSilenceDetected(false);
 
-          // Auto-submit after 1.2s silence
+          // Modern conversational pause threshold: 2.5s sustained silence before final submission
           if (voiceTimeoutRef.current) {
             clearTimeout(voiceTimeoutRef.current);
           }
           voiceTimeoutRef.current = setTimeout(() => {
+            setIsSilenceDetected(true);
             if (recognitionRef.current) {
               try { recognitionRef.current.stop(); } catch {}
             }
-          }, 1200);
+          }, 2500);
         }
       };
 
       recognition.onerror = (event: any) => {
         console.warn('Speech recognition error:', event.error);
         setIsListening(false);
+        setIsSilenceDetected(false);
         if (voiceTimeoutRef.current) clearTimeout(voiceTimeoutRef.current);
         if (event.error === 'not-allowed') {
           toast.error('Microphone access denied. Please allow microphone permissions in browser.');
@@ -218,11 +225,12 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
 
       recognition.onend = () => {
         setIsListening(false);
+        setIsSilenceDetected(false);
         if (voiceTimeoutRef.current) clearTimeout(voiceTimeoutRef.current);
         const spoken = voiceTranscriptRef.current.trim();
         if (spoken) {
           voiceTranscriptRef.current = '';
-          toast.success('🎙️ Spoken query captured — sending automatically!');
+          toast.success('🎙️ Spoken query complete — sending automatically!');
           handleSendMessage(spoken);
         }
       };
@@ -232,6 +240,7 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
     } catch (err: any) {
       console.error('Failed to start voice recognition:', err);
       setIsListening(false);
+      setIsSilenceDetected(false);
       toast.error('Could not activate microphone');
     }
   };
@@ -242,10 +251,11 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
       try { recognitionRef.current.stop(); } catch {}
     }
     setIsListening(false);
+    setIsSilenceDetected(false);
     const spoken = voiceTranscriptRef.current.trim() || inputText.trim();
     if (spoken) {
       voiceTranscriptRef.current = '';
-      toast.success('🎙️ Spoken query captured — sending automatically!');
+      toast.success('🎙️ Spoken query complete — sending automatically!');
       handleSendMessage(spoken);
     }
   };
@@ -656,17 +666,22 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
 
         {/* Active Speech Recognition Banner */}
         {isListening && (
-          <div className="px-4 py-2 bg-rose-50 border-t border-rose-200 flex items-center justify-between text-xs text-rose-800 animate-pulse">
+          <div className="px-4 py-2.5 bg-rose-50 border-t border-rose-200 flex items-center justify-between text-xs text-rose-800 transition-all">
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
-              <span className="font-semibold font-poppins">🎙️ Listening... Speak into your microphone</span>
+              <span className={`w-2.5 h-2.5 rounded-full ${isSilenceDetected ? 'bg-amber-500 animate-ping' : 'bg-rose-500 animate-ping'}`} />
+              <span className="font-semibold font-poppins">
+                {isSilenceDetected
+                  ? '⏱️ Finished speaking... Submitting query now...'
+                  : '🎙️ Listening... (Take your time, natural pauses allowed)'}
+              </span>
             </div>
             <button
               type="button"
               onClick={stopSpeechRecognition}
-              className="text-[11px] font-bold text-rose-700 hover:text-rose-900 underline cursor-pointer"
+              className="text-[11px] font-bold text-rose-700 hover:text-rose-900 bg-white border border-rose-200 px-2.5 py-1 rounded-md shadow-2xs cursor-pointer hover:bg-rose-50"
+              title="Click to submit immediately without waiting"
             >
-              Done Speaking
+              Send Now
             </button>
           </div>
         )}
