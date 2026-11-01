@@ -20,13 +20,25 @@ try:
     from optimizer.timetable_solver import solve_timetable
     from optimizer.exam_solver import solve_exams
     from optimizer.booking_engine import solve_bookings
-    from optimizer.disruption_solver import solve_disruption_repair, apply_disruption_payload
+    from optimizer.disruption_solver import (
+        solve_disruption_repair,
+        apply_disruption_payload,
+        normalize_disruption,
+        identify_affected_sessions,
+        solve_ranked_disruption_repairs,
+    )
     from optimizer.canonical_validator import validate_schedule, resolve_room_conflict, ROOM_PRIORITY_ORDER
 except ImportError:
     from timetable_solver import solve_timetable
     from exam_solver import solve_exams
     from booking_engine import solve_bookings
-    from disruption_solver import solve_disruption_repair, apply_disruption_payload
+    from disruption_solver import (
+        solve_disruption_repair,
+        apply_disruption_payload,
+        normalize_disruption,
+        identify_affected_sessions,
+        solve_ranked_disruption_repairs,
+    )
     from canonical_validator import validate_schedule, resolve_room_conflict, ROOM_PRIORITY_ORDER
 
 app = FastAPI(title="Campora Optimization Service", version="1.0.0")
@@ -61,6 +73,21 @@ class DisruptionSolveRequest(BaseModel):
     baseline_schedule: Dict[str, Any]
     timeout_seconds: Optional[int] = 120
     seed: Optional[int] = 42
+
+
+class RankedDisruptionSolveRequest(BaseModel):
+    dataset: Dict[str, Any]
+    disruption: Dict[str, Any]
+    baseline_schedule: Dict[str, Any]
+    preferences: Optional[Dict[str, Any]] = None
+    timeout_per_option: Optional[int] = 15
+    seed: Optional[int] = 42
+
+
+class DisruptionAffectedRequest(BaseModel):
+    dataset: Dict[str, Any]
+    disruption: Dict[str, Any]
+    baseline_schedule: Dict[str, Any]
 
 
 class ValidateMoveRequest(BaseModel):
@@ -132,6 +159,33 @@ def solve_disruption_endpoint(req: DisruptionSolveRequest):
         mutated_data = apply_disruption_payload(req.dataset, req.disruption)
         res = solve_disruption_repair(mutated_data, req.baseline_schedule, req.timeout_seconds, req.seed)
         return res
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/internal/solve/disruption/ranked")
+def solve_ranked_disruption_endpoint(req: RankedDisruptionSolveRequest):
+    try:
+        norm_disruption = normalize_disruption(req.disruption)
+        res = solve_ranked_disruption_repairs(
+            req.dataset,
+            norm_disruption,
+            req.baseline_schedule,
+            preferences=req.preferences or norm_disruption.get("preferences"),
+            timeout_per_option=req.timeout_per_option or 15,
+            seed=req.seed or 42
+        )
+        return res
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/internal/disruption/affected-sessions")
+def get_affected_sessions_endpoint(req: DisruptionAffectedRequest):
+    try:
+        norm_disruption = normalize_disruption(req.disruption)
+        affected = identify_affected_sessions(req.dataset, req.baseline_schedule, norm_disruption)
+        return {"affected_sessions": affected, "count": len(affected)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
