@@ -207,6 +207,18 @@ router.post('/unavailability', authenticate, async (req: AuthenticatedRequest, r
     });
     const nextVersionNumber = (latestVersion?.versionNumber || 0) + 1;
 
+    // Safe user lookup for FK integrity
+    let auditUserId: string | null = null;
+    if (req.user?.id) {
+      const dbUser = await prisma.user.findUnique({ where: { id: req.user.id } });
+      if (dbUser) {
+        auditUserId = dbUser.id;
+      } else if (req.user.email) {
+        const dbUserByEmail = await prisma.user.findUnique({ where: { email: req.user.email } });
+        if (dbUserByEmail) auditUserId = dbUserByEmail.id;
+      }
+    }
+
     const proposal = await prisma.scheduleVersion.create({
       data: {
         datasetVersionId: dataset.id,
@@ -214,7 +226,7 @@ router.post('/unavailability', authenticate, async (req: AuthenticatedRequest, r
         status: ScheduleStatus.pending_approval,
         hardViolations: 0,
         softScoreTotal: Math.round(solverResult.objective_value || 0),
-        createdById: req.user?.id,
+        createdById: auditUserId || req.user?.id || null,
       },
     });
 
@@ -249,7 +261,7 @@ router.post('/unavailability', authenticate, async (req: AuthenticatedRequest, r
     // Audit log
     await prisma.auditLog.create({
       data: {
-        userId: req.user?.id,
+        userId: auditUserId,
         action: 'FACULTY_UNAVAILABILITY_SUBMITTED',
         entityType: 'FACULTY_UNAVAILABILITY',
         entityId: unavailRequest.id,

@@ -210,3 +210,4 @@ export const AdminProposalsModal: React.FC<AdminProposalsModalProps> = ({
     </div>
   );
 };
+

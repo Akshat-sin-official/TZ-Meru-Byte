@@ -356,9 +356,19 @@ router.post('/proposals/:id/approve', authenticate, requireRole([Role.admin]), a
       }),
     ]);
 
+    let approveAuditId: string | null = null;
+    if (req.user?.id) {
+      const u = await prisma.user.findUnique({ where: { id: req.user.id } });
+      if (u) approveAuditId = u.id;
+      else if (req.user.email) {
+        const ue = await prisma.user.findUnique({ where: { email: req.user.email } });
+        if (ue) approveAuditId = ue.id;
+      }
+    }
+
     await prisma.auditLog.create({
       data: {
-        userId: req.user?.id,
+        userId: approveAuditId,
         action: 'ACTIVATE_SCHEDULE',
         entityType: 'SCHEDULE_VERSION',
         entityId: proposalId,
