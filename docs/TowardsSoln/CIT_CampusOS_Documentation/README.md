@@ -1,4 +1,4 @@
-# CIT CampusOS — Product & Engineering Documentation
+# Campora — Product & Engineering Documentation
 
 **Purpose:** authoritative implementation handoff for the CIT Campus Scheduling and Venue Management hackathon product.
 

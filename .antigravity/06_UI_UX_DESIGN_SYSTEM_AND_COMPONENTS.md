@@ -90,7 +90,7 @@ All color tokens strictly use HSL values for seamless opacity modifiers and them
 
 ```
 +-------------------------------------------------------------------------------------------------+
-| CIT CampusOS | Active Dataset: cit-public-v1 | Role: Admin [F37] | 🔔 Notifications | 👤 Profile |
+| Campora | Active Dataset: cit-public-v1 | Role: Admin [F37] | 🔔 Notifications | 👤 Profile |
 +------------------+------------------------------------------------------------------------------+
 | 📊 Dashboard     | [Filter: CSE-2 v] [Room: All v] [Faculty: All v]        [Export schedule.json] |
 | 📅 Timetable     |                                                                              |

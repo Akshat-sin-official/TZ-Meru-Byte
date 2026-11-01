@@ -1,7 +1,7 @@
-# n8n Workflow Integration – CIT CampusOS
+# n8n Workflow Integration – Campora
 
 ## Overview
-CIT CampusOS integrates Google Gemini AI with n8n Cloud to provide natural-language booking assistance, schedule-change request processing, and booking decision explanations.
+Campora integrates Google Gemini AI with n8n Cloud to provide natural-language booking assistance, schedule-change request processing, and booking decision explanations.
 
 **n8n Cloud URL:** https://techzephyr.app.n8n.cloud
 

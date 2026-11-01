@@ -1,12 +1,12 @@
 # Design Document
 
-## CIT CampusOS — Constraint-Driven Campus Operations Platform
+## Campora — Constraint-Driven Campus Operations Platform
 
 ---
 
 ## Overview
 
-CIT CampusOS is a multi-service web application for Chilika Institute of Technology that unifies four constraint-driven campus operations: weekly timetable generation, midsem exam scheduling, Spectra Week venue booking, and disruption-driven timetable repair. A natural-language AI copilot helps users compose requests without ever acting as a scheduling authority. Every constraint check flows through a single canonical validator, ensuring the application and the official `validator.py` scoring oracle are always in agreement.
+Campora is a multi-service web application for Chilika Institute of Technology that unifies four constraint-driven campus operations: weekly timetable generation, midsem exam scheduling, Spectra Week venue booking, and disruption-driven timetable repair. A natural-language AI copilot helps users compose requests without ever acting as a scheduling authority. Every constraint check flows through a single canonical validator, ensuring the application and the official `validator.py` scoring oracle are always in agreement.
 
 The system is built for the Crunch Week / TZ Hackathon and must produce zero hard-constraint violations on the public dataset export while minimizing soft penalties. Judges run the official `validator.py` independently; the application runs the same validator as a subprocess on every export to surface any discrepancy before submission.
 

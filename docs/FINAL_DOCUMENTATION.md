@@ -1,6 +1,6 @@
-# CIT CampusOS — Technical Documentation & Problem Statement Compliance Report
+# Campora — Technical Documentation & Problem Statement Compliance Report
 
-**Product:** CIT CampusOS (Chilika Institute of Technology Campus Operations Platform)  
+**Product:** CAMPORA (Chilika Institute of Technology Campus Operations Platform)
 **Team:** Meru Byte  
 **Live Production URL:** [https://cit.saubhagyalabs.tech/](https://cit.saubhagyalabs.tech/)  
 **Public Repository:** [https://github.com/Akshat-sin-official/TZ-Meru-Byte](https://github.com/Akshat-sin-official/TZ-Meru-Byte)  
@@ -10,7 +10,7 @@
 
 ## 1. System Architecture
 
-CIT CampusOS is engineered as a three-tier, high-reliability architecture that cleanly separates mathematical constraint optimization, transaction orchestration, and user interaction.
+Campora is engineered as a three-tier, high-reliability architecture that cleanly separates mathematical constraint optimization, transaction orchestration, and user interaction.
 
 ```
                                   [ User / Evaluator Browser ]
@@ -51,7 +51,7 @@ CIT CampusOS is engineered as a three-tier, high-reliability architecture that c
 
 ## 2. Problem Statement Mapping & Compliance Matrix
 
-| PS Section | Requirement Description | Implementation in CIT CampusOS | Verification / Status |
+| PS Section | Requirement Description | Implementation in Campora | Verification / Status |
 | :--- | :--- | :--- | :--- |
 | **Section 1 (Core)** | **Academic Timetable (189 Sessions)**<br>Zero hard violations across rooms, faculty, student groups, elective baskets (`OEB-1`), and fixed slots. | `optimizer/timetable_solver.py`<br>CP-SAT formulation enforcing H1–H10 constraints. | **100% Compliant**<br>`exports/schedule.json` verified with `validator.py`: **0 hard violations**, soft score 315. |
 | **Section 2 #1** | **Spectra Week Venue Allocation (25 Requests)**<br>Handle requests, role category capping, time windows, and equipment needs. | `optimizer/booking_engine.py`<br>Priority-ordered booking engine with ties broken by `submitted_at`. | **100% Compliant**<br>Score: **66.0 / 70.0**, 0 priority inversions. |

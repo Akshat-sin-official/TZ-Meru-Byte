@@ -1,6 +1,6 @@
 # 14 — Instructions for AI Coding Agents
 
-You are an implementation agent working on CIT CampusOS. These instructions are mandatory.
+You are an implementation agent working on Campora. These instructions are mandatory.
 
 ## 1. Read before coding
 Read this entire documentation pack, especially:

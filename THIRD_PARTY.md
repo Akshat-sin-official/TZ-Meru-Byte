@@ -1,6 +1,6 @@
 # THIRD_PARTY.md — Open Source Libraries & Solvers
 
-In accordance with Section 6 of the Hackathon Problem Statement, this document lists all third-party open-source libraries, frameworks, solvers, and runtime tools utilized in CIT CampusOS.
+In accordance with Section 6 of the Hackathon Problem Statement, this document lists all third-party open-source libraries, frameworks, solvers, and runtime tools utilized in Campora.
 
 ---
 

@@ -1,4 +1,4 @@
-# Kiro documentation audit — CIT CampusOS
+# Kiro documentation audit — Campora
 
 Needs revision
 
@@ -383,7 +383,7 @@ I would not ask Kiro to regenerate the document from scratch. That risks losing 
 
 Give it this revision instruction:
 
-Revise the existing CIT CampusOS Requirements Document. Do not regenerate it from scratch.
+Revise the existing Campora Requirements Document. Do not regenerate it from scratch.
 
 Perform a strict technical correction using these sources in descending authority:
 

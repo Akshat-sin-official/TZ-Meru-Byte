@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CIT CampusOS End-to-End Pipeline Test
+Campora End-to-End Pipeline Test
 Generates timetable, midsem exams, Spectra bookings, validates against canonical_validator
 and tests against official validator.py!
 """
@@ -19,7 +19,7 @@ OFFICIAL_VALIDATOR = "docs/PS/CrunchWeek_StarterPack (1)/CrunchWeek_StarterPack/
 
 def main():
     print("=" * 60)
-    print("CIT CampusOS Optimizer Verification")
+    print("Campora Optimizer Verification")
     print("=" * 60)
 
     with open(DATA_PATH, encoding="utf-8") as f:
@@ -47,7 +47,7 @@ def main():
 
     # Assemble schedule.json payload
     full_schedule = {
-        "team": "CIT CampusOS Team",
+        "team": "Campora Team",
         "dataset_id": data["dataset_id"],
         "sessions": tt_res["assignments"],
         "fest_week": {

@@ -57,7 +57,7 @@ class GeminiClient {
     }
 
     try {
-      const systemInstruction = `You are CIT CampusOS AI Assistant. Extract venue booking parameters from the user request into JSON.
+      const systemInstruction = `You are Campora AI Assistant. Extract venue booking parameters from the user request into JSON.
 Campus Venues:
 - Auditorium (500 seats)
 - Lecture Halls LH-1 to LH-6 (90 to 120 seats)

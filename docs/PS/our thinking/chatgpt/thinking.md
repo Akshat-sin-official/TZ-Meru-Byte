@@ -14,7 +14,7 @@ Your biggest opportunity is to build a platform where:
 
 ## 1. Understand what we're actually building
 
-# CIT CampusOS
+# Campora
 
 PROPOSED PRODUCT · CAMPUS OPERATIONS INTELLIGENCE
 

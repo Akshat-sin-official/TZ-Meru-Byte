@@ -1,11 +1,11 @@
-# CAMPORA (CIT CampusOS) — Engineering Specification & Technical Design
+# CAMPORA (Campora) — Engineering Specification & Technical Design
 ## Crunch Week Hackathon Complete Compliance & Delivery Blueprint
 
 ---
 
 ### Executive Overview
 
-CAMPORA (CIT CampusOS) is an AI-assisted campus operations and scheduling platform for Chilika Institute of Technology. Following a rigorous independent audit in `docs/verdict.md`, this specification establishes the authoritative engineering blueprint to address every identified gap, align the platform with the official Crunch Week Problem Statement and starter-pack validator, and deliver a competition-winning hackathon submission.
+CAMPORA (Campora) is an AI-assisted campus operations and scheduling platform for Chilika Institute of Technology. Following a rigorous independent audit in `docs/verdict.md`, this specification establishes the authoritative engineering blueprint to address every identified gap, align the platform with the official Crunch Week Problem Statement and starter-pack validator, and deliver a competition-winning hackathon submission.
 
 #### Official Baseline Verification Status
 The official `validator.py` was executed directly against our generated outputs with the following verified results:
@@ -37,7 +37,7 @@ The official `validator.py` was executed directly against our generated outputs 
 
 ```mermaid
 flowchart LR
-    subgraph DaySchedule["Official CIT CampusOS Daily Time Model"]
+    subgraph DaySchedule["Official Campora Daily Time Model"]
         direction LR
         P1["P1<br/>08:00-09:00"] --> P2["P2 (Lab Start)<br/>09:00-10:00"]
         P2 --> P3["P3<br/>10:00-11:00"]

@@ -1,6 +1,6 @@
 # AI_USAGE.md — Artificial Intelligence Disclosure
 
-This document provides complete, transparent disclosure of all Artificial Intelligence (AI) technologies, models, and tools used both inside the CIT CampusOS runtime application and during development, in strict compliance with **Section 6 (Implementation Rules)** of the Hackathon Problem Statement.
+This document provides complete, transparent disclosure of all Artificial Intelligence (AI) technologies, models, and tools used both inside the Campora runtime application and during development, in strict compliance with **Section 6 (Implementation Rules)** of the Hackathon Problem Statement.
 
 ---
 

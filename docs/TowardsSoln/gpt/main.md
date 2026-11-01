@@ -1,4 +1,4 @@
-# CIT CampusOS — Final RBAC Matrix
+# Campora — Final RBAC Matrix
 
 This is the recommended implementation baseline. It follows the Problem Statement, incorporates the Feature Guide and starter-pack rules, and resolves unspecified permissions using least-privilege access and practical campus workflows.
 
@@ -194,4 +194,4 @@ These are the defaults I recommend the development team adopts:
 
 One important implementation detail: keep the category limits and booking priority order in the imported dataset/configuration. Do not hardcode them into role middleware.
 
-This is the matrix I would use as the authoritative RBAC contract for CIT CampusOS.
+This is the matrix I would use as the authoritative RBAC contract for Campora.

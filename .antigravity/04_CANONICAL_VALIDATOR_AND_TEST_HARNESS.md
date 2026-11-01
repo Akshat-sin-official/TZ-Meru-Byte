@@ -7,7 +7,7 @@
 
 ## 1. Dual-Layer Validation Architecture
 
-To eliminate the discrepancy risks identified in `.kiro/gaps.md` (where Node.js and Python had differing constraint definitions), CIT CampusOS enforces a unified validation pipeline:
+To eliminate the discrepancy risks identified in `.kiro/gaps.md` (where Node.js and Python had differing constraint definitions), Campora enforces a unified validation pipeline:
 
 ```mermaid
 flowchart TD

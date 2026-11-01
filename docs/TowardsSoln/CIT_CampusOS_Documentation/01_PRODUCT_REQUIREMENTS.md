@@ -1,7 +1,7 @@
 # 01 — Product Requirements Document (PRD)
 
 ## 1. Product definition
-**Product:** CIT CampusOS (working name)
+**Product:** Campora (working name)
 
 **Product goal:** provide CIT with one reliable system to generate and operate its teaching timetable, schedule midsem exams, allocate Spectra venues, process schedule disruptions, and explain/approve operational changes without creating hard-constraint clashes.
 

@@ -1,10 +1,10 @@
-# CIT CampusOS — Master Specification & Engineering Blueprint
+# Campora — Master Specification & Engineering Blueprint
 
 > **Authoritative Specification Directory:** `.antigravity/`  
-> **Target Product:** CIT CampusOS (Campus Scheduling, Exam Planning, Venue Management & Disruption Engine)  
+> **Target Product:** CAMPORA (Campus Scheduling, Exam Planning, Venue Management & Disruption Engine)
 > **Source Documents Audited:**
 > - Problem Statement PDF & Starter Pack (`README.md`, `cit_public.json`, `validator.py`)
-> - Solution Documents (`docs/TowardsSoln/CIT_CampusOS_Documentation/`)
+> - Solution Documents (`docs/TowardsSoln/CIT_Campora_Documentation/`)
 > - Gap Audits (`.kiro/gaps.md`, `.kiro/gaps-design.md`)
 > - UI Standards & Reference Architecture (`docs/UI/app-ui`)
 
@@ -12,7 +12,7 @@
 
 ## 1. Executive Summary & Zero-Gap Objective
 
-CIT CampusOS is a resilient, enterprise-grade operations platform designed for Chilika Institute of Technology (CIT) to solve four core campus operational challenges:
+Campora is a resilient, enterprise-grade operations platform designed for Chilika Institute of Technology (CIT) to solve four core campus operational challenges:
 1. **Regular Weekly Timetable Generation**: 189 sessions (243 teaching hours) across 27 rooms, 40 faculty, and 14 student groups with **zero hard-constraint violations** and minimized soft penalties.
 2. **Midsem Examination Scheduling**: 41 exams distributed across exam week (MON–SAT, AM/PM) at half room capacity without group or room conflicts.
 3. **Spectra Week Venue Allocation (Fest Week / Week 7)**: 25 booking requests evaluated deterministically using role category caps, priority ordering, tie-breaking, and class displacement rules with **zero priority inversions**.
@@ -49,7 +49,7 @@ This specification eliminates every single flaw documented in `.kiro/gaps.md` an
 ```mermaid
 flowchart TB
     subgraph Client["Frontend Layer (React 18 + Vite + TypeScript)"]
-        UI["CIT CampusOS UI (docs/UI standards)\nPoppins, HSL Purple, Radix/shadcn"]
+        UI["Campora UI (docs/UI standards)\nPoppins, HSL Purple, Radix/shadcn"]
         DnD["Live Drag & Drop Preview\nInteractive Green/Red Feedback"]
         CopilotUI["AI Copilot Drawer & Assistant\nGraceful Offline Banner & Fallback Form"]
     end

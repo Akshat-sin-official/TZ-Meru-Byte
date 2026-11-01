@@ -1,5 +1,5 @@
-# CAMPORA (CIT CampusOS) — Features & Capabilities Directory
-**Product Name:** CAMPORA (CIT CampusOS)  
+# CAMPORA (Campora) — Features & Capabilities Directory
+**Product Name:** CAMPORA
 **Engineering Team:** MERUBYTE  
 **Campus:** Chilika Institute of Technology (CIT)  
 **Architecture:** 3-Tier Distributed System (React + Vite, Node.js + Express + Prisma ORM, Python FastAPI + Google OR-Tools CP-SAT)

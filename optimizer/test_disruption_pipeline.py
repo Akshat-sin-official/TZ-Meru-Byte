@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CIT CampusOS Disruption Repair Pipeline Test
+Campora Disruption Repair Pipeline Test
 Applies sample_disruption.json, repairs schedule with CP-SAT stability solver,
 validates against canonical_validator and official validator.py with baseline comparison.
 """
@@ -20,7 +20,7 @@ SCHEDULE_AFTER_PATH = "exports/schedule_after.json"
 
 def main():
     print("=" * 60)
-    print("CIT CampusOS Disruption Repair Verification")
+    print("Campora Disruption Repair Verification")
     print("=" * 60)
 
     with open(DATA_PATH, encoding="utf-8") as f:
@@ -43,7 +43,7 @@ def main():
     assert rep_res["status"] in ("OPTIMAL", "FEASIBLE"), "Disruption solver failed!"
 
     schedule_after = {
-        "team": "CIT CampusOS Team",
+        "team": "Campora Team",
         "dataset_id": data["dataset_id"],
         "sessions": rep_res["assignments"]
     }

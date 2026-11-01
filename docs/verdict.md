@@ -1,4 +1,4 @@
-# CAMPORA (CIT CampusOS) — Engineering and Hackathon Evaluation
+# CAMPORA (Campora) — Engineering and Hackathon Evaluation
 
 Strong product scope
 
