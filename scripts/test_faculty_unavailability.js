@@ -27,7 +27,7 @@ async function login(email, password) {
 }
 
 async function runTests() {
-  console.log('=== CIT CampusOS: Faculty Unavailability Test Suite ===\n');
+  console.log('=== Campora: Faculty Unavailability Test Suite ===\n');
   let passed = 0;
   let failed = 0;
 

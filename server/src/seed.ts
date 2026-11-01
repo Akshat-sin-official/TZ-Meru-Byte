@@ -10,7 +10,7 @@ const DATA_PATH = path.resolve(__dirname, '../../docs/PS/CrunchWeek_StarterPack 
 const SCHEDULE_PATH = path.resolve(__dirname, '../../exports/schedule.json');
 
 export async function seedDatabase() {
-  console.log('--- Starting CIT CampusOS Database Seeding ---');
+  console.log('--- Starting Campora Database Seeding ---');
 
   // Read cit_public.json
   const rawData = fs.readFileSync(DATA_PATH, 'utf-8');
@@ -336,7 +336,7 @@ export async function seedDatabase() {
     console.log(`Active ScheduleVersion created (id: ${activeSchedule.id}) with 0 hard violations.`);
   }
 
-  console.log('--- CIT CampusOS Seeding Completed Successfully ---');
+  console.log('--- Campora Seeding Completed Successfully ---');
 }
 
 if (require.main === module) {

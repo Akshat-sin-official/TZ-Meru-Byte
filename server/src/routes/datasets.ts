@@ -101,7 +101,7 @@ router.post('/upload', authenticate, requireRole([Role.admin]), async (req: Auth
 
     return res.json({
       success: true,
-      message: `Custom dataset '${datasetId}' successfully loaded into CIT CampusOS. Ready for timetable generation.`,
+      message: `Custom dataset '${datasetId}' successfully loaded into Campora. Ready for timetable generation.`,
       datasetVersionId: newVersion.id,
     });
   } catch (err: any) {

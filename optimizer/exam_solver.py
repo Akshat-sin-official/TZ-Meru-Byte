@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CIT CampusOS Midsem Examination Solver
+Campora Midsem Examination Solver
 Powered by Google OR-Tools CP-SAT
 Allocates 41 midsem exams across MON-SAT (AM/PM) at half room capacity.
 """

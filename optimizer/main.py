@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CIT CampusOS Optimization & Validation API Service
+Campora Optimization & Validation API Service
 Internal FastAPI service providing CP-SAT discrete optimization and canonical constraint validation.
 """
 
@@ -29,7 +29,7 @@ except ImportError:
     from disruption_solver import solve_disruption_repair, apply_disruption_payload
     from canonical_validator import validate_schedule, resolve_room_conflict, ROOM_PRIORITY_ORDER
 
-app = FastAPI(title="CIT CampusOS Optimization Service", version="1.0.0")
+app = FastAPI(title="Campora Optimization Service", version="1.0.0")
 
 
 class ValidateRequest(BaseModel):
@@ -87,7 +87,7 @@ class BatchValidateMoveRequest(BaseModel):
 
 @app.get("/internal/health")
 def health_check():
-    return {"status": "healthy", "service": "CIT CampusOS Optimizer"}
+    return {"status": "healthy", "service": "Campora Optimizer"}
 
 
 @app.post("/internal/validate")

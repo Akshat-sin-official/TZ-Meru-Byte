@@ -298,7 +298,7 @@ Special Rules:
     if (lower.includes('constraint')) {
       return {
         type: 'information',
-        reply: `**CIT CampusOS Operational Rules:**\n- **H1–H3**: Zero overlap for rooms, faculty, and student groups.\n- **H4–H5**: Room suitability & capacity match (half-capacity enforced for exams).\n- **H6**: Faculty daily teaching load strictly ≤ 4 hours.\n- **H7**: 3-hour lab blocks start strictly at P2 (09:00) or P6 (14:00).\n- **H8**: Basket courses (OEB-1) run in identical timeslots for all groups.\n- **H9**: Protected 13:00–14:00 lunch recess.\n- **B1–B2**: Spectra Week priority order: Exams > Classes > Institute > Guest > Department > Club events with zero priority inversions.`,
+        reply: `**Campora Operational Rules:**\n- **H1–H3**: Zero overlap for rooms, faculty, and student groups.\n- **H4–H5**: Room suitability & capacity match (half-capacity enforced for exams).\n- **H6**: Faculty daily teaching load strictly ≤ 4 hours.\n- **H7**: 3-hour lab blocks start strictly at P2 (09:00) or P6 (14:00).\n- **H8**: Basket courses (OEB-1) run in identical timeslots for all groups.\n- **H9**: Protected 13:00–14:00 lunch recess.\n- **B1–B2**: Spectra Week priority order: Exams > Classes > Institute > Guest > Department > Club events with zero priority inversions.`,
       };
     }
 

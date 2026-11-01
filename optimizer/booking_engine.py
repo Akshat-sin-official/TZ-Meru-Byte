@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CIT CampusOS Spectra Week Booking Engine
+Campora Spectra Week Booking Engine
 Deterministic matching algorithm with role capping, priority ordering,
 tie-breaking, class displacement, and priority inversion prevention.
 """

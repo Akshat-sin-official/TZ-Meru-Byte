@@ -282,7 +282,7 @@ router.post('/test-send', authenticate, requireRole([Role.admin]), async (req: A
     const { phone, message } = req.body;
     if (!phone) return res.status(400).json({ error: 'Phone is required' });
 
-    const textToSend = message || '🏛 *CIT CampusOS Notification*\n\nThis is a verification test from the CIT Campus Operations Bot.\nSystem is active and operational! ✅';
+    const textToSend = message || '🏛 *Campora Notification*\n\nThis is a verification test from the Campora Operations Bot.\nSystem is active and operational! ✅';
     const sent = await sendWhatsAppMessage(phone, textToSend);
 
     return res.json({

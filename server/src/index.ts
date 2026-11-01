@@ -30,7 +30,7 @@ app.use(express.json({ limit: '10mb' }));
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'healthy',
-    product: 'CIT CampusOS API Gateway',
+    product: 'Campora API Gateway',
     timestamp: new Date().toISOString(),
   });
 });
@@ -49,7 +49,7 @@ app.use('/api/faculty', facultyRoutes);
 
 app.listen(PORT, () => {
   console.log(`====================================================`);
-  console.log(` CIT CampusOS API Gateway listening on port ${PORT}`);
+  console.log(` Campora API Gateway listening on port ${PORT}`);
   console.log(` Health: http://localhost:${PORT}/api/health`);
   console.log(`====================================================`);
 });

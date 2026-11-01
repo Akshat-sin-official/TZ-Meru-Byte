@@ -1,5 +1,5 @@
 cit.saubhagyalabs.tech, saubhagyalabs.tech, www.saubhagyalabs.tech {
-    # 1. API proxy for CIT CampusOS
+    # 1. API proxy for Campora
     handle /api/* {
         reverse_proxy server:5000
     }
@@ -17,7 +17,7 @@ cit.saubhagyalabs.tech, saubhagyalabs.tech, www.saubhagyalabs.tech {
         try_files {path} /index.html
     }
 
-    # 4. CIT CampusOS Main Frontend
+    # 4. Campora Main Frontend
     handle {
         root * /var/www/cit
         file_server

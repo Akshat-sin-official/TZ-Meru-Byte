@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CIT CampusOS Disruption Repair Solver
+Campora Disruption Repair Solver
 Powered by Google OR-Tools CP-SAT
 Solves the disrupted schedule while minimizing moved sessions (time changed >> room only changed).
 """

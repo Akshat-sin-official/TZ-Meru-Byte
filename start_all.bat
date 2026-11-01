@@ -1,7 +1,7 @@
 @echo off
-title CIT CampusOS Master Launcher
+title Campora Master Launcher
 echo ===================================================
-echo  Starting CIT CampusOS Full Stack Platform
+echo  Starting Campora Full Stack Platform
 echo ===================================================
 
 start "CIT Optimizer" cmd /c "run_optimizer.bat"

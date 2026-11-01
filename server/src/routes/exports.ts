@@ -35,7 +35,7 @@ router.get('/schedule.json', authenticate, requireRole([Role.admin]), async (req
     if (!activeSchedule) return res.status(404).json({ error: 'No active schedule' });
 
     const payload = {
-      team: 'CIT CampusOS Team',
+      team: 'Campora Team',
       dataset_id: dataset.datasetId,
       sessions: activeSchedule.assignments.map((a) => ({
         session_id: a.sessionExternalId,
@@ -51,7 +51,7 @@ router.get('/schedule.json', authenticate, requireRole([Role.admin]), async (req
           ...(d.startPeriod ? { start_period: d.startPeriod } : {}),
           ...(d.endPeriod ? { end_period: d.endPeriod } : {}),
           ...(d.roomExternalId ? { room_id: d.roomExternalId } : {}),
-          reason: d.reason || 'Decision rendered by CIT CampusOS',
+          reason: d.reason || 'Decision rendered by Campora',
         })),
         session_overrides: activeSchedule.sessionOverrides.map((o) => ({
           session_id: o.sessionExternalId,
@@ -102,7 +102,7 @@ router.get('/exam_schedule.json', authenticate, requireRole([Role.admin]), async
     if (!activeSchedule) return res.status(404).json({ error: 'No active schedule' });
 
     const payload = {
-      team: 'CIT CampusOS Team',
+      team: 'Campora Team',
       dataset_id: dataset.datasetId,
       exams: activeSchedule.examAllocations.map((e) => ({
         exam_id: e.examExternalId,
@@ -137,7 +137,7 @@ router.get('/spectra_allocations.json', authenticate, requireRole([Role.admin]),
     if (!activeSchedule) return res.status(404).json({ error: 'No active schedule' });
 
     const payload = {
-      team: 'CIT CampusOS Team',
+      team: 'Campora Team',
       dataset_id: dataset.datasetId,
       fest_week: {
         bookings: activeSchedule.bookingDecisions.map((d) => ({
@@ -147,7 +147,7 @@ router.get('/spectra_allocations.json', authenticate, requireRole([Role.admin]),
           ...(d.startPeriod ? { start_period: d.startPeriod } : {}),
           ...(d.endPeriod ? { end_period: d.endPeriod } : {}),
           ...(d.roomExternalId ? { room_id: d.roomExternalId } : {}),
-          reason: d.reason || 'Decision rendered by CIT CampusOS',
+          reason: d.reason || 'Decision rendered by Campora',
         })),
         session_overrides: activeSchedule.sessionOverrides.map((o) => ({
           session_id: o.sessionExternalId,

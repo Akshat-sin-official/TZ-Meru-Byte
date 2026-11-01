@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CIT CampusOS Timetable Solver
+Campora Timetable Solver
 Powered by Google OR-Tools CP-SAT
 Solves the 189 sessions across 27 rooms with 0 hard violations and minimized soft penalties.
 """

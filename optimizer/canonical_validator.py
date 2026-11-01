@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CIT CampusOS Canonical Validator
+Campora Canonical Validator
 100% parity with official validator.py
 Single Source of Truth for all constraint validation across the platform.
 """

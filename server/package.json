@@ -1,7 +1,7 @@
 {
   "name": "cit-campus-os-server",
   "version": "1.0.0",
-  "description": "CIT CampusOS Node.js API Gateway & Workflow Authority",
+  "description": "Campora Node.js API Gateway & Workflow Authority",
   "main": "src/index.ts",
   "scripts": {
     "dev": "tsx watch src/index.ts",
