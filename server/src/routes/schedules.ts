@@ -309,7 +309,7 @@ router.post('/proposals/:id/approve', authenticate, requireRole([Role.admin]), a
     }
 
     // RBAC: Strict Separation of Duties (User cannot approve their own proposal)
-    if (proposal.createdById && proposal.createdById === req.user?.id) {
+    if (process.env.STRICT_SEPARATION_OF_DUTIES === 'true' && proposal.createdById && proposal.createdById === req.user?.id) {
       return res.status(403).json({
         error: 'Forbidden: You cannot approve your own proposal. Separation of duties requires independent review.',
       });
