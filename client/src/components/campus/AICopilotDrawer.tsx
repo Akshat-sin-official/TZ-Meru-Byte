@@ -16,6 +16,9 @@ import {
   Users,
   MapPin,
   Mic,
+  MicOff,
+  Volume2,
+  VolumeX,
   Video,
   Accessibility,
   ArrowRight,
@@ -56,6 +59,9 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
   const [loading, setLoading] = useState(false);
   const [aiMode, setAiMode] = useState<'n8n_only' | 'gemini_only' | 'both_compare'>('both_compare');
   const [submittingBooking, setSubmittingBooking] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
+  const recognitionRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -103,8 +109,124 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
   useEffect(() => {
     if (open) {
       setTimeout(scrollToBottom, 100);
+    } else {
+      if (recognitionRef.current) {
+        try { recognitionRef.current.abort(); } catch {}
+      }
+      setIsListening(false);
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      setSpeakingMessageId(null);
     }
   }, [open, messages]);
+
+  const toggleSpeechRecognition = () => {
+    if (isListening) {
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop(); } catch {}
+      }
+      setIsListening(false);
+      return;
+    }
+
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      toast.error('Voice recognition is not supported in this browser. Please use Chrome or Edge.');
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        toast.info('🎙️ Listening... Speak your request');
+      };
+
+      recognition.onresult = (event: any) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        if (transcript.trim()) {
+          setInputText(transcript);
+        }
+      };
+
+      recognition.onerror = (event: any) => {
+        console.warn('Speech recognition error:', event.error);
+        setIsListening(false);
+        if (event.error === 'not-allowed') {
+          toast.error('Microphone access denied. Please allow microphone permissions in browser.');
+        } else if (event.error !== 'no-speech') {
+          toast.error(`Microphone error: ${event.error}`);
+        }
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (err: any) {
+      console.error('Failed to start voice recognition:', err);
+      setIsListening(false);
+      toast.error('Could not activate microphone');
+    }
+  };
+
+  const stopSpeechRecognition = () => {
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch {}
+    }
+    setIsListening(false);
+  };
+
+  const toggleReadAloud = (msgId: string, text: string) => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      toast.error('Text-to-speech audio is not supported in this browser.');
+      return;
+    }
+
+    if (speakingMessageId === msgId) {
+      window.speechSynthesis.cancel();
+      setSpeakingMessageId(null);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+
+    const cleanText = text
+      .replace(/```[\s\S]*?```/g, 'Code block omitted.')
+      .replace(/`([^`]+)`/g, '$1')
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/\*([^*]+)\*/g, '$1')
+      .replace(/#{1,6}\s?/g, '')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .trim();
+
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.rate = 1.05;
+    utterance.pitch = 1.0;
+
+    utterance.onend = () => {
+      setSpeakingMessageId(null);
+    };
+
+    utterance.onerror = () => {
+      setSpeakingMessageId(null);
+    };
+
+    setSpeakingMessageId(msgId);
+    window.speechSynthesis.speak(utterance);
+  };
 
   const handleSendMessage = async (customPrompt?: string) => {
     const textToSend = customPrompt || inputText;
@@ -299,6 +421,24 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
                     <span className="font-bold text-primary">CIT Copilot</span>
                     <span>·</span>
                     <span>{msg.timestamp}</span>
+                    <button
+                      type="button"
+                      onClick={() => toggleReadAloud(msg.id, msg.text)}
+                      className="ml-2 inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary transition cursor-pointer px-1.5 py-0.5 rounded-md hover:bg-slate-100 border border-transparent hover:border-slate-200"
+                      title={speakingMessageId === msg.id ? "Stop reading" : "Read aloud"}
+                    >
+                      {speakingMessageId === msg.id ? (
+                        <>
+                          <VolumeX className="w-3 h-3 text-rose-500 animate-pulse" />
+                          <span className="text-rose-600 font-bold">Stop Audio</span>
+                        </>
+                      ) : (
+                        <>
+                          <Volume2 className="w-3 h-3 text-slate-500" />
+                          <span>Listen</span>
+                        </>
+                      )}
+                    </button>
                   </>
                 )}
               </div>
@@ -473,9 +613,51 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
           </div>
         </div>
 
+        {/* Active Speech Recognition Banner */}
+        {isListening && (
+          <div className="px-4 py-2 bg-rose-50 border-t border-rose-200 flex items-center justify-between text-xs text-rose-800 animate-pulse">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
+              <span className="font-semibold font-poppins">🎙️ Listening... Speak into your microphone</span>
+            </div>
+            <button
+              type="button"
+              onClick={stopSpeechRecognition}
+              className="text-[11px] font-bold text-rose-700 hover:text-rose-900 underline cursor-pointer"
+            >
+              Done Speaking
+            </button>
+          </div>
+        )}
+
         {/* Input Bar */}
         <div className="p-4 border-t border-[#E5E7EB] bg-white shrink-0">
           <div className="flex items-center gap-2">
+            {/* Microphone Voice Assistant Button */}
+            <button
+              type="button"
+              onClick={toggleSpeechRecognition}
+              disabled={loading}
+              title={isListening ? "Stop voice recording" : "Speak via microphone"}
+              className={`h-10 px-3 rounded-xl border flex items-center justify-center gap-1.5 transition cursor-pointer shrink-0 ${
+                isListening
+                  ? 'bg-rose-500 text-white border-rose-600 animate-pulse shadow-md shadow-rose-200'
+                  : 'bg-[#FAF9F6] hover:bg-slate-100 text-slate-700 border-[#E5E7EB]'
+              }`}
+            >
+              {isListening ? (
+                <>
+                  <MicOff className="w-4 h-4 text-white" />
+                  <span className="text-[11px] font-bold hidden sm:inline text-white">Listening...</span>
+                </>
+              ) : (
+                <>
+                  <Mic className="w-4 h-4 text-slate-700" />
+                  <span className="text-[11px] font-semibold hidden sm:inline text-slate-600">Voice</span>
+                </>
+              )}
+            </button>
+
             <Input
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
@@ -485,8 +667,10 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
                   handleSendMessage();
                 }
               }}
-              placeholder="Ask Copilot anything (e.g. 'seminar hall kal shaam 6 baje' or 'Why was BR-09 rejected?')..."
-              className="flex-1 h-10 text-xs bg-[#FAF9F6] border-[#E5E7EB] focus:bg-white rounded-xl font-sans"
+              placeholder={isListening ? "Listening to your voice..." : "Ask Copilot or use mic (e.g. 'seminar hall kal shaam 6 baje')..."}
+              className={`flex-1 h-10 text-xs bg-[#FAF9F6] border-[#E5E7EB] focus:bg-white rounded-xl font-sans ${
+                isListening ? 'border-rose-400 bg-rose-50/40 ring-1 ring-rose-300' : ''
+              }`}
             />
 
             <button
