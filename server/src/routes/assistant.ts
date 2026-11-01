@@ -566,10 +566,10 @@ router.post('/chat', async (req: Request, res: Response) => {
     }
 
     let fluentReply = '';
-    if (n8nRes?.success && n8nRes?.data?.assistant_message) {
-      fluentReply = n8nRes.data.assistant_message;
-    } else if (geminiRes?.data?.reply) {
+    if (geminiRes?.success && geminiRes?.data?.reply) {
       fluentReply = geminiRes.data.reply;
+    } else if (n8nRes?.success && n8nRes?.data?.assistant_message) {
+      fluentReply = n8nRes.data.assistant_message;
     } else {
       const venueName = extracted.requested_room || 'the requested venue';
       const slotDesc = extracted.windows?.[0]

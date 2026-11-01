@@ -15,8 +15,8 @@ class GeminiClient {
 
   constructor() {
     this.apiKey = process.env.GEMINI_API_KEY || '';
-    // Standard Google Gemini REST endpoint
-    this.endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`;
+    // Use the official supported Gemini model
+    this.endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent`;
   }
 
   private cleanJson(text: string): any {
@@ -35,8 +35,7 @@ class GeminiClient {
     const startTime = Date.now();
     const apiKey = process.env.GEMINI_API_KEY || this.apiKey;
 
-    if (!apiKey || apiKey.startsWith('AQ.')) {
-      // In case key is invalid or local development mock, use deterministic rules
+    if (!apiKey) {
       const local = parsePlainLanguageBooking(prompt, userRole);
       return {
         success: true,
@@ -58,7 +57,26 @@ class GeminiClient {
     }
 
     try {
-      const systemInstruction = `Extract venue booking parameters from the user text into JSON with keys: title, attendance (number), duration_periods (number), windows (array with day MON-SAT, from_period 1-13, to_period 1-13), room_types (array), needs (array), requested_room. Output raw JSON only.`;
+      const systemInstruction = `You are CIT CampusOS AI Assistant. Extract venue booking parameters from the user request into JSON.
+Campus Venues:
+- Auditorium (500 seats)
+- Lecture Halls LH-1 to LH-6 (90 to 120 seats)
+- Seminar Halls SH-1 (80 seats, accessible), SH-2 (80 seats, not accessible)
+- Computing Labs LAB-A, LAB-B (60 seats)
+- Outdoor Open Air Theatre OAT (large gathering)
+
+Required JSON format:
+{
+  "title": string,
+  "attendance": number,
+  "duration_periods": number,
+  "windows": [{"day": "MON"|"TUE"|"WED"|"THU"|"FRI"|"SAT", "from_period": number, "to_period": number}],
+  "room_types": string[],
+  "needs": string[],
+  "requested_room": string or null,
+  "reply": string
+}
+Return raw JSON only.`;
 
       const response = await axios.post(
         `${this.endpoint}?key=${apiKey}`,
@@ -75,89 +93,103 @@ class GeminiClient {
             responseMimeType: 'application/json',
           },
         },
-        { timeout: 15000 }
+        { timeout: 7000 }
       );
 
-      const candidate = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      const parsed = this.cleanJson(candidate || '');
+      const candidates = response.data?.candidates;
+      const text = candidates?.[0]?.content?.parts?.[0]?.text;
+      const parsed = text ? this.cleanJson(text) : null;
+
+      if (!parsed) {
+        throw new Error('Gemini JSON extraction failed');
+      }
 
       return {
-        success: Boolean(parsed),
-        data: parsed || parsePlainLanguageBooking(prompt, userRole),
+        success: true,
+        data: parsed,
         duration_ms: Date.now() - startTime,
-        isFallback: !parsed,
+        isFallback: false,
       };
     } catch (err: any) {
-      console.warn('[GeminiClient] Direct call failed, engaging fallback:', err.message);
-      const fallback = parsePlainLanguageBooking(prompt, userRole);
+      console.warn('Gemini API call failed, falling back to local deterministic engine:', err.message);
+      const local = parsePlainLanguageBooking(prompt, userRole);
       return {
         success: true,
-        data: fallback,
+        data: {
+          intent: 'book_venue',
+          title: local.title,
+          attendance: local.attendance,
+          duration_periods: local.duration_periods,
+          windows: local.windows,
+          room_types: local.room_types,
+          needs: local.needs,
+          requested_room: local.requested_room,
+          effective_category: local.effective_category,
+          reply: `I have analyzed your request using CIT Campus rules for ${local.attendance} attendees.`,
+        },
         duration_ms: Date.now() - startTime,
         isFallback: true,
-        error: err.message,
       };
     }
   }
 
-  async explainDecision(backendResult: any, language: string = 'English'): Promise<GeminiResponse> {
+  async explainDecision(prompt: string, contextData: any): Promise<GeminiResponse> {
     const startTime = Date.now();
     const apiKey = process.env.GEMINI_API_KEY || this.apiKey;
 
-    const fallbackExplanation = `Decision status: ${backendResult.status?.toUpperCase()}. Booking ${backendResult.request_id || ''} was evaluated against campus capacity and priorities. Reason: ${(backendResult.reason_codes || [backendResult.reason || 'General policy']).join(', ')}.`;
-
-    if (!apiKey || apiKey.startsWith('AQ.')) {
+    if (!apiKey) {
       return {
         success: true,
         data: {
-          assistant_message: `(Gemini Direct) ${fallbackExplanation}`,
-          decision_status: backendResult.status,
-          reason_codes: backendResult.reason_codes || [],
+          explanation: 'Decision rendered based on official Section 4 priority constraints and venue availability.',
         },
-        duration_ms: Date.now() - startTime + 70,
+        duration_ms: 10,
         isFallback: true,
       };
     }
 
     try {
-      const promptText = `You are CIT Smart Scheduler's explainer. Explain this decision in 2-3 sentences in ${language}. Never change decision or invent facts.\nStatus: ${backendResult.status}\nReasons: ${JSON.stringify(backendResult.reason_codes || [backendResult.reason])}\nDetails: ${JSON.stringify(backendResult)}`;
-
       const response = await axios.post(
         `${this.endpoint}?key=${apiKey}`,
         {
-          contents: [{ role: 'user', parts: [{ text: promptText }] }],
-          generationConfig: { temperature: 0.2, maxOutputTokens: 512 },
+          contents: [
+            {
+              role: 'user',
+              parts: [
+                {
+                  text: `Explain why this scheduling decision occurred using the provided context:\n\nContext:\n${JSON.stringify(
+                    contextData,
+                    null,
+                    2
+                  )}\n\nUser question: "${prompt}"\n\nBe concise, professional, and reference specific constraints.`,
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens: 512,
+          },
         },
-        { timeout: 15000 }
+        { timeout: 7000 }
       );
 
-      const text = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || fallbackExplanation;
-
+      const text = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
       return {
         success: true,
-        data: {
-          assistant_message: text.trim(),
-          decision_status: backendResult.status,
-          reason_codes: backendResult.reason_codes || [],
-        },
+        data: { explanation: text },
         duration_ms: Date.now() - startTime,
         isFallback: false,
       };
     } catch (err: any) {
       return {
-        success: true,
-        data: {
-          assistant_message: fallbackExplanation,
-          decision_status: backendResult.status,
-          reason_codes: backendResult.reason_codes || [],
-        },
+        success: false,
         duration_ms: Date.now() - startTime,
-        isFallback: true,
         error: err.message,
+        isFallback: true,
       };
     }
   }
 }
 
 export const geminiClient = new GeminiClient();
-
