@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-export const API_BASE_URL = 'http://localhost:5000/api';
+export const API_BASE_URL = '/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -66,6 +66,13 @@ export const campusApi = {
     const res = await api.post('/schedules/validate-move', params);
     return res.data;
   },
+  batchValidateMoves: async (params: {
+    session_id: string;
+    candidates: Array<{ target_day: string; target_start_period: number; target_room_id: string }>;
+  }) => {
+    const res = await api.post('/schedules/batch-validate-moves', params);
+    return res.data;
+  },
   approveProposal: async (id: string) => {
     const res = await api.post(`/schedules/proposals/${id}/approve`);
     return res.data;
@@ -80,6 +87,15 @@ export const campusApi = {
     const res = await api.post('/exams/generate');
     return res.data;
   },
+  rescheduleExam: async (params: {
+    examExternalId: string;
+    newDay: string;
+    newSession: string;
+    newRooms?: string[];
+  }) => {
+    const res = await api.post('/exams/reschedule-exam', params);
+    return res.data;
+  },
 
   // Bookings
   getBookings: async () => {
@@ -92,6 +108,10 @@ export const campusApi = {
   },
   submitBookingRequest: async (data: any) => {
     const res = await api.post('/bookings/requests', data);
+    return res.data;
+  },
+  checkRoomConflict: async (requestA: any, requestB: any) => {
+    const res = await api.post('/bookings/conflict-check', { request_a: requestA, request_b: requestB });
     return res.data;
   },
 
@@ -161,7 +181,79 @@ export const campusApi = {
     const res = await api.post('/exports/verify');
     return res.data;
   },
+
+  // Faculty Unavailability & Rescheduling
+  submitFacultyUnavailability: async (data: {
+    facultyId?: string;
+    days: string[];
+    periods: number[];
+    reason?: string;
+  }) => {
+    const res = await api.post('/faculty/unavailability', data);
+    return res.data;
+  },
+  getFacultyUnavailabilities: async () => {
+    const res = await api.get('/faculty/unavailability');
+    return res.data;
+  },
+  getFacultyAffectedSessions: async (id: string) => {
+    const res = await api.get(`/faculty/unavailability/${id}/affected-sessions`);
+    return res.data;
+  },
+  getFacultyUnavailabilityProposal: async (id: string) => {
+    const res = await api.get(`/faculty/unavailability/${id}/proposal`);
+    return res.data;
+  },
+  getPendingProposals: async () => {
+    const res = await api.get('/schedules/proposals/pending');
+    return res.data;
+  },
+  rejectProposal: async (id: string) => {
+    const res = await api.post(`/schedules/proposals/${id}/reject`);
+    return res.data;
+  },
+
+  // WhatsApp Gateway
+  getWhatsAppStatus: async () => {
+    const res = await api.get('/whatsapp/status');
+    return res.data;
+  },
+  connectWhatsApp: async () => {
+    const res = await api.post('/whatsapp/connect');
+    return res.data;
+  },
+  getWhatsAppContacts: async () => {
+    const res = await api.get('/whatsapp/contacts');
+    return res.data;
+  },
+  addWhatsAppContact: async (data: { phone: string; name?: string; role?: string; userId?: string }) => {
+    const res = await api.post('/whatsapp/contacts', data);
+    return res.data;
+  },
+  deleteWhatsAppContact: async (id: string) => {
+    const res = await api.delete(`/whatsapp/contacts/${id}`);
+    return res.data;
+  },
+  testSendWhatsApp: async (data: { phone: string; message?: string }) => {
+    const res = await api.post('/whatsapp/test-send', data);
+    return res.data;
+  },
+
+  // Notifications
+  getNotifications: async () => {
+    const res = await api.get('/notifications');
+    return res.data;
+  },
+  markNotificationRead: async (id: string) => {
+    const res = await api.patch(`/notifications/${id}/read`);
+    return res.data;
+  },
+  markAllNotificationsRead: async () => {
+    const res = await api.post('/notifications/mark-all-read');
+    return res.data;
+  },
 };
 
-export default api;
+export { api };
+export default campusApi;
 

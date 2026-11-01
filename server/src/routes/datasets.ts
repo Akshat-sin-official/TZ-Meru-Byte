@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import { PrismaClient, Role } from '@prisma/client';
 import { authenticate, requireRole, AuthenticatedRequest } from '../middleware/auth.js';
+import { recordAuditLog, emitNotification } from '../utils/notifications.js';
 import { seedDatabase } from '../seed.js';
 
 const router = Router();
@@ -48,14 +49,18 @@ router.post('/reset-demo', authenticate, requireRole([Role.admin]), async (req: 
     console.log(`Admin Demo Reset triggered by user ${req.user?.email}...`);
     await seedDatabase();
 
-    // Log in AuditLog
-    await prisma.auditLog.create({
-      data: {
-        userId: req.user?.id,
-        action: 'ADMIN_DEMO_RESET',
-        entityType: 'DATASET',
-        details: { message: 'Reset database to clean cit_public.json and seeded demo accounts' },
-      },
+    await recordAuditLog({
+      userId: req.user?.id,
+      roleFallback: Role.admin,
+      action: 'ADMIN_DEMO_RESET',
+      entityType: 'DATASET',
+      details: { message: 'Reset database to clean cit_public.json and seeded demo accounts' },
+    });
+
+    await emitNotification({
+      broadcast: true,
+      title: 'Baseline Schedule Synchronized',
+      message: 'Master teaching baseline and demo accounts restored to pristine verified state.',
     });
 
     return res.json({

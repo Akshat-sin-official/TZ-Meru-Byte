@@ -113,7 +113,7 @@ export const FacultyDashboard: React.FC<FacultyDashboardProps> = ({ onNavigateTa
           className="rounded-lg bg-primary hover:bg-primary/95 text-white shadow-xs font-bold font-poppins px-3.5 py-2 text-xs flex items-center gap-2 transition cursor-pointer"
         >
           <CalendarDays className="w-3.5 h-3.5" />
-          <span>Full Campus Timetable</span>
+          <span>My Teaching Timetable</span>
         </button>
       </div>
 
@@ -213,7 +213,7 @@ export const FacultyDashboard: React.FC<FacultyDashboardProps> = ({ onNavigateTa
                             {Array.isArray(item.session.groups) ? item.session.groups.join(', ') : item.session.groups}
                           </td>
                           <td className="py-2.5 px-3.5 font-mono font-medium text-[#111926]">
-                            {item.assignment.roomId}
+                            {item.assignment.roomExternalId || item.assignment.roomId}
                           </td>
                           <td className="py-2.5 px-3.5 text-right">
                             <span

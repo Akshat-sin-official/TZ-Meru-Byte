@@ -44,6 +44,30 @@
 
     --font-poppins: "Poppins", sans-serif;
     --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+    /* Notion / Atelier Monolith Palette */
+    --notion-canvas: #FFFFFF;
+    --notion-sidebar: #FBFBFA;
+    --notion-border: #EBEBEA;
+    --notion-subtle: #F1F1EF;
+    --notion-hover: #EFEFED;
+    --notion-text: #37352F;
+    --notion-secondary: #787774;
+    --notion-tertiary: #9B9A97;
+  }
+}
+
+@layer utilities {
+  .bg-notion-canvas { background-color: #FFFFFF; }
+  .bg-notion-sidebar { background-color: #FBFBFA; }
+  .border-notion-border { border-color: #EBEBEA; }
+  .bg-notion-subtle { background-color: #F1F1EF; }
+  .bg-notion-hover { background-color: #EFEFED; }
+  .text-notion-text { color: #37352F; }
+  .text-notion-secondary { color: #787774; }
+  .text-notion-tertiary { color: #9B9A97; }
+  .sidebar-transition {
+    transition: width 200ms cubic-bezier(0.2, 0, 0, 1), transform 200ms cubic-bezier(0.2, 0, 0, 1), margin 200ms cubic-bezier(0.2, 0, 0, 1);
   }
 }
 
@@ -63,5 +87,124 @@
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-poppins);
     letter-spacing: -0.02em;
+  }
+}
+
+/* Pre-print state trigger to annihilate any scrollbars before print preview render */
+body.printing-pdf,
+body.printing-pdf *,
+body.printing-pdf *::before,
+body.printing-pdf *::after {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+body.printing-pdf *::-webkit-scrollbar,
+body.printing-pdf ::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+@media print {
+  @page {
+    size: landscape;
+    margin: 0.6cm;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+
+  /* Universal scrollbar killer in print mode */
+  *,
+  *::before,
+  *::after {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  *::-webkit-scrollbar,
+  ::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    background: transparent !important;
+    opacity: 0 !important;
+  }
+
+  /* Unconstrain viewport height & all container overflows */
+  html,
+  body,
+  #root,
+  div,
+  main,
+  section,
+  article,
+  .h-screen,
+  .h-full,
+  .min-h-screen,
+  div[class*="h-screen"],
+  div[class*="h-full"],
+  div[class*="overflow-"],
+  div[class*="scrollbar-"] {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    position: static !important;
+  }
+
+  /* Completely strip out all toasts, popups, notifications, dialogs, drawers, sidebars, headers */
+  aside,
+  header,
+  nav,
+  button,
+  .no-print,
+  .fixed,
+  [data-sonner-toaster],
+  [data-sonner-toast],
+  .toaster,
+  [role="status"],
+  [role="alert"],
+  [role="region"],
+  [data-radix-popper-content-wrapper],
+  [data-radix-portal] {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    width: 0 !important;
+    pointer-events: none !important;
+  }
+
+  main,
+  .print-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    overflow: visible !important;
+  }
+
+  /* Force print grid to stretch 100% of landscape A4 without horizontal overflow scrollbars */
+  .print-grid-fit {
+    min-width: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
   }
 }

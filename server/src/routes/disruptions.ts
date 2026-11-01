@@ -3,20 +3,23 @@ import { PrismaClient, Role, ScheduleStatus } from '@prisma/client';
 import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { authenticate, requireRole, AuthenticatedRequest } from '../middleware/auth.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { emitNotification } from '../utils/notifications.js';
 
 const router = Router();
 const prisma = new PrismaClient();
 const OPTIMIZER_URL = process.env.OPTIMIZER_URL || 'http://127.0.0.1:8001';
 
-// GET baseline vs repaired disruption diff (pre-computed fallback)
-router.get('/latest', async (req, res) => {
+// GET baseline vs repaired disruption diff (pre-computed fallback per RBAC in ini.md)
+router.get('/latest', authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const exportsDir = path.resolve(__dirname, '../../../exports');
+    if (req.user?.role === Role.club) {
+      return res.status(403).json({
+        error: 'Forbidden: Club representatives are not authorized to view academic disruption diffs.',
+      });
+    }
+
+    const exportsDir = path.resolve(process.cwd(), '../exports');
     const basePath = path.join(exportsDir, 'schedule.json');
     const afterPath = path.join(exportsDir, 'schedule_after.json');
 
@@ -147,6 +150,12 @@ router.post('/submit', authenticate, requireRole([Role.admin]), async (req: Auth
         timeChanged: movedSessions.filter((m) => m.type === 'time_changed').length,
         roomOnlyChanged: movedSessions.filter((m) => m.type === 'room_only_changed').length,
       },
+    });
+
+    await emitNotification({
+      broadcast: true,
+      title: 'Disruption Recovery Plan Executed',
+      message: `Operational mitigation complete: ${movedSessions.length} teaching sessions relocated (${movedSessions.filter((m) => m.type === 'time_changed').length} timeslot adjustments, ${movedSessions.filter((m) => m.type === 'room_only_changed').length} room reassignments) with 0 hard violations.`,
     });
 
     return res.json({

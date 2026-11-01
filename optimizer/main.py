@@ -9,11 +9,25 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import uvicorn
 
-from optimizer.timetable_solver import solve_timetable
-from optimizer.exam_solver import solve_exams
-from optimizer.booking_engine import solve_bookings
-from optimizer.disruption_solver import solve_disruption_repair, apply_disruption_payload
-from optimizer.canonical_validator import validate_schedule
+import sys
+import os
+
+# Add parent directory to sys.path so 'import optimizer.*' or local imports work uniformly
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+try:
+    from optimizer.timetable_solver import solve_timetable
+    from optimizer.exam_solver import solve_exams
+    from optimizer.booking_engine import solve_bookings
+    from optimizer.disruption_solver import solve_disruption_repair, apply_disruption_payload
+    from optimizer.canonical_validator import validate_schedule, resolve_room_conflict, ROOM_PRIORITY_ORDER
+except ImportError:
+    from timetable_solver import solve_timetable
+    from exam_solver import solve_exams
+    from booking_engine import solve_bookings
+    from disruption_solver import solve_disruption_repair, apply_disruption_payload
+    from canonical_validator import validate_schedule, resolve_room_conflict, ROOM_PRIORITY_ORDER
 
 app = FastAPI(title="CIT CampusOS Optimization Service", version="1.0.0")
 
@@ -56,6 +70,19 @@ class ValidateMoveRequest(BaseModel):
     target_day: str
     target_start_period: int
     target_room_id: str
+
+
+class CandidateMove(BaseModel):
+    target_day: str
+    target_start_period: int
+    target_room_id: str
+
+
+class BatchValidateMoveRequest(BaseModel):
+    dataset: Dict[str, Any]
+    current_schedule: Dict[str, Any]
+    session_id: str
+    candidates: List[CandidateMove]
 
 
 @app.get("/internal/health")
@@ -156,6 +183,86 @@ def validate_move_endpoint(req: ValidateMoveRequest):
         raise HTTPException(status_code=400, detail=str(e))
 
 
+@app.post("/internal/batch-validate-moves")
+def batch_validate_moves_endpoint(req: BatchValidateMoveRequest):
+    """
+    Batch pre-flight validation endpoint for evaluating multiple candidate moves for a session.
+    Returns results for all candidates in a single round-trip.
+    """
+    try:
+        base_sessions = [dict(s) for s in req.current_schedule.get("sessions", [])]
+        results = []
+        
+        for cand in req.candidates:
+            sessions_copy = [dict(s) for s in base_sessions]
+            found = False
+            for s in sessions_copy:
+                if s["session_id"] == req.session_id:
+                    s["day"] = cand.target_day
+                    s["start_period"] = cand.target_start_period
+                    s["room_id"] = cand.target_room_id
+                    found = True
+                    break
+            if not found:
+                sessions_copy.append({
+                    "session_id": req.session_id,
+                    "day": cand.target_day,
+                    "start_period": cand.target_start_period,
+                    "room_id": cand.target_room_id
+                })
+            
+            sched_copy = dict(req.current_schedule)
+            sched_copy["sessions"] = sessions_copy
+            report = validate_schedule(req.dataset, sched_copy)
+            
+            relevant_violations = [
+                v for v in report.get("hard_violations", [])
+                if req.session_id in v.get("detail", "") or cand.target_room_id in v.get("detail", "")
+            ]
+            
+            results.append({
+                "target_day": cand.target_day,
+                "target_start_period": cand.target_start_period,
+                "target_room_id": cand.target_room_id,
+                "valid": len(relevant_violations) == 0,
+                "violations": relevant_violations,
+                "total_hard_violations": report["hard_violation_count"],
+                "soft_total": report["soft_total"]
+            })
+            
+        return {
+            "session_id": req.session_id,
+            "evaluated_count": len(results),
+            "results": results
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8001)
 
+
+
+class ResolveRoomConflictRequest(BaseModel):
+    request_a: Dict[str, Any]
+    request_b: Dict[str, Any]
+    dataset: Optional[Dict[str, Any]] = None
+
+
+@app.post("/internal/resolve-room-conflict")
+def resolve_room_conflict_endpoint(req: ResolveRoomConflictRequest):
+    """
+    When two requests want the same room at the same time, this order decides who gets it:
+    1. Exams
+    2. Regular classes
+    3. Institute events (Spectra main events, convocation)
+    4. Guest lectures
+    5. Department events
+    6. Club events
+    Ties broken by earlier submitted_at.
+    """
+    try:
+        return resolve_room_conflict(req.dataset or {}, req.request_a, req.request_b)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

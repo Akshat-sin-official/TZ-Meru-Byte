@@ -113,6 +113,17 @@ export const DisruptionsView: React.FC = () => {
     });
   }, [movedList, filterType, searchQuery]);
 
+  if (user?.role === 'club') {
+    return (
+      <div className="bg-white border border-[#E5E7EB] rounded-xl p-8 text-center max-w-md mx-auto my-16 space-y-3 shadow-xs">
+        <h3 className="text-base font-semibold text-[#09090B]">Disruptions Management Restricted</h3>
+        <p className="text-xs text-[#52525B] leading-relaxed">
+          Club Representatives do not have operational clearance to inspect or simulate academic timetable disruptions.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header and Controls */}
@@ -144,17 +155,16 @@ export const DisruptionsView: React.FC = () => {
                 {solving ? <RotateCw className="w-3.5 h-3.5 animate-spin" /> : null}
                 <span>{solving ? 'Solving Repair...' : 'Simulate Sample Disruption'}</span>
               </button>
+              <a
+                href="/api/exports/schedule_after.json"
+                download="schedule_after.json"
+                className="rounded-lg border border-[#E5E7EB] bg-white hover:bg-slate-50 text-[#111926] shadow-2xs font-bold font-poppins px-3.5 py-1.5 text-xs inline-flex items-center gap-1.5 transition"
+              >
+                <Download className="w-3.5 h-3.5 text-muted-foreground" />
+                <span>schedule_after.json</span>
+              </a>
             </>
           )}
-
-          <a
-            href="http://localhost:5000/api/exports/schedule_after.json"
-            download="schedule_after.json"
-            className="rounded-lg border border-[#E5E7EB] bg-white hover:bg-slate-50 text-[#111926] shadow-2xs font-bold font-poppins px-3.5 py-1.5 text-xs inline-flex items-center gap-1.5 transition"
-          >
-            <Download className="w-3.5 h-3.5 text-muted-foreground" />
-            <span>schedule_after.json</span>
-          </a>
         </div>
       </div>
 

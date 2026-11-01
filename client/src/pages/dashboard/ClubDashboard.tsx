@@ -108,7 +108,7 @@ export const ClubDashboard: React.FC<ClubDashboardProps> = ({
             className="rounded-lg border border-[#E5E7EB] bg-white hover:bg-slate-50 text-[#111926] shadow-2xs font-bold font-poppins px-3.5 py-2 text-xs inline-flex items-center gap-1.5 transition cursor-pointer"
           >
             <PartyPopper className="w-3.5 h-3.5 text-muted-foreground" />
-            <span>All Allocations</span>
+            <span>My Event Allocations</span>
           </button>
         </div>
       </div>

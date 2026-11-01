@@ -50,6 +50,7 @@ model User {
   auditLogs    AuditLog[]
   notifications Notification[]
   aiConversations AiConversation[]
+  whatsAppContacts WhatsAppContact[]
 }
 
 model DatasetVersion {
@@ -178,12 +179,15 @@ model ScheduleVersion {
   approvedById       String?
   createdAt          DateTime       @default(now())
   activatedAt        DateTime?
+  versionHash        String?
+  baseVersionHash    String?
 
   datasetVersion     DatasetVersion @relation(fields: [datasetVersionId], references: [id], onDelete: Cascade)
   assignments        ScheduleAssignment[]
   bookingDecisions   BookingDecision[]
   sessionOverrides   SessionOverride[]
   examAllocations    ExamAllocation[]
+  timetableHead      TimetableHead?
 
   @@index([datasetVersionId, status])
 }
@@ -324,7 +328,6 @@ model Notification {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-
 model AiConversation {
   id           String      @id @default(uuid())
   userId       String
@@ -350,4 +353,44 @@ model AiMessage {
   conversation   AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   @@index([conversationId])
+}
+
+model WhatsAppContact {
+  id        String   @id @default(uuid())
+  userId    String?
+  phone     String   @unique
+  name      String?
+  role      Role     @default(club)
+  optedIn   Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model TimetableHead {
+  id          Int      @id @default(1)
+  versionId   String?  @unique
+  versionHash String   @default("")
+  updatedAt   DateTime @updatedAt
+
+  version     ScheduleVersion? @relation(fields: [versionId], references: [id], onDelete: SetNull)
+
+  @@map("timetable_head")
+}
+
+model FacultyUnavailabilityRequest {
+  id               String   @id @default(uuid())
+  facultyId        String
+  facultyName      String
+  days             Json
+  periods          Json
+  reason           String?
+  status           String   @default("pending_approval")
+  affectedSessions Json?
+  proposalId       String?
+  createdById      String
+  createdAt        DateTime @default(now())
+
+  @@index([facultyId])
+  @@index([status])
 }

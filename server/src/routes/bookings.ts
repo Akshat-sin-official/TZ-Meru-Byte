@@ -2,12 +2,26 @@ import { Router, Response } from 'express';
 import { PrismaClient, Role, ScheduleStatus, BookingDecisionStatus } from '@prisma/client';
 import axios from 'axios';
 import { authenticate, requireRole, AuthenticatedRequest } from '../middleware/auth.js';
+import { emitNotification } from '../utils/notifications.js';
+import {
+  resolveRoomConflict,
+  getEffectiveCategory,
+  ROOM_PRIORITY_ORDER,
+  CATEGORY_META,
+} from '../utils/priority.js';
 
 const router = Router();
 const prisma = new PrismaClient();
 const OPTIMIZER_URL = process.env.OPTIMIZER_URL || 'http://127.0.0.1:8001';
 
-router.get('/', async (req, res) => {
+const PRIORITY_HIERARCHY_PAYLOAD = ROOM_PRIORITY_ORDER.map((k) => ({
+  rank: CATEGORY_META[k].rank,
+  key: k,
+  label: CATEGORY_META[k].label,
+  description: CATEGORY_META[k].description,
+}));
+
+router.get('/', authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const dataset = await prisma.datasetVersion.findFirst({ where: { isCurrent: true } });
     if (!dataset) return res.status(404).json({ error: 'No dataset loaded' });
@@ -22,20 +36,86 @@ router.get('/', async (req, res) => {
       },
     });
 
-    const requests = await prisma.bookingRequest.findMany({
+    let requests = await prisma.bookingRequest.findMany({
       where: { datasetVersionId: dataset.id },
       orderBy: { submittedAt: 'asc' },
     });
+
+    const userRole = req.user?.role;
+    const userName = req.user?.name || '';
+    const clubName = req.user?.clubName || '';
+
+    // Per ini.md Section 3: View all venue requests is Admin only; Others view own / department requests
+    if (userRole === Role.club) {
+      requests = requests.filter(
+        (r) =>
+          r.role === Role.club ||
+          (clubName && r.requester.toLowerCase().includes(clubName.toLowerCase())) ||
+          r.requester.toLowerCase().includes(userName.toLowerCase())
+      );
+    } else if (userRole === Role.faculty) {
+      requests = requests.filter(
+        (r) =>
+          r.role === Role.faculty ||
+          r.effectiveCategory === 'guest_lecture' ||
+          r.requester.toLowerCase().includes(userName.toLowerCase())
+      );
+    } else if (userRole === Role.department_coordinator) {
+      requests = requests.filter(
+        (r) =>
+          r.role === Role.department_coordinator ||
+          r.effectiveCategory === 'department_event' ||
+          r.requester.toLowerCase().includes('coordinator') ||
+          r.requester.toLowerCase().includes(userName.toLowerCase())
+      );
+    }
+
+    const scopedReqIds = new Set(requests.map((r) => r.id));
+    const scopedDecisions = (activeSchedule?.bookingDecisions || []).filter((d) =>
+      userRole === Role.admin ? true : scopedReqIds.has(d.requestId)
+    );
 
     const rooms = await prisma.room.findMany({ where: { datasetVersionId: dataset.id } });
 
     return res.json({
       requests,
-      decisions: activeSchedule?.bookingDecisions || [],
+      decisions: scopedDecisions,
       sessionOverrides: activeSchedule?.sessionOverrides || [],
       rooms,
-      priorityOrder: (dataset.rawJson as any)?.priority_order,
+      priorityOrder: (dataset.rawJson as any)?.priority_order || ROOM_PRIORITY_ORDER,
       roleCategoryCap: (dataset.rawJson as any)?.role_category_cap,
+      priorityHierarchy: PRIORITY_HIERARCHY_PAYLOAD,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * Room Conflict Arbiter Endpoint:
+ * When two requests want the same room at the same time, this order decides who gets it:
+ * 1. Exams
+ * 2. Regular classes
+ * 3. Institute events (Spectra main events, convocation)
+ * 4. Guest lectures
+ * 5. Department events
+ * 6. Club events
+ *
+ * Ties are broken by earlier submitted_at timestamp.
+ */
+router.post('/conflict-check', async (req, res) => {
+  try {
+    const { request_a, request_b } = req.body;
+    if (!request_a || !request_b) {
+      return res.status(400).json({
+        error: 'Both request_a and request_b are required to evaluate room conflict.',
+      });
+    }
+
+    const resolution = resolveRoomConflict(request_a, request_b);
+    return res.json({
+      success: true,
+      resolution,
     });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
@@ -54,6 +134,8 @@ router.post('/requests', authenticate, async (req: AuthenticatedRequest, res: Re
       requested_room,
       mandatory_for_groups,
       raw_text,
+      requested_category,
+      requestedCategory,
     } = req.body;
 
     const dataset = await prisma.datasetVersion.findFirst({ where: { isCurrent: true } });
@@ -63,15 +145,22 @@ router.post('/requests', authenticate, async (req: AuthenticatedRequest, res: Re
     const count = await prisma.bookingRequest.count({ where: { datasetVersionId: dataset.id } });
     const externalId = `BR-EXT-${count + 1}`;
 
+    const userRole = req.user?.role || Role.club;
+    const reqCat = requested_category || requestedCategory || (userRole === 'admin' ? 'institute_event' : 'club_event');
+    const effCat = getEffectiveCategory({
+      role: userRole,
+      requestedCategory: reqCat,
+    });
+
     const newReq = await prisma.bookingRequest.create({
       data: {
         datasetVersionId: dataset.id,
         externalId,
         submittedAt: new Date(),
         requester: req.user?.name || 'Authorized Requester',
-        role: req.user?.role || Role.club,
-        requestedCategory: req.user?.role === 'admin' ? 'institute_event' : req.user?.role === 'department_coordinator' ? 'department_event' : req.user?.role === 'faculty' ? 'guest_lecture' : 'club_event',
-        effectiveCategory: req.user?.role === 'admin' ? 'institute_event' : req.user?.role === 'department_coordinator' ? 'department_event' : req.user?.role === 'faculty' ? 'guest_lecture' : 'club_event',
+        role: userRole,
+        requestedCategory: reqCat,
+        effectiveCategory: effCat,
         title: title || 'Campus Booking',
         attendance: Number(attendance) || 50,
         durationPeriods: Number(duration_periods) || 2,
@@ -84,7 +173,15 @@ router.post('/requests', authenticate, async (req: AuthenticatedRequest, res: Re
       },
     });
 
-    return res.json({ success: true, bookingRequest: newReq });
+    return res.json({
+      success: true,
+      bookingRequest: newReq,
+      priorityDetails: {
+        rank: CATEGORY_META[effCat]?.rank || 6,
+        category: effCat,
+        label: CATEGORY_META[effCat]?.label || 'Club events',
+      },
+    });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
@@ -115,7 +212,7 @@ router.post('/solve', authenticate, requireRole([Role.admin]), async (req: Authe
 
     const result = solveRes.data;
 
-    // Persist decisions
+    // Persist decisions using batch processing
     await prisma.bookingDecision.deleteMany({ where: { scheduleVersionId: activeSchedule.id } });
     await prisma.sessionOverride.deleteMany({ where: { scheduleVersionId: activeSchedule.id } });
 
@@ -125,44 +222,53 @@ router.post('/solve', authenticate, requireRole([Role.admin]), async (req: Authe
       rejected: BookingDecisionStatus.rejected,
     };
 
-    for (const d of result.bookings) {
-      const reqRecord = await prisma.bookingRequest.findUnique({
-        where: {
-          datasetVersionId_externalId: {
-            datasetVersionId: dataset.id,
-            externalId: d.request_id,
-          },
-        },
-      });
+    // Batch fetch all booking requests in one query
+    const allRequests = await prisma.bookingRequest.findMany({
+      where: { datasetVersionId: dataset.id },
+    });
+    const reqMap = new Map(allRequests.map((r) => [r.externalId, r]));
 
+    const decisionsData = [];
+    for (const d of result.bookings || []) {
+      const reqRecord = reqMap.get(d.request_id);
       if (reqRecord) {
-        await prisma.bookingDecision.create({
-          data: {
-            scheduleVersionId: activeSchedule.id,
-            requestId: reqRecord.id,
-            status: decStatusMap[d.status] || BookingDecisionStatus.rejected,
-            day: d.day || null,
-            startPeriod: d.start_period || null,
-            endPeriod: d.end_period || null,
-            roomExternalId: d.room_id || null,
-            reason: d.reason || '',
-          },
+        decisionsData.push({
+          scheduleVersionId: activeSchedule.id,
+          requestId: reqRecord.id,
+          status: decStatusMap[d.status] || BookingDecisionStatus.rejected,
+          day: d.day || null,
+          startPeriod: d.start_period || null,
+          endPeriod: d.end_period || null,
+          roomExternalId: d.room_id || null,
+          reason: d.reason || '',
         });
       }
     }
 
-    for (const o of result.session_overrides || []) {
-      await prisma.sessionOverride.create({
-        data: {
+    if (decisionsData.length > 0) {
+      await prisma.bookingDecision.createMany({
+        data: decisionsData,
+      });
+    }
+
+    if (result.session_overrides && result.session_overrides.length > 0) {
+      await prisma.sessionOverride.createMany({
+        data: result.session_overrides.map((o: any) => ({
           scheduleVersionId: activeSchedule.id,
           sessionExternalId: o.session_id,
           day: o.day,
           startPeriod: o.start_period,
           roomExternalId: o.room_id,
           displacedByReqId: o.displaced_by,
-        },
+        })),
       });
     }
+
+    await emitNotification({
+      broadcast: true,
+      title: 'Spectra Fest Allocations Solved',
+      message: `CP-SAT solved ${result.bookings?.length || 0} event venue requests with priority satisfaction (${decisionsData.filter(d => d.status === BookingDecisionStatus.approved).length} approved, ${result.session_overrides?.length || 0} session overrides).`,
+    });
 
     return res.json({ success: true, count: result.bookings.length, overrides: result.session_overrides.length });
   } catch (err: any) {
@@ -171,4 +277,3 @@ router.post('/solve', authenticate, requireRole([Role.admin]), async (req: Authe
 });
 
 export default router;
-

@@ -108,10 +108,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
         {/* Header */}
         <div className="relative z-10">
           <div className="inline-flex items-center gap-3 group">
-            <div className="p-2 bg-white/70 rounded-xl border border-white shadow-sm backdrop-blur-md">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-indigo-600 flex items-center justify-center text-white font-poppins font-bold text-xs shadow-xs">
-                CIT
-              </div>
+            <div className="p-1.5 bg-white/90 rounded-2xl border border-white/90 shadow-sm backdrop-blur-md flex items-center justify-center">
+              <img src="/logo.jpeg" alt="CIT CampusOS" className="w-12 h-12 object-cover rounded-xl shadow-2xs" />
             </div>
             <div className="flex flex-col">
               <span className="text-xl font-bold font-poppins tracking-tight text-ink/95 leading-none">
@@ -216,6 +214,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
         <div className="flex-1 overflow-y-auto px-6 pb-12 flex flex-col items-center justify-center scrollbar-thin">
           <div className="w-full max-w-[380px] my-auto space-y-6 animate-fade-in">
             <div className="flex flex-col space-y-2 text-center lg:text-left">
+              <div className="lg:hidden flex items-center justify-center gap-2.5 mb-2">
+                <div className="w-12 h-12 rounded-2xl bg-white border border-border/50 p-1 flex items-center justify-center shadow-xs overflow-hidden">
+                  <img src="/logo.jpeg" alt="CIT CampusOS" className="w-full h-full object-cover rounded-xl" />
+                </div>
+                <span className="text-xl font-bold font-poppins text-ink">CIT CampusOS</span>
+              </div>
               <h2 className="text-3xl font-extrabold font-poppins tracking-tight text-ink">Sign In</h2>
               <p className="text-sm text-ink-soft font-sans">
                 Select a profile above or sign in with your CIT account

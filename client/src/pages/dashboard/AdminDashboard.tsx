@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { campusApi } from '@/services/api';
 import { toast } from 'sonner';
+import { WhatsAppBotSection } from '@/components/campus/WhatsAppBotSection';
 import {
   CalendarDays,
   FileSpreadsheet,
@@ -135,7 +136,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateTab })
           </button>
 
           <a
-            href="http://localhost:5000/api/exports/schedule.json"
+            href="/api/exports/schedule.json"
             download="schedule.json"
             className="rounded-lg border border-[#E5E7EB] bg-white hover:bg-slate-50 text-[#111926] shadow-2xs font-bold font-poppins px-3.5 py-2 text-xs inline-flex items-center gap-1.5 transition"
           >
@@ -275,6 +276,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateTab })
           >
             CP-SAT Solver Diagnostics
           </TabsTrigger>
+          <TabsTrigger
+            value="whatsapp"
+            className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-1 py-2 text-xs font-bold font-poppins text-muted-foreground data-[state=active]:text-[#111926]"
+          >
+            WhatsApp Bot & Hotline
+          </TabsTrigger>
         </TabsList>
 
         {/* Tab 1: Compliance Matrix */}
@@ -393,6 +400,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateTab })
               </div>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* Tab 4: WhatsApp Bot & Direct Channel */}
+        <TabsContent value="whatsapp" className="m-0">
+          <WhatsAppBotSection />
         </TabsContent>
       </Tabs>
     </div>
