@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="client/public/logo.png" alt="CAMPORA logo" width="150" />
+
 # CAMPORA
 ### by MERUBYTE
 **AI-Assisted Campus Scheduling & Venue Management Platform**  
@@ -416,6 +418,115 @@ npm run dev
 The Vite development server is expected to run at `http://localhost:5173`.
 
 **Setup verification:** The commands above reflect the current project setup documented by the team. If a clean clone fails, update these instructions and `.env.example` before submission so a judge can reproduce the setup.
+
+---
+
+
+## 11. n8n Cloud AI workflows
+
+CAMPORA integrates Google Gemini AI with n8n Cloud for natural-language booking intake, schedule-change request processing and booking-decision explanations.
+
+**n8n Cloud workspace:** [techzephyr.app.n8n.cloud](https://techzephyr.app.n8n.cloud)
+
+> **Important:** n8n and Gemini assist with understanding and communication. They do not approve bookings, change schedules or determine whether a proposed allocation is valid. The Express backend and deterministic scheduling/validation services remain authoritative.
+
+### Workflow overview
+
+| Workflow | Webhook endpoint | Purpose | Result |
+|---|---|---|---|
+| **WF01 — AI Booking Intake** | `POST /webhook/cit/ai/booking-intake` | Understands English, Hindi and Hinglish venue requests; extracts booking details; identifies missing or ambiguous fields; uses prior booking drafts for multi-turn context. | Structured booking draft, status, missing fields and assistant message. |
+| **WF02 — AI Schedule Change** | `POST /webhook/cit/ai/schedule-change` | Interprets faculty unavailability and room-closure requests; extracts affected resources, date, change type and reason; identifies when backend optimisation is needed. | Structured schedule-change request, status and clarification message. |
+| **WF03 — AI Decision Explainer** | `POST /webhook/cit/ai/explain-decision` | Explains an authoritative booking decision returned by the backend in simple English, Hindi or Hinglish. | Assistant explanation, decision status and supplied reason codes. |
+
+### WF01 — AI Booking Intake
+
+![WF01 — CIT AI Booking Intake n8n workflow](docs/N8N/WF01_CIT_AI_BOOKING_INTAKE.png)
+
+**Flow:** Booking Intake Webhook → Normalize Input → Extract Booking Details (Gemini Chat Model + Structured Output Parser) → Validate Extraction → Respond to Webhook. Invalid or incomplete extraction follows the error response path.
+
+- Accepts natural-language booking requests in English, Hindi and Hinglish.
+- Extracts venue, date, time, event type, purpose and expected attendance.
+- Identifies missing or ambiguous information for clarification.
+- Accepts previous booking drafts supplied by the backend to support multi-turn conversations.
+- Returns an editable draft; it does not create or approve a booking.
+
+### WF02 — AI Schedule Change
+
+![WF02 — CIT AI Schedule Change n8n workflow](docs/N8N/WF02_CIT_AI_SCHEDULE_CHANGE.png)
+
+**Flow:** Schedule Change Webhook → Normalize Input → Extract Schedule Change (Gemini Chat Model + Structured Output Parser) → Validate Extraction → Respond to Webhook. Invalid input follows the error response path.
+
+- Understands faculty-unavailability and room-closure requests.
+- Extracts affected faculty or room, date, change type and reason.
+- Identifies whether backend optimisation is required.
+- Sends structured disruption information to the Express backend.
+- The backend maps the request to application records and communicates with the Python CP-SAT optimiser. The workflow itself does not directly modify the timetable.
+
+### WF03 — AI Decision Explainer
+
+![WF03 — CIT AI Decision Explainer n8n workflow](docs/N8N/WF03_CIT_AI_DECISION_EXPLAINER.png)
+
+**Flow:** Explain Decision Webhook → Validate Input → Explain Decision (Gemini Chat Model) → Respond to Webhook. Invalid input follows the error response path.
+
+- Receives the authoritative decision and reason codes from the backend.
+- Explains approval or rejection outcomes in simple language.
+- Supports English, Hindi and Hinglish.
+- Does not approve, reject, or modify the underlying decision.
+
+### Backend integration and API routes
+
+The Node.js Express backend calls n8n through Axios using:
+
+`server/src/utils/n8nClient.ts`
+
+| Backend route | Responsibility |
+|---|---|
+| `POST /api/ai/booking-intake` | Forwards booking-intake text and conversation context to WF01. |
+| `POST /api/ai/schedule-change` | Forwards a schedule-change request to WF02. |
+| `POST /api/ai/decision-explainer` | Sends a backend decision and reason details to WF03 for explanation. |
+| `GET /api/ai/conversations/:id` | Retrieves a conversation and its stored messages. |
+
+**Webhook authentication:** Backend-to-n8n requests use the `x-cit-webhook-secret` header. The secret is stored in environment variables and must never be exposed to the frontend or committed to Git.
+
+### Conversation memory
+
+- MySQL stores AI conversations and messages.
+- Conversations are scoped to authenticated user IDs.
+- Booking drafts accumulate across multiple messages.
+- The backend supplies previous drafts to WF01 so the workflow can interpret follow-up messages in context.
+
+### AI execution modes
+
+CIT Copilot supports three documented execution modes:
+
+1. **n8n Only** — sends requests through the n8n workflows.
+2. **Gemini Only** — uses the direct Gemini integration.
+3. **Compare Both** — runs both paths so their responses can be compared.
+
+### Error handling and safe fallback
+
+- Invalid workflow input returns a validation/error response.
+- n8n or Gemini failures are returned as sanitised errors.
+- The backend supports deterministic/manual fallback when AI services fail.
+- Manual booking must remain usable even when n8n or Gemini is unavailable.
+- A workflow response is a suggestion or explanation, never an authorisation to commit a booking or timetable change.
+
+### Workflow configuration and operational checklist
+
+1. Configure the n8n Cloud workspace and the three workflows using the webhook paths listed above.
+2. Configure the Google Gemini Chat Model credentials inside n8n; keep credentials in n8n's credential store rather than in workflow screenshots or source control.
+3. Configure the backend's n8n base URL and webhook secret in the server environment. Use `.env.example` for the variable names and placeholder values.
+4. Ensure `server/src/utils/n8nClient.ts` sends the expected webhook paths and `x-cit-webhook-secret` header.
+5. Test each webhook with valid, incomplete and invalid input; confirm both success and error responses.
+6. Test booking-intake follow-ups to confirm that backend-supplied prior drafts are used.
+7. Simulate n8n/Gemini unavailability and verify that manual booking and deterministic backend validation still work.
+8. Confirm that schedule-change proposals pass through backend optimisation, validation and the required approval flow before any timetable change is committed.
+
+**Workflow asset note:** The repository includes the three supplied n8n workflow screenshots and `docs/N8N/n8n.md`. The uploaded project archive did not contain n8n workflow export JSON files. To make the workflows independently importable into another n8n workspace, export each workflow from n8n as JSON and add those exports to `docs/N8N/`.
+
+### n8n documentation
+
+See [`docs/N8N/n8n.md`](docs/N8N/n8n.md) for the workflow integration notes and endpoint summary.
 
 ---
 
