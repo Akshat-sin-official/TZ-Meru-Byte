@@ -4,13 +4,13 @@
   "team": "CIT CampusOS Team",
   "soft_penalties": {
     "S1": 0,
-    "S2": 50,
-    "S3": 48,
-    "S4": 192,
+    "S2": 49,
+    "S3": 60,
+    "S4": 165,
     "S5": 0,
     "S6": 0
   },
-  "soft_total": 290,
+  "soft_total": 274,
   "bookings": {
     "booking_score": 66.0,
     "booking_score_max_if_all_approved": 70,

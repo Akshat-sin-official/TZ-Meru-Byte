@@ -106,8 +106,8 @@ The following table maps the official judging categories to the relevant CAMPORA
 | Official criterion | Marks | CAMPORA capability / evidence |
 |---|---:|---|
 | Scheduling correctness | 25 | Official validator checks timetable, bookings and exams. Current published validator result reports zero hard violations for the exported baseline. Judges may also generate a timetable in the app. |
-| Rescheduling | 15 | Disruption workflow proposes a repaired schedule, reports moved sessions and presents changes for Admin review before application. Current published disruption export reports 15 sessions moved. |
-| Optimisation | 10 | Solver optimises the six soft-constraint conditions; the official validator reports a soft score of 290 for the published baseline. Lower is better only if that is how the validator defines the penalty; compare using the official report. |
+| Rescheduling | 15 | Disruption workflow proposes a repaired schedule, reports moved sessions and presents changes for Admin review before application. Current published disruption export reports 11 sessions moved. |
+| Optimisation | 10 | Solver optimises the six soft-constraint conditions; the official validator reports a soft score of 274 for the published baseline. Lower is better only if that is how the validator defines the penalty; compare using the official report. |
 | Use of AI | 15 | Copilot interprets English/Hinglish requests, extracts booking details and supports explanations. The application validates every proposed action with deterministic code. |
 | Booking decisions | 10 | Spectra allocation export reports 66.0 / 70.0 and zero priority inversions; booking decisions include reasons. |
 | Usability and dashboard | 10 | Four role-based dashboards, timetable views, booking workflows, approvals and reset capability support independent judge testing. |
@@ -142,14 +142,14 @@ The project README records a run against the official `validator.py` supplied in
 
 | Area | Recorded result |
 |---|---:|
-| Soft-constraint score | 290 |
+| Soft-constraint score | 274 |
 | Spectra booking score | 66.0 / 70.0 |
 | Spectra priority inversions | 0 |
 | Midsem exams scheduled | 41 / 41 |
 | Midsem exam hard violations | 0 |
-| Sessions moved in disruption export | 15 |
+| Sessions moved in disruption export | 11 |
 
-**Disruption interpretation:** The published `schedule_after.json` is reported to have zero hard violations and 15 moved sessions relative to the baseline. This README does not claim that 15 is a mathematically proven global minimum; the official comparison across teams determines the fewest-moves score.
+**Disruption interpretation:** The published `schedule_after.json` is reported to have zero hard violations and 11 moved sessions (2 time changed, 9 room only) relative to the baseline. This README does not claim that 15 is a mathematically proven global minimum; the official comparison across teams determines the fewest-moves score.
 
 Live evidence:
 - [Open validator report](https://cit.saubhagyalabs.tech/api/exports/verify)
