@@ -185,28 +185,19 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
 
       {/* Right Panel - Login Form matching docs/UI */}
       <div className="flex flex-col h-screen overflow-hidden bg-[#FAF9F6] relative">
-        {/* Top Bar with Role Pills */}
+        {/* Top Bar with System Status & Operational Badge */}
         <div className="flex items-center justify-between p-6 lg:p-8 shrink-0 bg-[#FAF9F6] z-20 w-full">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-ink-soft font-poppins">Quick Profiles:</span>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 font-poppins">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              CP-SAT Engine Active
+            </span>
           </div>
 
-          <div className="flex items-center gap-1.5 p-1 bg-white rounded-full border border-border/40 shadow-xs text-[11px] font-bold text-ink-soft font-poppins">
-            {demoRoles.map((dr) => (
-              <button
-                key={dr.role}
-                type="button"
-                onClick={() => handleDemoLogin(dr.role)}
-                disabled={activeRole !== null}
-                className={`px-3 py-1 rounded-full transition-all cursor-pointer ${
-                  activeRole === dr.role
-                    ? 'bg-primary text-white shadow-xs'
-                    : 'hover:bg-slate-50 text-ink'
-                }`}
-              >
-                {dr.label}
-              </button>
-            ))}
+          <div className="flex items-center gap-2 px-3 py-1 bg-white rounded-full border border-border/50 shadow-xs text-[11px] font-medium text-ink-soft font-poppins">
+            <span className="text-ink font-semibold">Autumn 2027</span>
+            <span className="text-border">|</span>
+            <span className="font-mono text-ink-soft/70">v2.4 Live</span>
           </div>
         </div>
 
