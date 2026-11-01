@@ -23,7 +23,7 @@ const EXPORTS_DIR = fs.existsSync('/exports/schedule.json')
   ? '/exports'
   : path.resolve(__dirname, '../../../exports');
 
-const OPTIMIZER_URL = process.env.OPTIMIZER_URL || 'http://127.0.0.1:8001';
+const OPTIMIZER_URL = (process.env.OPTIMIZER_URL || 'http://127.0.0.1:8001').replace(/\/+$/, '');
 
 // GET schedule.json (Admin Only per RBAC in ini.md)
 router.get('/schedule.json', authenticate, requireRole([Role.admin]), async (req: AuthenticatedRequest, res: Response) => {

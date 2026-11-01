@@ -8,7 +8,7 @@ import { recordAuditLog, emitNotification, getSafeUserId } from '../utils/notifi
 
 const router = Router();
 const prisma = new PrismaClient();
-const OPTIMIZER_URL = process.env.OPTIMIZER_URL || 'http://127.0.0.1:8001';
+const OPTIMIZER_URL = (process.env.OPTIMIZER_URL || 'http://127.0.0.1:8001').replace(/\/+$/, '');
 
 // GET active timetable (Role-scoped per RBAC Matrix in ini.md)
 router.get('/active', authenticate, async (req: AuthenticatedRequest, res: Response) => {

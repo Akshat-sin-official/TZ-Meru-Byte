@@ -8,7 +8,7 @@ import { geminiClient } from '../utils/geminiClient.js';
 
 const router = Router();
 const prisma = new PrismaClient();
-const OPTIMIZER_URL = process.env.OPTIMIZER_URL || 'http://127.0.0.1:8001';
+const OPTIMIZER_URL = (process.env.OPTIMIZER_URL || 'http://127.0.0.1:8001').replace(/\/+$/, '');
 
 // Optional Google Gemini API setup
 const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '';

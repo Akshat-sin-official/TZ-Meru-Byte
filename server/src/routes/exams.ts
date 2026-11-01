@@ -6,7 +6,7 @@ import { recordAuditLog, emitNotification } from '../utils/notifications.js';
 
 const router = Router();
 const prisma = new PrismaClient();
-const OPTIMIZER_URL = process.env.OPTIMIZER_URL || 'http://127.0.0.1:8001';
+const OPTIMIZER_URL = (process.env.OPTIMIZER_URL || 'http://127.0.0.1:8001').replace(/\/+$/, '');
 
 router.get('/active', authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {

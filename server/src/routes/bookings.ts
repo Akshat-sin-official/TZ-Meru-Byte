@@ -12,7 +12,7 @@ import {
 
 const router = Router();
 const prisma = new PrismaClient();
-const OPTIMIZER_URL = process.env.OPTIMIZER_URL || 'http://127.0.0.1:8001';
+const OPTIMIZER_URL = (process.env.OPTIMIZER_URL || 'http://127.0.0.1:8001').replace(/\/+$/, '');
 
 const PRIORITY_HIERARCHY_PAYLOAD = ROOM_PRIORITY_ORDER.map((k) => ({
   rank: CATEGORY_META[k].rank,

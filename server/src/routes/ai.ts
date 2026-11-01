@@ -7,7 +7,7 @@ import { parsePlainLanguageBooking } from './assistant.js';
 
 const router = Router();
 const prisma = new PrismaClient();
-const OPTIMIZER_URL = process.env.OPTIMIZER_URL || 'http://127.0.0.1:8001';
+const OPTIMIZER_URL = (process.env.OPTIMIZER_URL || 'http://127.0.0.1:8001').replace(/\/+$/, '');
 
 // In-memory fallback cache for conversations when database connection is unavailable
 const ephemeralConversationStore = new Map<string, { userId: string; currentDraft: any }>();

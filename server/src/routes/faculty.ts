@@ -5,7 +5,7 @@ import { authenticate, AuthenticatedRequest } from '../middleware/auth.js';
 
 const router = Router();
 const prisma = new PrismaClient();
-const OPTIMIZER_URL = process.env.OPTIMIZER_URL || 'http://127.0.0.1:8001';
+const OPTIMIZER_URL = (process.env.OPTIMIZER_URL || 'http://127.0.0.1:8001').replace(/\/+$/, '');
 
 const VALID_DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI'];
 const VALID_PERIODS = [1, 2, 3, 4, 5, 6, 7, 8, 9];

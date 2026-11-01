@@ -31,8 +31,10 @@ app.use(cors({
 
 app.use(express.json({ limit: '10mb' }));
 
-// Health Check
-app.get('/api/health', (req, res) => {
+// Dedicated API router to support both direct /api/... access and stripped /... routing
+const apiRouter = express.Router();
+
+apiRouter.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
     product: 'CIT CampusOS API Gateway',
@@ -40,19 +42,22 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Route registration
-app.use('/api/auth', authRoutes);
-app.use('/api/datasets', datasetRoutes);
-app.use('/api/schedules', scheduleRoutes);
-app.use('/api/exams', examRoutes);
-app.use('/api/bookings', bookingRoutes);
-app.use('/api/disruptions', disruptionRoutes);
-app.use('/api/assistant', assistantRoutes);
-app.use('/api/ai', aiRoutes);
-app.use('/api/exports', exportRoutes);
-app.use('/api/whatsapp', whatsappRoutes);
-app.use('/api/faculty', facultyRoutes);
-app.use('/api/notifications', notificationRoutes);
+apiRouter.use('/auth', authRoutes);
+apiRouter.use('/datasets', datasetRoutes);
+apiRouter.use('/schedules', scheduleRoutes);
+apiRouter.use('/exams', examRoutes);
+apiRouter.use('/bookings', bookingRoutes);
+apiRouter.use('/disruptions', disruptionRoutes);
+apiRouter.use('/assistant', assistantRoutes);
+apiRouter.use('/ai', aiRoutes);
+apiRouter.use('/exports', exportRoutes);
+apiRouter.use('/whatsapp', whatsappRoutes);
+apiRouter.use('/faculty', facultyRoutes);
+apiRouter.use('/notifications', notificationRoutes);
+
+// Mount under /api (standard external public path) and root / (in case rewrite strips prefix)
+app.use('/api', apiRouter);
+app.use('/', apiRouter);
 
 export default app;
 
