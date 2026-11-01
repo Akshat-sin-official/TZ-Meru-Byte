@@ -87,6 +87,15 @@ export const campusApi = {
     const res = await api.post('/exams/generate');
     return res.data;
   },
+  rescheduleExam: async (params: {
+    examExternalId: string;
+    newDay: string;
+    newSession: string;
+    newRooms?: string[];
+  }) => {
+    const res = await api.post('/exams/reschedule-exam', params);
+    return res.data;
+  },
 
   // Bookings
   getBookings: async () => {
