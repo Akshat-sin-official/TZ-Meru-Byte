@@ -297,13 +297,19 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
 
       setMessages((prev) => [...prev, botMsg]);
     } catch (err: any) {
-      toast.error('Copilot service encountered a temporary error');
+      console.error('Copilot request failed:', err);
+      const isNetworkError = !err?.response || err.code === 'ERR_NETWORK';
+      const errMsg = isNetworkError
+        ? '⚠️ Cannot connect to backend server at http://localhost:5000. Please ensure run_server.bat is actively running in your terminal.'
+        : (err.response?.data?.error || 'Copilot service encountered a temporary error. Please try again or switch engine mode above.');
+
+      toast.error(isNetworkError ? 'Backend server unreachable (port 5000)' : 'Copilot request error');
       setMessages((prev) => [
         ...prev,
         {
           id: `bot-err-${Date.now()}`,
           sender: 'assistant',
-          text: 'I could not process that request. Please verify your query or try one of the prompt templates below.',
+          text: errMsg,
           type: 'error',
           timestamp: 'Just now',
         },
