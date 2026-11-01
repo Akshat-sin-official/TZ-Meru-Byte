@@ -6,14 +6,44 @@ import crypto from 'crypto';
 
 const prisma = new PrismaClient();
 
-const DATA_PATH = path.resolve(__dirname, '../../docs/PS/CrunchWeek_StarterPack (1)/CrunchWeek_StarterPack/data/cit_public.json');
-const SCHEDULE_PATH = path.resolve(__dirname, '../../exports/schedule.json');
+function findDataPath(): string {
+  const candidates = [
+    '/docs/PS/CrunchWeek_StarterPack (1)/CrunchWeek_StarterPack/data/cit_public.json',
+    path.resolve(process.cwd(), 'docs/PS/CrunchWeek_StarterPack (1)/CrunchWeek_StarterPack/data/cit_public.json'),
+    path.resolve(process.cwd(), '../docs/PS/CrunchWeek_StarterPack (1)/CrunchWeek_StarterPack/data/cit_public.json'),
+    path.resolve(__dirname, '../../docs/PS/CrunchWeek_StarterPack (1)/CrunchWeek_StarterPack/data/cit_public.json'),
+    path.resolve(__dirname, '../../../docs/PS/CrunchWeek_StarterPack (1)/CrunchWeek_StarterPack/data/cit_public.json'),
+  ];
+  for (const c of candidates) {
+    if (fs.existsSync(c)) return c;
+  }
+  return candidates[0];
+}
+
+function findSchedulePath(): string {
+  const candidates = [
+    '/exports/schedule.json',
+    path.resolve(process.cwd(), 'exports/schedule.json'),
+    path.resolve(process.cwd(), '../exports/schedule.json'),
+    path.resolve(__dirname, '../../exports/schedule.json'),
+    path.resolve(__dirname, '../../../exports/schedule.json'),
+  ];
+  for (const c of candidates) {
+    if (fs.existsSync(c)) return c;
+  }
+  return candidates[0];
+}
 
 export async function seedDatabase() {
-  console.log('--- Starting CIT CampusOS Database Seeding ---');
+  console.log('--- Starting Campora Dataset Seeding from cit_public.json ---');
+
+  const dataPath = findDataPath();
+  const schedulePath = findSchedulePath();
+  console.log(`Using canonical dataset from: ${dataPath}`);
+  console.log(`Using canonical schedule from: ${schedulePath}`);
 
   // Read cit_public.json
-  const rawData = fs.readFileSync(DATA_PATH, 'utf-8');
+  const rawData = fs.readFileSync(dataPath, 'utf-8');
   const citData = JSON.parse(rawData);
   const contentHash = crypto.createHash('sha256').update(rawData).digest('hex');
 
@@ -251,9 +281,9 @@ export async function seedDatabase() {
   });
 
   // 10. Load Initial Active Schedule (from exports/schedule.json via Batch Inserts)
-  if (fs.existsSync(SCHEDULE_PATH)) {
+  if (fs.existsSync(schedulePath)) {
     console.log('Loading verified baseline schedule from exports/schedule.json...');
-    const schedData = JSON.parse(fs.readFileSync(SCHEDULE_PATH, 'utf-8'));
+    const schedData = JSON.parse(fs.readFileSync(schedulePath, 'utf-8'));
 
     const activeSchedule = await prisma.scheduleVersion.create({
       data: {
@@ -261,7 +291,7 @@ export async function seedDatabase() {
         versionNumber: 1,
         status: ScheduleStatus.active,
         hardViolations: 0,
-        softScoreTotal: 315,
+        softScoreTotal: 274,
         activatedAt: new Date(),
       },
     });
@@ -374,7 +404,7 @@ export async function seedDatabase() {
     await prisma.notification.createMany({ data: notifsToInsert });
   }
 
-  console.log('--- CIT CampusOS Seeding Completed Successfully ---');
+  console.log('--- Campora Dataset Seeding Completed Successfully ---');
 }
 
 if (require.main === module) {
