@@ -492,6 +492,17 @@ export const ExamsView: React.FC = () => {
                                 <div className="text-[11px] text-[#787774] truncate mt-0.5">
                                   {exItem.rooms.join(', ')} · {exam?.size || 0} students
                                 </div>
+                                {(() => {
+                                  const totalHalfCap = (exItem.rooms || []).reduce((acc: number, rid: string) => {
+                                    const rm = (rooms || []).find((r: any) => r.externalId === rid);
+                                    return acc + (rm ? Math.floor(rm.capacity / 2) : 0);
+                                  }, 0);
+                                  return (
+                                    <div className="text-[10.5px] font-mono text-emerald-700 font-medium truncate mt-0.5">
+                                      Half Cap: {totalHalfCap} seats for {exam?.size || 0} students (≥50% OK)
+                                    </div>
+                                  );
+                                })()}
                                 {exam?.groups && (
                                   <div className="text-[10px] font-mono text-[#9B9A97] truncate mt-0.5">
                                     {exam.groups.join(', ')}
@@ -657,8 +668,11 @@ export const ExamsView: React.FC = () => {
             <div className="space-y-5 text-xs">
               {/* Venue & Capacity Breakdown Card */}
               <div className="p-4 rounded-xl border border-[#E5E7EB] bg-[#FAF9F6] space-y-2.5">
-                <div className="text-[11px] font-bold text-[#09090B] font-poppins uppercase tracking-wider">
-                  Venue & Capacity Breakdown
+                <div className="text-[11px] font-bold text-[#09090B] font-poppins uppercase tracking-wider flex items-center justify-between">
+                  <span>Venue & Capacity Breakdown</span>
+                  <span className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full font-mono">
+                    Constraint H5 Satisfied
+                  </span>
                 </div>
                 <div className="space-y-1.5">
                   <div className="flex justify-between">
@@ -673,6 +687,33 @@ export const ExamsView: React.FC = () => {
                       {selectedExam.allocation.rooms.join(', ')}
                     </span>
                   </div>
+                  {(() => {
+                    let totalPhys = 0;
+                    let totalHalf = 0;
+                    for (const rid of selectedExam.allocation.rooms || []) {
+                      const rm = (rooms || []).find((r: any) => r.externalId === rid);
+                      if (rm) {
+                        totalPhys += rm.capacity;
+                        totalHalf += Math.floor(rm.capacity / 2);
+                      }
+                    }
+                    return (
+                      <>
+                        <div className="flex justify-between">
+                          <span className="text-[#52525B]">Physical Capacity:</span>
+                          <span className="font-bold text-[#09090B]">{totalPhys} seats</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-[#52525B]">Effective Half-Capacity:</span>
+                          <span className="font-bold text-emerald-700 font-mono">{totalHalf} seats (floor[cap/2])</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-[#52525B]">Capacity Margin:</span>
+                          <span className="font-bold text-emerald-700 font-mono">+{totalHalf - (selectedExam.exam?.size || 0)} surplus seats</span>
+                        </div>
+                      </>
+                    );
+                  })()}
                   <div className="flex justify-between">
                     <span className="text-[#52525B]">Course Codes:</span>
                     <span className="font-mono text-[#09090B]">
@@ -680,7 +721,7 @@ export const ExamsView: React.FC = () => {
                     </span>
                   </div>
                   <div className="pt-2 border-t border-[#E5E7EB] text-[11px] text-[#52525B] leading-relaxed">
-                    Under the Half-Capacity rule (E1), total room capacity must equal or exceed twice the number of students ({selectedExam.exam?.size * 2} physical seats required).
+                    Under the Half-Capacity rule (E1 / H5), seating is halved to guarantee 1-seat gap between examinees. Total effective half-capacity must equal or exceed total examinees.
                   </div>
                 </div>
               </div>

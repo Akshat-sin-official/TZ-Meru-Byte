@@ -698,7 +698,7 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
                 )
               )}
 
-              {/* Data & Validator Hub Channel (PS §2 #9) */}
+              {/* Data & Validator Hub Channel (Official) */}
               {user?.role === 'admin' && (
                 sidebarCollapsed ? (
                   <Tooltip delayDuration={80}>
@@ -720,7 +720,7 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
                     <TooltipContent side="right" sideOffset={12} className="flex items-center gap-2 bg-[#09090B] text-white border-0 py-1.5 px-3 shadow-lg">
                       <span className="text-xs font-medium">Data Hub & Validator</span>
                       <span className="text-[10px] font-mono bg-emerald-950 text-emerald-400 px-1.5 py-0.2 rounded font-medium">
-                        PS §2 #9
+                        Official
                       </span>
                     </TooltipContent>
                   </Tooltip>
@@ -739,7 +739,7 @@ export const AppDashboardLayout: React.FC<AppDashboardLayoutProps> = ({
                       <span className="whitespace-nowrap">Data Hub & Validator</span>
                     </div>
                     <span className="text-[11px] font-mono font-medium text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-1.5 py-0.5 rounded shrink-0">
-                      PS §2 #9
+                      Official
                     </span>
                   </button>
                 )
