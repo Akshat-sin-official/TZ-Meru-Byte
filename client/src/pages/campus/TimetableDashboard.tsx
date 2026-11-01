@@ -198,6 +198,7 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
   const [targetRoom, setTargetRoom] = useState('LH-1');
   const [validatingMove, setValidatingMove] = useState(false);
   const [applyingMove, setApplyingMove] = useState(false);
+  const [moveValidationResult, setMoveValidationResult] = useState<any | null>(null);
   const [requestingMove, setRequestingMove] = useState(false);
 
   const handleRequestMove = async () => {
@@ -218,9 +219,6 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
       setRequestingMove(false);
     }
   };
-  const [moveValidationResult, setMoveValidationResult] = useState<any | null>(null);
-  const [requestingMove, setRequestingMove] = useState(false);
-  const [moveReason, setMoveReason] = useState('');
 
   const fetchTimetable = async () => {
     setLoading(true);
@@ -309,27 +307,6 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
     }
   };
 
-  const handleRequestSessionMove = async () => {
-    if (!selectedSessionDetail) return;
-    setRequestingMove(true);
-    try {
-      const res = await api.post('/faculty/request-move', {
-        session_id: selectedSessionDetail.session.externalId,
-        target_day: targetDay,
-        target_start_period: Number(targetPeriod),
-        target_room_id: targetRoom,
-        reason: moveReason || 'Requested by faculty instructor via Timetable Matrix',
-      });
-      toast.success(res.data?.message || 'Session move request submitted for Administrative approval!');
-      setSelectedSessionDetail(null);
-      setMoveReason('');
-      await fetchTimetable();
-    } catch (err: any) {
-      toast.error('Failed to submit move request: ' + (err.response?.data?.error || err.message));
-    } finally {
-      setRequestingMove(false);
-    }
-  };
 
   const handleApplyMove = async () => {
     if (!selectedSessionDetail || !moveValidationResult?.valid) return;
