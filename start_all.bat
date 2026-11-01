@@ -1,16 +1,17 @@
 @echo off
+cd /d "%~dp0"
 title CIT CampusOS Master Launcher
 echo ===================================================
 echo  Starting CIT CampusOS Full Stack Platform
 echo ===================================================
 
-start "CIT Optimizer" cmd /c "run_optimizer.bat"
+start "CIT Optimizer" cmd /k "run_optimizer.bat"
 timeout /t 3 /nobreak >nul
 
-start "CIT Server" cmd /c "run_server.bat"
+start "CIT Server" cmd /k "run_server.bat"
 timeout /t 3 /nobreak >nul
 
-start "CIT Client" cmd /c "run_client.bat"
+start "CIT Client" cmd /k "run_client.bat"
 
 echo.
 echo All services launched!
@@ -19,4 +20,3 @@ echo Server:    http://localhost:5000
 echo UI:        http://localhost:5173
 echo.
 pause
-

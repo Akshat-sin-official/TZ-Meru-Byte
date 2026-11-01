@@ -125,9 +125,9 @@ export const campusApi = {
     return res.data;
   },
 
-  // AI Assistant
-  chatWithAssistant: async (message: string, role?: string) => {
-    const res = await api.post('/assistant/chat', { message, role });
+  // AI Assistant (Backward-compatible & n8n Integrated)
+  chatWithAssistant: async (message: string, role?: string, aiMode: string = 'n8n_only') => {
+    const res = await api.post('/assistant/chat', { message, role, ai_mode: aiMode });
     return res.data;
   },
   parseBookingPrompt: async (message: string) => {
@@ -137,6 +137,32 @@ export const campusApi = {
   explainDecision: async (params: any) => {
     const res = await api.post('/assistant/explain-decision', params);
     return res.data;
+  },
+
+  // TechZephyr AI Workflows (Dedicated /api/ai endpoints powered by n8n Cloud)
+  ai: {
+    bookingIntake: async (payload: { message: string; conversation_id?: string; timezone?: string }) => {
+      const res = await api.post('/ai/booking-intake', payload);
+      return res.data;
+    },
+    scheduleChange: async (payload: { message: string; conversation_id?: string; timezone?: string }) => {
+      const res = await api.post('/ai/schedule-change', payload);
+      return res.data;
+    },
+    decisionExplainer: async (payload: {
+      request_id?: string;
+      status?: string;
+      reason_codes?: string[];
+      language?: string;
+      backend_result?: any;
+    }) => {
+      const res = await api.post('/ai/decision-explainer', payload);
+      return res.data;
+    },
+    getConversation: async (conversationId: string) => {
+      const res = await api.get(`/ai/conversations/${conversationId}`);
+      return res.data;
+    },
   },
 
   // Manual Moves (PS #10)
