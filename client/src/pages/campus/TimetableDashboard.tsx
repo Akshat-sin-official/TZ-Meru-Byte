@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { campusApi } from '@/services/api';
+import { campusApi, api } from '@/services/api';
 import { useCampusAuth } from '@/contexts/CampusAuthContext';
 import { toast } from 'sonner';
 import {
@@ -120,6 +120,7 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
 
   // Collapsed Days state
   const [collapsedDays, setCollapsedDays] = useState<Record<string, boolean>>({});
+  const [expandedEvenings, setExpandedEvenings] = useState<Record<string, boolean>>({});
 
   const toggleDayCollapse = (day: string) => {
     setCollapsedDays((prev) => {
@@ -218,6 +219,8 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
     }
   };
   const [moveValidationResult, setMoveValidationResult] = useState<any | null>(null);
+  const [requestingMove, setRequestingMove] = useState(false);
+  const [moveReason, setMoveReason] = useState('');
 
   const fetchTimetable = async () => {
     setLoading(true);
@@ -306,6 +309,28 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
     }
   };
 
+  const handleRequestSessionMove = async () => {
+    if (!selectedSessionDetail) return;
+    setRequestingMove(true);
+    try {
+      const res = await api.post('/faculty/request-move', {
+        session_id: selectedSessionDetail.session.externalId,
+        target_day: targetDay,
+        target_start_period: Number(targetPeriod),
+        target_room_id: targetRoom,
+        reason: moveReason || 'Requested by faculty instructor via Timetable Matrix',
+      });
+      toast.success(res.data?.message || 'Session move request submitted for Administrative approval!');
+      setSelectedSessionDetail(null);
+      setMoveReason('');
+      await fetchTimetable();
+    } catch (err: any) {
+      toast.error('Failed to submit move request: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setRequestingMove(false);
+    }
+  };
+
   const handleApplyMove = async () => {
     if (!selectedSessionDetail || !moveValidationResult?.valid) return;
     setApplyingMove(true);
@@ -372,6 +397,57 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
     return map;
   }, [filteredAssignments, sessionsMap]);
 
+  // Evening sessions (P10-P13) for Spectra/approved bookings
+  const eveningAssignments = useMemo(() => {
+    if (!selectedFilter) return new Map<string, any[]>();
+    const map = new Map<string, any[]>();
+    // Include all assignments that start at P10 or later
+    assignments.forEach((a: any) => {
+      if (a.startPeriod >= 10) {
+        const session = sessionsMap.get(a.sessionExternalId);
+        if (!session) return;
+        // Apply same filtering logic
+        let matches = false;
+        if (filterType === 'group') {
+          matches = (session.groups || []).includes(selectedFilter);
+        } else if (filterType === 'faculty') {
+          matches = session.facultyId === selectedFilter;
+        } else if (filterType === 'room') {
+          matches = a.roomExternalId === selectedFilter;
+        }
+        if (matches) {
+          const existing = map.get(a.day) || [];
+          existing.push({ assignment: a, session });
+          map.set(a.day, existing);
+        }
+      }
+    });
+    // Also include booking decisions for evening periods
+    const bookingDecisions = data?.schedule?.bookingDecisions || [];
+    bookingDecisions.forEach((bd: any) => {
+      if (bd.startPeriod && bd.startPeriod >= 10 && bd.status === 'approved') {
+        const day = bd.day;
+        if (day) {
+          const existing = map.get(day) || [];
+          existing.push({
+            assignment: bd,
+            session: {
+              courseId: bd.requestTitle || bd.requestExternalId || 'Spectra Event',
+              facultyId: bd.requester || 'Spectra',
+              kind: 'event',
+              duration: (bd.endPeriod || bd.startPeriod) - bd.startPeriod + 1,
+              groups: [],
+              needsAccessible: false,
+            },
+            isBooking: true,
+          });
+          map.set(day, existing);
+        }
+      }
+    });
+    return map;
+  }, [assignments, data?.schedule?.bookingDecisions, filterType, selectedFilter, sessionsMap]);
+
   // Entity summary statistics
   const entityStats = useMemo(() => {
     const totalHours = filteredAssignments.reduce((acc: number, curr: any) => {
@@ -413,6 +489,7 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
   };
 
   const days = ['MON', 'TUE', 'WED', 'THU', 'FRI'];
+  const EVENING_PERIOD_LABELS: Record<number, string> = { 10: '18:00–19:00', 11: '19:00–20:00', 12: '20:00–21:00', 13: '21:00–22:00' };
 
   if (loading || !data) {
     return (
@@ -495,7 +572,17 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
                 <span className="truncate font-medium" title={facultyMap.get(session.facultyId)?.name || session.facultyId}>
                   {facultyMap.get(session.facultyId)?.name || session.facultyId}
                 </span>
-                <span className="text-[9px] font-medium opacity-85">{typeBadge}</span>
+                <span className="flex items-center gap-1">
+                  {(() => {
+                    const room = roomsMap.get(assignment.roomExternalId);
+                    return room && !room.accessible && session.needsAccessible ? (
+                      <span className="text-[10px]" title="Accessibility conflict: room is not wheelchair accessible but session requires it">♿❌</span>
+                    ) : room?.accessible && session.needsAccessible ? (
+                      <span className="text-[10px]" title="Wheelchair accessible room assigned">♿</span>
+                    ) : null;
+                  })()}
+                  <span className="text-[9px] font-medium opacity-85">{typeBadge}</span>
+                </span>
               </div>
             </div>
           </div>
@@ -931,8 +1018,8 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
               }
 
               return (
+                <React.Fragment key={day}>
                 <div
-                  key={day}
                   id={`day-row-${day}`}
                   className={`grid grid-cols-[80px_repeat(5,1fr)_44px_repeat(4,1fr)] print:grid-cols-[68px_repeat(5,1fr)_34px_repeat(4,1fr)] min-h-[82px] print:min-h-[58px] transition-all duration-150 ${
                     idx !== days.length - 1 ? 'border-b border-[#EBEBEA]' : ''
@@ -980,6 +1067,60 @@ export const TimetableDashboard: React.FC<TimetableDashboardProps> = ({
                   {/* Afternoon Periods (P6–P9) */}
                   {renderPeriodBlock(day, 6, 9)}
                 </div>
+
+                {/* Evening Events Row (P10–P13) */}
+                {(() => {
+                  const evts = eveningAssignments.get(day) || [];
+                  if (evts.length === 0) return null;
+                  const isExpanded = expandedEvenings[day] ?? false;
+                  return (
+                    <div className={`border-b border-[#EBEBEA] bg-[#FFFBEB]/40 ${idx === days.length - 1 ? "" : ""}`}>
+                      <button
+                        onClick={() => setExpandedEvenings(prev => ({ ...prev, [day]: !isExpanded }))}
+                        className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-amber-800 hover:bg-amber-50/60 transition-colors cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2">
+                          {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                          <span className="font-semibold">Evening Events (P10–P13)</span>
+                          <span className="text-[10px] font-mono bg-amber-100 border border-amber-200 px-1.5 py-0.5 rounded text-amber-700">
+                            {evts.length} session{evts.length !== 1 ? "s" : ""} · 18:00–22:00
+                          </span>
+                        </div>
+                      </button>
+                      {isExpanded && (
+                        <div className="px-3 pb-2.5 grid grid-cols-4 gap-2">
+                          {evts.map((evt: any, evtIdx: number) => {
+                            const s = evt.session;
+                            const a = evt.assignment;
+                            const startP = a.startPeriod || 10;
+                            const dur = s.duration || 1;
+                            const timeLabel = EVENING_PERIOD_LABELS[startP] || `P${startP}`;
+                            return (
+                              <div
+                                key={evtIdx}
+                                className="bg-amber-50 border border-amber-200 rounded-md p-2 text-xs hover:border-amber-300 transition-colors"
+                              >
+                                <div className="flex items-start justify-between gap-1">
+                                  <span className="font-semibold text-amber-900 truncate">{s.courseId}</span>
+                                  <span className="text-[10px] font-mono px-1 rounded border bg-white/90 border-amber-200 text-amber-700">
+                                    {a.roomExternalId || "TBD"}
+                                  </span>
+                                </div>
+                                <div className="flex items-center justify-between text-amber-700 mt-1">
+                                  <span className="truncate">{facultyMap.get(s.facultyId)?.name || s.facultyId}</span>
+                                  <span className="text-[9px] font-medium">
+                                    P{startP}{dur > 1 ? `–P${startP + dur - 1}` : ""} · {timeLabel}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+                </React.Fragment>
               );
             })}
           </div>

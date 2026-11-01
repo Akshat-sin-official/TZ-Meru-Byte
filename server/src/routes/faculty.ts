@@ -523,4 +523,199 @@ router.get('/unavailability/:id/proposal', authenticate, async (req: Authenticat
   }
 });
 
+
+/**
+ * POST /api/faculty/request-move
+ * Faculty member requests a session move, creating a pending_approval proposal for Admin review
+ */
+router.post('/request-move', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userRole = req.user?.role;
+    if (userRole !== Role.faculty && userRole !== Role.admin && userRole !== Role.department_coordinator) {
+      return res.status(403).json({
+        error: `Forbidden: role '${userRole}' cannot request session moves.`,
+      });
+    }
+
+    const { session_id, target_day, target_start_period, target_room_id, reason } = req.body;
+    if (!session_id || !target_day || !target_start_period || !target_room_id) {
+      return res.status(400).json({
+        error: 'Missing required parameters: session_id, target_day, target_start_period, target_room_id',
+      });
+    }
+
+    const dataset = await prisma.datasetVersion.findFirst({ where: { isCurrent: true } });
+    if (!dataset) {
+      return res.status(404).json({ error: 'No active dataset found' });
+    }
+
+    const activeSchedule = await prisma.scheduleVersion.findFirst({
+      where: { datasetVersionId: dataset.id, status: ScheduleStatus.active },
+      include: { assignments: true },
+    });
+    if (!activeSchedule) {
+      return res.status(404).json({ error: 'No active schedule found' });
+    }
+
+    const currentAssignment = activeSchedule.assignments.find(
+      (a) => a.sessionExternalId === session_id
+    );
+    if (!currentAssignment) {
+      return res.status(404).json({ error: `Session '${session_id}' not found in active schedule` });
+    }
+
+    // Role check: Faculty can only move their own sessions
+    const session = await prisma.session.findUnique({
+      where: {
+        datasetVersionId_externalId: {
+          datasetVersionId: dataset.id,
+          externalId: session_id,
+        },
+      },
+    });
+
+    if (!session) {
+      return res.status(404).json({ error: `Session record '${session_id}' not found` });
+    }
+
+    if (userRole === Role.faculty && req.user?.facultyId && session.facultyId !== req.user.facultyId) {
+      return res.status(403).json({
+        error: `Forbidden: Faculty '${req.user.facultyId}' cannot request move for session owned by '${session.facultyId}'.`,
+      });
+    }
+
+    // Validate move against optimizer
+    let validationResult: any = { valid: true };
+    try {
+      const valRes = await axios.post(`${OPTIMIZER_URL}/internal/validate-move`, {
+        dataset: dataset.rawJson,
+        current_schedule: {
+          sessions: activeSchedule.assignments.map((a) => ({
+            session_id: a.sessionExternalId,
+            day: a.day,
+            start_period: a.startPeriod,
+            room_id: a.roomExternalId,
+          })),
+        },
+        session_id,
+        target_day,
+        target_start_period: Number(target_start_period),
+        target_room_id,
+      });
+      validationResult = valRes.data;
+    } catch (valErr: any) {
+      console.warn('Validator service warning:', valErr.message);
+    }
+
+    if (validationResult.valid === false) {
+      return res.status(422).json({
+        error: 'Proposed move violates hard constraints',
+        violations: validationResult.violations,
+      });
+    }
+
+    // Get next version number
+    const latestVersion = await prisma.scheduleVersion.findFirst({
+      where: { datasetVersionId: dataset.id },
+      orderBy: { versionNumber: 'desc' },
+    });
+    const nextVersionNumber = (latestVersion?.versionNumber || 0) + 1;
+
+    // Safe user lookup
+    let auditUserId: string | null = null;
+    if (req.user?.id) {
+      const dbUser = await prisma.user.findUnique({ where: { id: req.user.id } });
+      if (dbUser) auditUserId = dbUser.id;
+    }
+
+    // Create proposal ScheduleVersion (pending_approval)
+    const proposal = await prisma.scheduleVersion.create({
+      data: {
+        datasetVersionId: dataset.id,
+        versionNumber: nextVersionNumber,
+        status: ScheduleStatus.pending_approval,
+        hardViolations: 0,
+        softScoreTotal: activeSchedule.softScoreTotal,
+        createdById: auditUserId || req.user?.id || null,
+      },
+    });
+
+    // Clone all assignments from active, updating the target session's assignment
+    for (const a of activeSchedule.assignments) {
+      const isTarget = a.sessionExternalId === session_id;
+      await prisma.scheduleAssignment.create({
+        data: {
+          scheduleVersionId: proposal.id,
+          sessionExternalId: a.sessionExternalId,
+          day: isTarget ? target_day : a.day,
+          startPeriod: isTarget ? Number(target_start_period) : a.startPeriod,
+          roomExternalId: isTarget ? target_room_id : a.roomExternalId,
+        },
+      });
+    }
+
+    // Create FacultyUnavailabilityRequest to surface cleanly in Admin proposals list
+    const facultyMember = await prisma.faculty.findUnique({
+      where: {
+        datasetVersionId_externalId: {
+          datasetVersionId: dataset.id,
+          externalId: session.facultyId,
+        },
+      },
+    });
+    const facultyName = facultyMember?.name || req.user?.name || `Faculty ${session.facultyId}`;
+
+    const requestRecord = await prisma.facultyUnavailabilityRequest.create({
+      data: {
+        facultyId: session.facultyId,
+        facultyName,
+        days: [target_day],
+        periods: [Number(target_start_period)],
+        reason: `Session Move Request: ${session_id} (${session.courseId}) -> ${target_day} P${target_start_period} at ${target_room_id}${reason ? ` · ${reason}` : ''}`,
+        status: 'pending_approval',
+        affectedSessions: [
+          {
+            sessionId: session_id,
+            courseId: session.courseId,
+            groups: Array.isArray(session.groups) ? (session.groups as string[]) : [],
+            facultyId: session.facultyId,
+            oldSlot: { day: currentAssignment.day, startPeriod: currentAssignment.startPeriod, roomExternalId: currentAssignment.roomExternalId },
+            newSlot: { day: target_day, startPeriod: Number(target_start_period), roomExternalId: target_room_id },
+          },
+        ],
+        proposalId: proposal.id,
+        createdById: req.user?.id || 'anonymous',
+      },
+    });
+
+    // Audit log
+    await prisma.auditLog.create({
+      data: {
+        userId: auditUserId,
+        action: 'FACULTY_SESSION_MOVE_REQUESTED',
+        entityType: 'SCHEDULE_PROPOSAL',
+        entityId: proposal.id,
+        details: {
+          sessionId: session_id,
+          targetDay: target_day,
+          targetStartPeriod: Number(target_start_period),
+          targetRoomId: target_room_id,
+          proposalId: proposal.id,
+        },
+      },
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Session move request submitted. Created pending schedule proposal for Admin approval.',
+      proposalId: proposal.id,
+      requestId: requestRecord.id,
+      status: 'pending_approval',
+    });
+  } catch (err: any) {
+    console.error('Request session move error:', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;

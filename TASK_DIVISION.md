@@ -17,16 +17,16 @@ To ensure rapid, collision-free execution for the hackathon presentation, the 10
 
 ---
 
-## Workstream 2: AI-2 (Assigned to Other AI — READY TO DISPATCH)
+## Workstream 2: AI-2 (Assigned to Other AI — COMPLETED)
 **Domain:** CP-SAT Solver Soft Objectives, Timetable Dashboard Enhancements & Faculty Requests.
 > **Prompt for AI-2**: *"You are working on Workstream 2. Do NOT edit `disruptions.ts`, `bookings.ts`, `CampusAuthContext.tsx`, or `SpectraBookingsView.tsx`. Your scope is strictly `optimizer/timetable_solver.py`, `client/src/pages/campus/TimetableDashboard.tsx`, and `server/src/routes/faculty.ts`."*
 
 | Task ID | Problem | Files Owned | Scope & Detailed Instructions | Status |
 |---|---|---|---|:---:|
-| **W2-A1** | **Problem A1** | `optimizer/timetable_solver.py` | Add soft penalty objective terms for **S4** (same-course double lecture = 3 pts/excess) and **S3** (daily overload > 6h = 3 pts/excess) into `objective_terms` before `model.Minimize(...)`. Follow the exact CP-SAT formulation given in `PROBLEMS.md` lines 63–99. Keep solve time under 25s. | **READY** |
-| **W2-D4** | **Problem D4** | `client/src/pages/campus/TimetableDashboard.tsx` | In `renderPeriodBlock`: display full faculty name (`facultyMap.get(session.facultyId)?.name || session.facultyId`) instead of raw ID `F19`. Display ♿ badge if `room.accessible && session.needsAccessible`. | **READY** |
-| **W2-D2** | **Problem D2** | `client/src/pages/campus/TimetableDashboard.tsx` | Render evening sessions / approved Spectra allocations (Periods P10–P13, 18:00–22:00) as an expandable evening row or cards below afternoon periods for each day. | **READY** |
-| **W2-C2** | **Problem C2** | `client/src/pages/campus/TimetableDashboard.tsx`<br>`server/src/routes/faculty.ts` | In the session detail drawer, when logged-in role is `faculty`, add a "Request Session Move" button that creates a `pending_approval` proposal for Admin review. | **READY** |
+| **W2-A1** | **Problem A1** | `optimizer/timetable_solver.py` | Add soft penalty objective terms for **S4** (same-course double lecture = 3 pts/excess) and **S3** (daily overload > 6h = 3 pts/excess) into `objective_terms` before `model.Minimize(...)`. Follow the exact CP-SAT formulation given in `PROBLEMS.md` lines 63–99. Keep solve time under 25s. | **COMPLETED** |
+| **W2-D4** | **Problem D4** | `client/src/pages/campus/TimetableDashboard.tsx` | In `renderPeriodBlock`: display full faculty name (`facultyMap.get(session.facultyId)?.name || session.facultyId`) instead of raw ID `F19`. Display ♿ badge if `room.accessible && session.needsAccessible`. | **COMPLETED** |
+| **W2-D2** | **Problem D2** | `client/src/pages/campus/TimetableDashboard.tsx` | Render evening sessions / approved Spectra allocations (Periods P10–P13, 18:00–22:00) as an expandable evening row or cards below afternoon periods for each day. | **COMPLETED** |
+| **W2-C2** | **Problem C2** | `client/src/pages/campus/TimetableDashboard.tsx`<br>`server/src/routes/faculty.ts` | In the session detail drawer, when logged-in role is `faculty`, add a "Request Session Move" button that creates a `pending_approval` proposal for Admin review. | **COMPLETED** |
 
 ---
 
